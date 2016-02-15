@@ -24,7 +24,6 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
 
   private val schemaParser = new OpenLdapSchemaParser
   val pizzaSchema = schemaParser.parse(scala.io.Source.fromInputStream(getClass.getResourceAsStream("/schemas/pizza.schema")).getLines().mkString("\n"))
-  print(pizzaSchema)
 
   try {
     init
