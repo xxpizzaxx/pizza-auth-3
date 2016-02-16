@@ -5,7 +5,8 @@ package moe.pizza.auth.ldap.server
   */
 object Main extends App {
 
-  val e = new EmbeddedLdapServer("server", "o=pizza", "localhost", 389)
+  val e = new EmbeddedLdapServer("server", "ou=pizza", "localhost", 389)
+  e.setPassword("testpassword")
   e.start()
 
 }
