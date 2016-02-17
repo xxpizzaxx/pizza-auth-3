@@ -9093,6 +9093,7 @@
             <attributetype>corporation</attributetype>
             <attributetype>email</attributetype>
             <attributetype>uid</attributetype>
+            <attributetype>metadata</attributetype>
           </mandatory>
           <optional>
             <attributetype>authGroup</attributetype>
