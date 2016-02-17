@@ -9003,7 +9003,7 @@
           <syntax>1.3.6.1.4.1.1466.115.121.1.26</syntax>
           <equality>caseExactIA5Match</equality>
           <ordering>caseExactOrderingMatch</ordering>
-          <substring>caseIgnoreIA5SubstringsMatch</substring>
+          <substring>caseExactIA5SubstringsMatch</substring>
         </attributetype>
         <attributetype oid="1.3.6.1.4.1.39478.3.3" obsolete="false" singlevalue="true" collective="false" nousermodification="false">
           <aliases>
@@ -9023,7 +9023,7 @@
           <syntax>1.3.6.1.4.1.1466.115.121.1.26</syntax>
           <equality>caseExactIA5Match</equality>
           <ordering>caseExactOrderingMatch</ordering>
-          <substring>caseExactSubstringsMatch</substring>
+          <substring>caseExactIA5SubstringsMatch</substring>
         </attributetype>
         <attributetype oid="1.3.6.1.4.1.39478.3.5" obsolete="false" singlevalue="true" collective="false" nousermodification="false">
           <aliases>
@@ -9055,9 +9055,19 @@
           <ordering>caseExactOrderingMatch</ordering>
           <substring>caseExactIA5SubstringsMatch</substring>
         </attributetype>
-        <attributetype oid="1.3.6.1.4.1.39478.3.9" obsolete="false" singlevalue="false" collective="true" nousermodification="false">
+        <attributetype oid="1.3.6.1.4.1.39478.3.9" obsolete="false" singlevalue="false" collective="false" nousermodification="false">
           <aliases>
             <alias>apiKey</alias>
+          </aliases>
+          <usage>USER_APPLICATIONS</usage>
+          <syntax>1.3.6.1.4.1.1466.115.121.1.26</syntax>
+          <equality>caseExactIA5Match</equality>
+          <ordering>caseExactOrderingMatch</ordering>
+          <substring>caseExactIA5SubstringsMatch</substring>
+        </attributetype>
+        <attributetype oid="1.3.6.1.4.39478.3.9" obsolete="false" singlevalue="true" collective="false" nousermodification="false">
+          <aliases>
+            <alias>metadata</alias>
           </aliases>
           <usage>USER_APPLICATIONS</usage>
           <syntax>1.3.6.1.4.1.1466.115.121.1.26</syntax>
@@ -9075,7 +9085,7 @@
           <superiors>
             <superior>simpleSecurityObject</superior>
           </superiors>
-          <type>STRUCTURAL</type>
+          <type>AUXILIARY</type>
           <mandatory>
             <attributetype>accountStatus</attributetype>
             <attributetype>alliance</attributetype>
