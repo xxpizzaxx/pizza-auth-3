@@ -1,72 +1,59 @@
-attributetype ( 1.3.6.1.4.1.39478.1.2 NAME 'ts3uid'
-    DESC 'Teamspeak3 UID'
-    EQUALITY caseIgnoreIA5Match
-    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-attributetype ( 1.3.6.1.4.1.39478.1.3 NAME 'corporation'
-    DESC 'EVE Corporation'
-    EQUALITY caseIgnoreIA5Match
-    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-attributetype ( 1.3.6.1.4.1.39478.1.4 NAME 'alliance'
-    DESC 'EVE Alliance'
-    EQUALITY caseIgnoreIA5Match
-    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-attributetype ( 1.3.6.1.4.1.39478.1.5 NAME 'accountStatus'
-    DESC 'Account Status'
-    EQUALITY caseIgnoreMatch
-    SUBSTR caseIgnoreSubstringsMatch
-    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )
-
-attributetype ( 1.3.6.1.4.1.39478.1.6 NAME 'keyID'
-    DESC 'API key ID'
-    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-attributetype ( 1.3.6.1.4.1.39478.1.7 NAME 'vCode'
-    DESC 'API key vCode'
-    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-attributetype ( 1.3.6.1.4.1.39478.1.8 NAME 'authGroup'
-   DESC 'Auth System Group'
-   EQUALITY caseIgnoreMatch
-   SUBSTR caseIgnoreSubstringsMatch
-   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )
-
-attributetype ( 1.3.6.1.4.1.39478.1.9 NAME 'characterName'
-   DESC 'Character Name'
-   EQUALITY caseIgnoreIA5Match
-   SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-attributetype ( 1.3.6.1.4.1.39478.1.10 NAME 'alt'
-	DESC 'Linked character'
-	SUP distinguishedName )
-
-attributetype ( 1.3.6.1.4.1.39478.1.11 NAME 'recommendedBy'
-	DESC 'User this user was recommended by'
-	SUP distinguishedName )
-
-objectclass	( 1.3.6.1.4.1.39478.1.1
-    NAME 'xxPilot'
-    AUXILIARY
-    DESC 'Pilot registered with the Confederation of xXPIZZAXx'
-    MUST ( characterName $ keyID $ vCode $ corporation )
-    MAY ( ts3uid $ authGroup $ alliance $ email $ accountStatus $ alt $ recommendedBy ) )
-
-attributetype	( 1.3.6.1.4.1.39478.2.2 NAME 'redditName'
-	DESC 'Reddit Account Name'
-	EQUALITY caseIgnoreMatch
-	SUBSTR caseIgnoreSubstringsMatch
-	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )
-
-attributetype	( 1.3.6.1.4.1.39478.2.3 NAME 'redditToken'
-	DESC 'Reddit Account Token'
-	EQUALITY caseIgnoreMatch
-	SUBSTR caseIgnoreSubstringsMatch
-	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )
-
-objectclass	( 1.3.6.1.4.1.39478.2.1
-	NAME 'redditAccount'
+attributetype ( 1.3.6.1.4.1.39478.3.2 NAME 'accountStatus'
+	EQUALITY caseExactIA5Match
+	ORDERING caseExactOrderingMatch
+	SUBSTR caseExactIA5SubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	USAGE userApplications )
+attributetype ( 1.3.6.1.4.1.39478.3.3 NAME 'characterName'
+	EQUALITY caseExactIA5Match
+	ORDERING caseExactOrderingMatch
+	SUBSTR caseExactIA5SubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	SINGLE-VALUE
+	USAGE userApplications )
+attributetype ( 1.3.6.1.4.1.39478.3.4 NAME 'corporation'
+	EQUALITY caseExactIA5Match
+	ORDERING caseExactOrderingMatch
+	SUBSTR caseExactIA5SubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	SINGLE-VALUE
+	USAGE userApplications )
+attributetype ( 1.3.6.1.4.1.39478.3.5 NAME 'alliance'
+	EQUALITY caseExactIA5Match
+	ORDERING caseExactOrderingMatch
+	SUBSTR caseExactIA5SubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	SINGLE-VALUE
+	USAGE userApplications )
+attributetype ( 1.3.6.1.4.1.39478.3.6 NAME 'authGroup'
+	EQUALITY caseExactIA5Match
+	ORDERING caseExactOrderingMatch
+	SUBSTR caseExactIA5SubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	USAGE userApplications )
+attributetype ( 1.3.6.1.4.1.39478.3.7 NAME 'crestToken'
+	EQUALITY caseExactIA5Match
+	ORDERING caseExactOrderingMatch
+	SUBSTR caseExactIA5SubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	USAGE userApplications )
+attributetype ( 1.3.6.1.4.1.39478.3.9 NAME 'apiKey'
+	EQUALITY caseExactIA5Match
+	ORDERING caseExactOrderingMatch
+	SUBSTR caseExactIA5SubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	USAGE userApplications )
+attributetype ( 1.3.6.1.4.39478.3.9 NAME 'metadata'
+	DESC ''
+	EQUALITY caseExactIA5Match
+	ORDERING caseExactOrderingMatch
+	SUBSTR caseExactIA5SubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
+	SINGLE-VALUE
+	USAGE userApplications )
+objectclass ( 1.3.6.1.4.1.39478.3.1 NAME 'pilot'
+	DESC 'Pilot registered with this Authentication System'
+	SUP simpleSecurityObject
 	AUXILIARY
-	DESC 'Reddit Account'
-	MUST ( redditName $ redditToken ) )
+	MUST ( accountStatus $ alliance $ characterName $ corporation $ email $ uid $ metadata )
+	MAY ( authGroup $ crestToken $ apiKey ) )
