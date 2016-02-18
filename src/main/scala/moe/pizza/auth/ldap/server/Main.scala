@@ -7,7 +7,7 @@ import moe.pizza.auth.ldap.client.LdapClient
   */
 object Main extends App {
 
-  val LDAP_PORT = 3389
+  val LDAP_PORT = 389
 
   val e = new EmbeddedLdapServer("server", "ou=pizza", "localhost", LDAP_PORT)
   e.setPassword("testpassword")
@@ -18,8 +18,8 @@ object Main extends App {
   import client._
   client.withConnection { c =>
     c.filter("", "(objectclass=*)").foreach {
-      e =>
-        println(e.toMap)
+      e => ()
+        //println(e.toMap)
     }
 
   }

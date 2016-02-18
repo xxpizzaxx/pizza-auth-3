@@ -32,8 +32,8 @@ import org.slf4j.{LoggerFactory, Logger}
 
 class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, port: Int, instanceName: String = "pizza-auth-ldap") {
   private final val log: Logger = LoggerFactory.getLogger(getClass)
-  private var directoryService: DirectoryService = null
-  private var ldapService: LdapServer = null
+  var directoryService: DirectoryService = null
+  var ldapService: LdapServer = null
 
   private val schemaParser = new OpenLdapSchemaParser
   val pizzaSchema = schemaParser.parse(scala.io.Source.fromInputStream(getClass.getResourceAsStream("/schemas/pizza.schema")).getLines().mkString("\n"))
@@ -174,5 +174,15 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
       }
       directoryService.getAdminSession.add(entry)
     }
+  }
+
+  def createEntry(id: String, e: Entry): Unit = {
+    if (!ldapService.isStarted) {
+      throw new IllegalStateException("Service is not running")
+    }
+    if (!directoryService.getAdminSession.exists(id)) {
+      directoryService.getAdminSession.add(e)
+    }
+
   }
 }
