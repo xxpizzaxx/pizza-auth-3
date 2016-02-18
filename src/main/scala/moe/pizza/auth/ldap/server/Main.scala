@@ -9,4 +9,16 @@ object Main extends App {
   e.setPassword("testpassword")
   e.start()
 
+
+  val client = new LdapClient("localhost", 389, "uid=admin,ou=system", "testpassword")
+  import client._
+  client.withConnection { c =>
+    c.filter("", "(objectclass=*)").foreach {
+      e =>
+        println(e.toMap)
+    }
+
+  }
+
+
 }
