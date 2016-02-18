@@ -32,7 +32,7 @@ class UserLoadingSpec extends FlatSpec with MustMatchers {
       "ObjectClass: pilot",
       "ObjectClass: simpleSecurityObject",
       "objectclass: account",
-      "accountStatus: Expired",
+      "accountStatus: Internal",
       "alliance: Confederation of xXPIZZAXx",
       "characterName: Lucia Denniard",
       "corporation: Love Squad",
@@ -49,7 +49,7 @@ class UserLoadingSpec extends FlatSpec with MustMatchers {
       import c._
       val r = con.filter("ou=pizza", "(uid=lucia_denniard)")
       val user = r.toList.headOption.map(_.toMap).map(Pilot.fromMap)
-      user must equal(Some(Pilot("lucia_denniard","Expired","Confederation of xXPIZZAXx","Love Squad","unknown","lucia@pizza.moe",Pilot.OM.createObjectNode(),List(),List(),List())))
+      user must equal(Some(Pilot("lucia_denniard","Internal","Confederation of xXPIZZAXx","Love Squad","Lucia Denniard","lucia@pizza.moe",Pilot.OM.createObjectNode(),List(),List(),List())))
     }
 
   }

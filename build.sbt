@@ -12,3 +12,5 @@ libraryDependencies += "org.log4s" %% "log4s" % "1.2.1"
 libraryDependencies += "org.apache.directory.server" % "apacheds-all" % "2.0.0-M21"
 
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
+
+Twirl.settings

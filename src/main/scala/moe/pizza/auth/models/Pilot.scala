@@ -13,10 +13,10 @@ object Pilot {
   def fromMap(m: Map[String, List[String]]): Pilot = {
     new Pilot(
       m.get("uid").flatMap(_.headOption).getOrElse("unknown"),
-      m.get("accountStatus").flatMap(_.headOption).getOrElse("Expired"),
+      m.get("accountstatus").flatMap(_.headOption).getOrElse("Expired"),
       m.get("alliance").flatMap(_.headOption).getOrElse("unknown"),
       m.get("corporation").flatMap(_.headOption).getOrElse("unknown"),
-      m.get("characterName").flatMap(_.headOption).getOrElse("unknown"),
+      m.get("charactername").flatMap(_.headOption).getOrElse("unknown"),
       m.get("email").flatMap(_.headOption).getOrElse("unknown"),
       m.get("metadata").flatMap(_.headOption).map(OM.readTree).getOrElse(OM.createObjectNode()),
       m.getOrElse("authGroups", List.empty[String]),
