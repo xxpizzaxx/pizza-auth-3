@@ -1,6 +1,6 @@
-package moe.pizza.auth.ldap.server
+package moe.pizza.auth.ldap.client
 
-import org.apache.directory.api.ldap.model.entry.{Entry, Attribute}
+import org.apache.directory.api.ldap.model.entry.Entry
 import org.apache.directory.api.ldap.model.message.SearchScope
 import org.apache.directory.ldap.client.api._
 
