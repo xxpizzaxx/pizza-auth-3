@@ -55,5 +55,19 @@ class UtilsSpec extends FlatSpec with MustMatchers with MockitoSugar {
     r.getSession.get.alerts must equal(List(new Alert("info", "I like turtles")))
   }
 
+  "pimpedrequest" should "clear alerts" in {
+    trait mock
+    val r = mock[Request]
+    val s = mock[Session]
+    when(r.session()).thenReturn(s)
+    val session = new Types.Session("foo", "bar", "Terry", 1, List(Types.Alert("info", "I like turtles")))
+    import Utils.PimpedRequest
+    // flash to a session
+    when(s.attribute[Types.Session](Webapp.SESSION)).thenReturn(session)
+    r.clearAlerts()
+    verify(s).attribute(Webapp.SESSION)
+    verify(s).attribute(Webapp.SESSION, session.copy(alerts = List.empty[Types.Alert]))
+  }
+
 
 }
