@@ -4,7 +4,7 @@ import moe.pizza.auth.webapp.Types.Alert
 import moe.pizza.auth.webapp.Utils.Alerts
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, MustMatchers}
-import org.mockito.Mockito.{when, verify, never}
+import org.mockito.Mockito.{when, verify, never, reset, times}
 import org.mockito.Matchers.{anyString, anyInt}
 import spark.{Session, Request}
 
@@ -62,12 +62,27 @@ class UtilsSpec extends FlatSpec with MustMatchers with MockitoSugar {
     when(r.session()).thenReturn(s)
     val session = new Types.Session("foo", "bar", "Terry", 1, List(Types.Alert("info", "I like turtles")))
     import Utils.PimpedRequest
-    // flash to a session
+    // clear a session
     when(s.attribute[Types.Session](Webapp.SESSION)).thenReturn(session)
     r.clearAlerts()
     verify(s).attribute(Webapp.SESSION)
     verify(s).attribute(Webapp.SESSION, session.copy(alerts = List.empty[Types.Alert]))
   }
+
+  "pimpedrequest" should "do nothing if there's no session when you clear alerts or flash" in {
+    trait mock
+    val r = mock[Request]
+    val s = mock[Session]
+    when(r.session()).thenReturn(s)
+    val session = new Types.Session("foo", "bar", "Terry", 1, List(Types.Alert("info", "I like turtles")))
+    import Utils.PimpedRequest
+    // clear a session
+    when(s.attribute[Types.Session](Webapp.SESSION)).thenReturn(null)
+    r.clearAlerts()
+    r.flash(Alerts.info, "I like turtles")
+    verify(s, times(2)).attribute[Types.Session](Webapp.SESSION)
+  }
+
 
 
 }
