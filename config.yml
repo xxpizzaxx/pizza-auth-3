@@ -15,13 +15,15 @@
     clientID: "f"
     secretKey: "4"
     redirectUrl: "http://localhost:4567/callback"
+
   #############################################################################
   ## auth settings
   #############################################################################
   auth:
-    # Run in alliance or corporation mode
+    # Run in alliance, corporation or public mode
     #mode: alliance
     #mode: corporation
+    #mode: public
 
     # Pick your alliance or corporation
     #alliance: Confederation of xXPIZZAXx
@@ -42,8 +44,3 @@
       # public groups are the list of open groups that can be joined by random neutrals
       public:
         - dota
-
-
-
-
-
