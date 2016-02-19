@@ -1,0 +1,73 @@
+@(title: String, content: Html, session: Option[moe.pizza.auth.webapp.Types.Session])
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
+<head>
+    <meta name="author" content="Lucia Denniard"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="shortcut icon" href="/static/favicon.png">
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+
+    <title>@title</title>
+</head>
+<body>
+<nav class="navbar navbar-default">
+    <div class="container">
+        <div class="navbar-header">
+            <button class="navbar-toggle" data-target=".navbar-collapse" data-toggle="collapse" type="button" data-target=".navbar-ex1-collapse">
+					<span class="sr-only">
+						Toggle navigation
+					</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pizza-auth</a>
+        </div>
+        <nav id="navcbars" class="collapse navbar-collapse navbar-ex1-collapse" role="navigtion">
+            <ul class="nav navbar-nav">
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                @if(session.isDefined) {
+                    <li class="navbar-text">
+                        @session.get.characterName
+                    </li>
+                    <li>
+                        <a href="/logout" class="btn btn-primary" role="button">Logout</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+</nav>
+
+<div class="container">
+    @if(session.isDefined) {
+        <div id="alerts">
+            @for(alert <- session.get.alerts) {
+                <div class="alert alert-@alert.level" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    @alert.content
+                </div>
+            }
+        </div>
+    }
+    @content
+</div>
+<hr />
+<footer>
+    <div class="container">
+        <p class=".small text-center text-muted">This site is a deployment of <a href="https://github.com/xxpizzaxx/pizza-auth-3">pizza-auth-3</a>, which is available under the <a href="http://opensource.org/licenses/MIT">MIT License</a>.</p>
+    </div>
+</footer>
+
+</body>
+
+</html>

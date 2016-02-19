@@ -6,11 +6,17 @@ scalaVersion := "2.11.7"
 
 resolvers += Resolver.jcenterRepo
 
+// web framework
 libraryDependencies += "com.sparkjava" % "spark-core" % "2.3"
-libraryDependencies += "moe.pizza" %% "eveapi" % "0.33"
+// eve online APIs
+libraryDependencies += "moe.pizza" %% "eveapi" % "0.34"
+// logging
 libraryDependencies += "org.log4s" %% "log4s" % "1.2.1"
+// LDAP
 libraryDependencies += "org.apache.directory.server" % "apacheds-all" % "2.0.0-M21"
+// translations
+libraryDependencies += "com.googlecode.gettext-commons" % "gettext-maven-plugin" % "1.2.4"
 
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 
-Twirl.settings
+enablePlugins(SbtTwirl)
