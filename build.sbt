@@ -20,6 +20,8 @@ libraryDependencies += "com.googlecode.gettext-commons" % "gettext-maven-plugin"
 libraryDependencies += "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.6.1"
 // command line interface
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
+// queues
+libraryDependencies += "org.apache.kafka" %% "kafka" % "0.8.2.2"
 // tests
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 
