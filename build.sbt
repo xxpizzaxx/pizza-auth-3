@@ -21,8 +21,9 @@ libraryDependencies += "com.fasterxml.jackson.dataformat" % "jackson-dataformat-
 // command line interface
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
 // queues
-libraryDependencies += "org.apache.kafka" %% "kafka" % "0.8.2.2"
+libraryDependencies += "org.apache.kafka" %% "kafka" % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12")
 // tests
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
+libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test"
 
 enablePlugins(SbtTwirl)
