@@ -1,0 +1,62 @@
+---
+  #############################################################################
+  ## CREST settings
+  #############################################################################
+  crest:
+    # login server URL, uncomment the one you want
+    #login_url: "https://sisilogin.testeveonline.com"  # singularity
+    #login_url: "https://login.eveonline.com"          # tranquility
+
+    # CREST server URL
+    #crest_url: "https://api-sisi.testeveonline.com/"  # singularity
+    #crest_url: "https://crest-tq.eveonline.com/"      # tranquility
+
+    # Your app settings from https://developers.eveonline.com/ or https://developers.testeveonline.com/
+    clientID: "f"
+    secretKey: "4"
+    redirectUrl: "http://localhost:4567/callback"
+
+  #############################################################################
+  ## auth settings
+  #############################################################################
+  auth:
+    # Run in alliance, corporation or public mode
+    #mode: alliance
+    #mode: corporation
+    #mode: public
+
+    # Pick your alliance or corporation
+    #alliance: Confederation of xXPIZZAXx
+    #corporation: Love Squad
+
+    # Groups that users can sign up to or be in
+    groups:
+      # closed groups require admin-approval
+      closed:
+        - admin
+        - ping
+        - capital
+        - timerboard
+      # open groups can be joined by any internal/allied users
+      open:
+        - social
+        - dota
+      # public groups are the list of open groups that can be joined by random neutrals
+      public:
+        - dota
+
+  #############################################################################
+  ## embedded ldap settings
+  #############################################################################
+  #embeddedldap:
+    # folder to store the database in
+    #instancePath: /var/lib/pizza-auth/ldap/
+
+    # port to run on
+    #port: 389
+
+    # base DN
+    #basedn: ou=pizza
+
+    # host to bind to (leave this as localhost for security reasons unless you really know what you're doing)
+    #host: localhost

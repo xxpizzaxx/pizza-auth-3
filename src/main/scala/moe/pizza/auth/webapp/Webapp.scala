@@ -19,7 +19,7 @@ object Webapp {
   val defaultCrestScopes = List("characterLocationRead")
 }
 
-class Webapp(fullconfig: ConfigFile) {
+class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021) {
 
   val log = org.log4s.getLogger
   val config = fullconfig.crest
@@ -28,9 +28,8 @@ class Webapp(fullconfig: ConfigFile) {
   val eveapi = new EVEAPI()
 
   def start(): Unit = {
-    println("starting")
 
-    port(9021)
+    port(portnumber)
     staticFileLocation("/static/")
 
     // index page
