@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.ldap.server.EmbeddedLdapServer
+import moe.pizza.auth.webapp.Webapp
 import scopt.OptionParser
 
 import scala.io.Source
@@ -63,6 +64,11 @@ object Main {
             if (s.ldap) {
               //new EmbeddedLdapServer()
             }
+            if (s.webinterface) {
+              val webapp = new Webapp(configfile.get)
+              webapp.start()
+            }
+
 
         }
     }

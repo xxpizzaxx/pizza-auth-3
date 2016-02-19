@@ -24,7 +24,7 @@ class EmbeddedZookeeper(config: Properties) {
         try {
           server.runFromConfig(zkconfig)
         } catch {
-          case e => e.printStackTrace(System.err)
+          case e: Throwable => e.printStackTrace(System.err)
         }
 
       }
