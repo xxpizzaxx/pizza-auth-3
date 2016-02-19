@@ -16,7 +16,10 @@ libraryDependencies += "org.log4s" %% "log4s" % "1.2.1"
 libraryDependencies += "org.apache.directory.server" % "apacheds-all" % "2.0.0-M21"
 // translations
 libraryDependencies += "com.googlecode.gettext-commons" % "gettext-maven-plugin" % "1.2.4"
+// YAML
+libraryDependencies += "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.6.1"
 
+// tests
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 
 enablePlugins(SbtTwirl)
