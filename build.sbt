@@ -18,7 +18,8 @@ libraryDependencies += "org.apache.directory.server" % "apacheds-all" % "2.0.0-M
 libraryDependencies += "com.googlecode.gettext-commons" % "gettext-maven-plugin" % "1.2.4"
 // YAML
 libraryDependencies += "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.6.1"
-
+// command line interface
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
 // tests
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 

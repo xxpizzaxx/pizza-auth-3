@@ -44,3 +44,19 @@
       # public groups are the list of open groups that can be joined by random neutrals
       public:
         - dota
+
+  #############################################################################
+  ## embedded ldap settings
+  #############################################################################
+  #embeddedldap:
+    # folder to store the database in
+    #instancePath: /var/lib/pizza-auth/ldap/
+
+    # port to run on
+    #port: 389
+
+    # base DN
+    #basedn: ou=pizza
+
+    # host to bind to (leave this as localhost for security reasons unless you really know what you're doing)
+    #host: localhost
