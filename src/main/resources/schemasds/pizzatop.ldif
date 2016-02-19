@@ -1,0 +1,11 @@
+dn: ou=pizza
+objectclass: organizationalUnit
+objectclass: extensibleObject
+objectclass: top
+ou: pizza-auth
+
+dn: ou=Pilots,ou=pizza
+objectclass: organizationalUnit
+objectclass: top
+ou: Pilots
+
