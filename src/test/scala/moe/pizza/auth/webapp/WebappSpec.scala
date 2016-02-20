@@ -2,12 +2,18 @@ package moe.pizza.auth.webapp
 
 import javax.servlet.http.HttpSession
 
+import moe.pizza.auth.webapp.Types.Alert
 import moe.pizza.auth.webapp.WebappTestSupports._
+import moe.pizza.crestapi.CrestApi
+import moe.pizza.crestapi.CrestApi.{VerifyResponse, CallbackResponse}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, MustMatchers}
 import org.mockito.Mockito.{when, verify, never, reset, times, spy}
 import org.mockito.Matchers.{anyString, anyInt}
 import spark._
+
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by Andi on 19/02/2016.
@@ -109,6 +115,33 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       verify(req).session()
       verify(resp).redirect("/")
       verify(httpsession).invalidate()
+      Spark.stop()
+    }
+  }
+
+
+  "Webapp" should "verify crest callbacks" in {
+    withPort { port =>
+      val crest = mock[CrestApi]
+      val w = new Webapp(readTestConfig(), port, Some(crest))
+      w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/callback", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      when(req.session).thenReturn(session)
+      val resp = mock[Response]
+      // arguments
+      when(req.queryParams("code")).thenReturn("CRESTCODE")
+      when(req.queryParams("state")).thenReturn("CRESTSTATE")
+      when(crest.callback("CRESTCODE")).thenReturn(Future{new CallbackResponse("ACCESSTOKEN", "TYPE", 100, Some("REF"))})
+      when(crest.verify("ACCESSTOKEN")).thenReturn(Future{new VerifyResponse(1, "Bob", "ages", "scopes", "bearer", "owner", "eve")})
+      val res = handler.handle[String](req, resp)
+      verify(req).queryParams("code")
+      verify(req).queryParams("state")
+      verify(crest).callback("CRESTCODE")
+      verify(crest).verify("ACCESSTOKEN")
+      val finalsession = new Types.Session("ACCESSTOKEN","REF","Bob", 1, List(new Alert("success", "Thanks for logging in %s".format("Bob"))))
+      verify(session).attribute(Webapp.SESSION, finalsession)
       Spark.stop()
     }
   }

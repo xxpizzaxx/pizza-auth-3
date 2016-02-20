@@ -19,12 +19,12 @@ object Webapp {
   val defaultCrestScopes = List("characterLocationRead")
 }
 
-class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021) {
+class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[CrestApi] = None) {
 
   val log = org.log4s.getLogger
   val config = fullconfig.crest
 
-  val crest = new CrestApi(baseurl = config.loginUrl, cresturl = config.crestUrl, config.clientID, config.secretKey, config.redirectUrl)
+  val crest = crestapi.getOrElse(new CrestApi(baseurl = config.loginUrl, cresturl = config.crestUrl, config.clientID, config.secretKey, config.redirectUrl))
   val eveapi = new EVEAPI()
 
   def start(): Unit = {
