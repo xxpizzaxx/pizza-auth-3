@@ -25,7 +25,10 @@ libraryDependencies += "org.apache.kafka" %% "kafka" % "0.8.2.2" exclude("org.sl
 // tests
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test"
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.0" % "test"
 
 enablePlugins(SbtTwirl)
 
 coverageExcludedPackages := "templates\\.html\\.*;moe\\.pizza\\.auth\\.Main;moe\\.pizza\\.auth\\.queue.*"
+
+testOptions in Test += Tests.Argument(TestFrameworks.ScalaCheck, "-maxSize", "5", "-minSuccessfulTests", "33", "-workers", "1", "-verbosity", "1")
