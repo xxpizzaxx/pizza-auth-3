@@ -32,4 +32,21 @@ class WebappInjectedSpec extends FlatSpec with MustMatchers with MockitoSugar {
     }
   }
 
+  "Webapp" should "serve the main page" in {
+    withPort { port =>
+      val w = new Webapp(readTestConfig(), port)
+      w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      val usersession = new Types.Session("foo", "bar", "Terry", 1, List.empty[Types.Alert])
+      when(req.session()).thenReturn(session)
+      when(session.attribute(Webapp.SESSION)).thenReturn(usersession)
+      val resp = mock[Response]
+      val res = handler.handle[String](req, resp)
+      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession)).toString().trim)
+      Spark.stop()
+    }
+  }
+
 }
