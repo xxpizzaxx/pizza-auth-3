@@ -53,8 +53,10 @@ class UserLoadingSpec extends FlatSpec with MustMatchers {
         val user = r.toList.headOption.map(_.toMap).map(Pilot.fromMap)
         user must equal(Some(Pilot("lucia_denniard", "Internal", "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())))
       }
+      server.stop()
     } finally {
       tempfolder.delete()
+
     }
 
   }

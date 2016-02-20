@@ -4,9 +4,11 @@ import play.twirl.api.HtmlFormat
 import spark._
 
 object SparkWebScalaHelpers {
+  /*
   implicit def stringlambda2route(l: (Request, Response) => String): Route = new Route {
     override def handle(request: Request, response: Response): String = l(request, response)
   }
+  */
 
   implicit def twirllambda2route(l: (Request, Response) => HtmlFormat.Appendable): Route = new Route {
     override def handle(request: Request, response: Response): String = l(request, response).toString()

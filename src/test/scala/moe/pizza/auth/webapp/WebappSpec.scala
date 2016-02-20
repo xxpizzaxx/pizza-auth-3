@@ -1,72 +1,114 @@
 package moe.pizza.auth.webapp
 
-import java.net.{InetSocketAddress, Socket, ServerSocket}
+import javax.servlet.http.HttpSession
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import dispatch._
-import moe.pizza.auth.config.ConfigFile.ConfigFile
-import org.scalatest.{FlatSpec, MustMatchers}
+import moe.pizza.auth.webapp.WebappTestSupports._
 import org.scalatest.mock.MockitoSugar
-import spark.Spark
-import moe.pizza.eveapi.SyncableFuture
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-
-import scala.io.Source
-import scala.util.Try
+import org.scalatest.{FlatSpec, MustMatchers}
+import org.mockito.Mockito.{when, verify, never, reset, times, spy}
+import org.mockito.Matchers.{anyString, anyInt}
+import spark._
 
 /**
   * Created by Andi on 19/02/2016.
   */
 class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
 
-  def withPort(b: Int => Unit) {
-    val port = claimPort()
-    b(port)
-    waitForPortToFree(port)
-  }
+  val ACCEPTHTML = "text/html"
 
-  def claimPort(): Int = {
-    val s = new ServerSocket(0)
-    val port = s.getLocalPort
-    s.close()
-    port
-  }
-
-  def waitForPortToFree(p: Int) = {
-    val f = Future { Try {
-      val s = new Socket()
-      s.connect(new InetSocketAddress("127.0.0.1", p), 10000)
-    }}
-    Await.result(f, 10.seconds)
-  }
-
-  val OM = new ObjectMapper(new YAMLFactory())
-  OM.registerModule(DefaultScalaModule)
-
-  "Webapp" should "start up cleanly" in {
+  "Webapp" should "serve the landing page" in {
     withPort { port =>
-      val config = Source.fromURL(getClass.getResource("/config.yml")).getLines().mkString("\n")
-      val conf = OM.readValue[ConfigFile](config, classOf[ConfigFile])
-      val w = new Webapp(conf, port)
+      val w = new Webapp(readTestConfig(), port)
       w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      when(req.session()).thenReturn(session)
+      when(session.attribute(Webapp.SESSION)).thenReturn(null)
+      val resp = mock[Response]
+      val res = handler.handle[String](req, resp)
+      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.landing.apply(), None).toString().trim)
+      val posthandler = resolve(spark.route.HttpMethod.after, "/", ACCEPTHTML)
+      val res2 = posthandler.filter[Any](req, resp)
+      verify(session, times(2)).attribute[Types.Session](Webapp.SESSION)
       Spark.stop()
     }
   }
 
-  "Webapp" should "serve the landing page" in {
+  "Webapp" should "serve the main page" in {
     withPort { port =>
-      val config = Source.fromURL(getClass.getResource("/config.yml")).getLines().mkString("\n")
-      val conf = OM.readValue[ConfigFile](config, classOf[ConfigFile])
-      val w = new Webapp(conf, port)
+      val w = new Webapp(readTestConfig(), port)
       w.start()
-      val r = Http(url(s"http://localhost:$port/").GET).sync()
-      r.getStatusCode must equal(200)
-      r.getResponseBody.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.landing.apply(), None).toString().trim)
+      val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      val usersession = new Types.Session("foo", "bar", "Terry", 1, List.empty[Types.Alert])
+      when(req.session()).thenReturn(session)
+      when(session.attribute(Webapp.SESSION)).thenReturn(usersession)
+      val resp = mock[Response]
+      val res = handler.handle[String](req, resp)
+      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession)).toString().trim)
+      Spark.stop()
+    }
+  }
+
+  "Webapp" should "serve the main page with alerts" in {
+    withPort { port =>
+      val w = new Webapp(readTestConfig(), port)
+      w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      val alert = Types.Alert("info", "ducks are cool too")
+      val usersession = new Types.Session("foo", "bar", "Terry", 1, List(alert))
+      when(req.session()).thenReturn(session)
+      when(session.attribute(Webapp.SESSION)).thenReturn(usersession)
+      val resp = mock[Response]
+      val res = handler.handle[String](req, resp)
+      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession)).toString().trim)
+      // ensure that our alert got shown
+      res contains "ducks are cool too" must equal(true)
+      // run the post-filter
+      val posthandler = resolve(spark.route.HttpMethod.after, "/", ACCEPTHTML)
+      val res2 = posthandler.filter[Any](req, resp)
+      // make sure it cleared the alerts
+      verify(session).attribute(Webapp.SESSION, usersession.copy(alerts = List.empty[Types.Alert]))
+      Spark.stop()
+    }
+  }
+
+  "Webapp" should "redirect to CREST on /login" in {
+    withPort { port =>
+      val w = new Webapp(readTestConfig(), port)
+      w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/login", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      when(req.session()).thenReturn(session)
+      when(session.attribute(Webapp.SESSION)).thenReturn(null)
+      val resp = mock[Response]
+      val res = handler.handle[String](req, resp)
+      verify(req).session(true)
+      verify(resp).redirect("https://sisilogin.testeveonline.com/oauth/authorize/?response_type=code&redirect_uri=http://localhost:4567/callback&client_id=f&scope=characterLocationRead&state=")
+      Spark.stop()
+    }
+  }
+
+  "Webapp" should "clear the session on /logout" in {
+    withPort { port =>
+      val w = new Webapp(readTestConfig(), port)
+      w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/logout", ACCEPTHTML)
+      val req = mock[Request]
+      val httpsession = mock[HttpSession]
+      val session = reflectSession(httpsession)
+      when(req.session).thenReturn(session)
+      when(session.attribute(Webapp.SESSION)).thenReturn(null)
+      val resp = mock[Response]
+      val res = handler.handle[String](req, resp)
+      verify(req).session()
+      verify(resp).redirect("/")
+      verify(httpsession).invalidate()
       Spark.stop()
     }
   }

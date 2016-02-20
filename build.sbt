@@ -27,3 +27,5 @@ libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test"
 
 enablePlugins(SbtTwirl)
+
+//coverageExcludedPackages := "templates\\.html\\.*"

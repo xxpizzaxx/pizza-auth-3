@@ -1,12 +1,13 @@
 package moe.pizza.auth.webapp
 
 import java.net.{Socket, InetSocketAddress, ServerSocket}
+import javax.servlet.http.HttpSession
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.config.ConfigFile.ConfigFile
-import spark.{RouteImpl, Response, Request, Spark}
+import spark._
 import spark.route.SimpleRouteMatcher
 import spark.routematch.RouteMatch
 
@@ -49,9 +50,20 @@ object WebappTestSupports {
     r
   }
 
+  def reflectSession(httpSession: HttpSession): Session = {
+    val clazz = classOf[Session]
+    val constructor = clazz.getDeclaredConstructors.head
+    constructor.setAccessible(true)
+    val obj = constructor.newInstance(httpSession).asInstanceOf[Session]
+    obj
+  }
+
   implicit class PimpedRouteMatch(r: RouteMatch) {
     def handle[T](req: Request, resp: Response): T = {
       r.getTarget.asInstanceOf[RouteImpl].handle(req, resp).asInstanceOf[T]
+    }
+    def filter[T](req: Request, resp: Response): T = {
+      r.getTarget.asInstanceOf[FilterImpl].handle(req, resp).asInstanceOf[T]
     }
   }
 
@@ -67,5 +79,11 @@ object WebappTestSupports {
   def resolve(method: spark.route.HttpMethod, path: String, accept: String): RouteMatch = {
     reflectRoutingTable().findTargetForRequestedRoute(method, path, accept)
   }
+
+  import scala.collection.JavaConverters._
+  def resolvemulti(method: spark.route.HttpMethod, path: String, accept: String): Seq[RouteMatch] = {
+    reflectRoutingTable().findTargetsForRequestedRoute(method, path, accept).asScala
+  }
+
 
 }

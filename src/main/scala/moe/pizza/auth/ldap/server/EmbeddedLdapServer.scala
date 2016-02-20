@@ -38,23 +38,8 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
   private val schemaParser = new OpenLdapSchemaParser
   val pizzaSchema = schemaParser.parse(scala.io.Source.fromInputStream(getClass.getResourceAsStream("/schemas/pizza.schema")).getLines().mkString("\n"))
 
-  try {
-    init
-  }
-  catch {
-    case e: IOException => {
-      log.error("IOException while initializing EmbeddedLdapServer", e)
-    }
-    case e: LdapException => {
-      log.error("LdapException while initializing EmbeddedLdapServer", e)
-    }
-    case e: NamingException => {
-      log.error("NamingException while initializing EmbeddedLdapServer", e)
-    }
-    case e: Exception => {
-      log.error("Exception while initializing EmbeddedLdapServer", e)
-    }
-  }
+
+  init
 
   def setPassword(password: String, uid: String = "uid=admin,ou=system"): Unit = {
     val setpassword = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "userPassword", password)
@@ -135,37 +120,18 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
     loadSchemas(directoryService.getAdminSession)
   }
 
-  @throws(classOf[Exception])
   def start() {
-    if (ldapService.isStarted) {
-      throw new IllegalStateException("Service already running")
-    }
     directoryService.startup
     ldapService.start
     createOu(directoryService.getAdminSession)
-    //applyLdif(new File("src/main/resources/schemasds/pizzatop.ldif"))
   }
 
-  @throws(classOf[Exception])
   def stop() {
-    if (!ldapService.isStarted) {
-      throw new IllegalStateException("Service is not running")
-    }
     ldapService.stop
     directoryService.shutdown
   }
 
-  @throws(classOf[Exception])
-  def applyLdif(ldifFile: File) {
-    new LdifFileLoader(directoryService.getAdminSession, ldifFile, null).execute
-  }
-
-  @throws(classOf[LdapException])
-  @throws(classOf[LdapInvalidDnException])
   def createEntry(id: String, attributes: Map[String, String]) {
-    if (!ldapService.isStarted) {
-      throw new IllegalStateException("Service is not running")
-    }
     val dn: Dn = new Dn(directoryService.getSchemaManager, id)
     if (!directoryService.getAdminSession.exists(dn)) {
       val entry: Entry = directoryService.newEntry(dn)
@@ -177,9 +143,6 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
   }
 
   def createEntry(id: String, e: Entry): Unit = {
-    if (!ldapService.isStarted) {
-      throw new IllegalStateException("Service is not running")
-    }
     if (!directoryService.getAdminSession.exists(id)) {
       directoryService.getAdminSession.add(e)
     }
