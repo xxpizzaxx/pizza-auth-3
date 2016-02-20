@@ -14,9 +14,11 @@ object SparkWebScalaHelpers {
     override def handle(request: Request, response: Response): String = l(request, response).toString()
   }
 
+  /*
   implicit def lambda2modelroute(l: (Request, Response) => ModelAndView): TemplateViewRoute = new TemplateViewRoute {
     override def handle(request: Request, response: Response): ModelAndView = l(request, response)
   }
+  */
 
   implicit def unitlambda2filter(l: (Request, Response) => Unit): Filter = new Filter {
     override def handle(request: Request, response: Response): Unit = l(request, response)
