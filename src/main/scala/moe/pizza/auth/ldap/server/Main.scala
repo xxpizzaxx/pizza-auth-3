@@ -5,8 +5,9 @@ import moe.pizza.auth.ldap.client.LdapClient
 /**
   * Created by Andi on 15/02/2016.
   */
-object Main extends App {
+object Main {
 
+  /*
   val LDAP_PORT = 389
 
   val e = new EmbeddedLdapServer("server", "ou=pizza", "localhost", LDAP_PORT)
@@ -24,5 +25,6 @@ object Main extends App {
 
   }
 
+*/
 
 }
