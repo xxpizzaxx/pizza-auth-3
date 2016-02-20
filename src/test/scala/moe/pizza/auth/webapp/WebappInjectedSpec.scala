@@ -1,9 +1,5 @@
 package moe.pizza.auth.webapp
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import moe.pizza.auth.config.ConfigFile.ConfigFile
 import moe.pizza.auth.webapp.WebappTestSupports._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, MustMatchers}
@@ -20,17 +16,11 @@ class WebappInjectedSpec extends FlatSpec with MustMatchers with MockitoSugar {
 
   val ACCEPTHTML = "text/html"
 
-
-  val OM = new ObjectMapper(new YAMLFactory())
-  OM.registerModule(DefaultScalaModule)
-
   "Webapp" should "serve the landing page" in {
     withPort { port =>
-      val config = Source.fromURL(getClass.getResource("/config.yml")).getLines().mkString("\n")
-      val conf = OM.readValue[ConfigFile](config, classOf[ConfigFile])
-      val w = new Webapp(conf, port)
+      val w = new Webapp(readTestConfig(), port)
       w.start()
-      val handler = reflectRoutingTable().findTargetForRequestedRoute(spark.route.HttpMethod.get, "/", ACCEPTHTML)
+      val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
       val req = mock[Request]
       val session = mock[Session]
       when(req.session()).thenReturn(session)

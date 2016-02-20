@@ -2,11 +2,16 @@ package moe.pizza.auth.webapp
 
 import java.net.{Socket, InetSocketAddress, ServerSocket}
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import moe.pizza.auth.config.ConfigFile.ConfigFile
 import spark.{RouteImpl, Response, Request, Spark}
 import spark.route.SimpleRouteMatcher
 import spark.routematch.RouteMatch
 
 import scala.concurrent.{Future, Await}
+import scala.io.Source
 import scala.util.Try
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -49,4 +54,18 @@ object WebappTestSupports {
       r.getTarget.asInstanceOf[RouteImpl].handle(req, resp).asInstanceOf[T]
     }
   }
+
+  val OM = new ObjectMapper(new YAMLFactory())
+  OM.registerModule(DefaultScalaModule)
+
+  def readTestConfig(): ConfigFile = {
+    val config = Source.fromURL(getClass.getResource("/config.yml")).getLines().mkString("\n")
+    val conf = OM.readValue[ConfigFile](config, classOf[ConfigFile])
+    conf
+  }
+
+  def resolve(method: spark.route.HttpMethod, path: String, accept: String): RouteMatch = {
+    reflectRoutingTable().findTargetForRequestedRoute(method, path, accept)
+  }
+
 }
