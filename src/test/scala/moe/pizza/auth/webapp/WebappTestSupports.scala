@@ -22,9 +22,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 object WebappTestSupports {
  def withPort(b: Int => Unit) {
-    val port = claimPort()
-    b(port)
-    waitForPortToFree(port)
+   val port = claimPort()
+   b(port)
+   waitForPortToFree(port)
+   Spark.stop()
+   Thread.sleep(2000)
   }
 
   def claimPort(): Int = {
