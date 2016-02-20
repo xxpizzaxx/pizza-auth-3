@@ -28,4 +28,4 @@ libraryDependencies += "org.mockito" % "mockito-all" % "1.10.19" % "test"
 
 enablePlugins(SbtTwirl)
 
-//coverageExcludedPackages := "templates\\.html\\.*"
+coverageExcludedPackages := "templates\\.html\\.*;moe\\.pizza\\.auth\\.Main;moe\\.pizza\\.auth\\.queue.*"
