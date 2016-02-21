@@ -1,12 +1,15 @@
 package moe.pizza.auth.models
 
 import com.fasterxml.jackson.databind.{ObjectMapper, JsonNode}
+import moe.pizza.auth.models.Pilot.CrestToken
+import moe.pizza.eveapi.ApiKey
 
 object Pilot {
   val OM = new ObjectMapper()
 
   /**
     * Create a Pilot from a Map[String, List[String]], as returned by the simple Ldap Client
+    *
     * @param m output from LDAP client
     * @return a constructed Pilot
     */
@@ -24,6 +27,8 @@ object Pilot {
       m.getOrElse("apiKey", List.empty[String])
     )
   }
+
+  case class CrestToken(characterID: Long, token: String)
 }
 
 case class Pilot(
@@ -36,5 +41,27 @@ case class Pilot(
                   metadata: JsonNode,
                   authGroups: List[String],
                   crestTokens: List[String],
-                  apiKey: List[String]
-                )
+                  apiKeys: List[String]
+                ) {
+  def getCrestTokens: List[CrestToken] = {
+    crestTokens.flatMap{t =>
+      val r = t.split(":", -1)
+      if (r.length == 2) {
+        Some(CrestToken(r(0).toLong, r(1)))
+      } else {
+        None
+      }
+    }
+  }
+  def getApiKeys: List[ApiKey] = {
+    apiKeys.flatMap{k =>
+      val r = k.split(":", -1)
+      if (r.length == 2) {
+        Some(ApiKey(r(0).toInt, r(1)))
+      } else {
+        None
+      }
+    }
+
+  }
+}
