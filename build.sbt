@@ -5,20 +5,22 @@ version := "1.0"
 scalaVersion := "2.11.7"
 
 resolvers += Resolver.jcenterRepo
+resolvers += Resolver.bintrayRepo("andimiller", "maven") // while things sync to jcenter
 
 // main dependencies
 libraryDependencies ++= Seq(
   // frameworks
-  "com.sparkjava"                    % "spark-core"              % "2.3",
+  "com.sparkjava"                    % "spark-core"                 % "2.3",
   // supporting libraries
-  "moe.pizza"                        %% "eveapi"                 % "0.34",
-  "org.log4s"                        %% "log4s"                  % "1.2.1",
-  "com.github.scopt"                 %% "scopt"                  % "3.3.0",
-  "com.googlecode.gettext-commons"   % "gettext-maven-plugin"    % "1.2.4",
-  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml" % "2.6.1",
+  "moe.pizza"                        %% "eveapi"                    % "0.34",
+  "org.log4s"                        %% "log4s"                     % "1.2.1",
+  "com.github.scopt"                 %% "scopt"                     % "3.3.0",
+  "com.googlecode.gettext-commons"   % "gettext-maven-plugin"       % "1.2.4",
+  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml"    % "2.6.1",
+  "net.andimiller"                   %% "integrated-query-language" % "1.1",
   // embedded services
-  "org.apache.directory.server"      % "apacheds-all"            % "2.0.0-M21",
-  "org.apache.kafka"                 %% "kafka"                  % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12")
+  "org.apache.directory.server"      % "apacheds-all"               % "2.0.0-M21",
+  "org.apache.kafka"                 %% "kafka"                     % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12")
 )
 
 // test frameworks and tools

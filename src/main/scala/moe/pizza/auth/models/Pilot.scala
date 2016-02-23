@@ -1,11 +1,15 @@
 package moe.pizza.auth.models
 
 import com.fasterxml.jackson.databind.{ObjectMapper, JsonNode}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.models.Pilot.CrestToken
 import moe.pizza.eveapi.ApiKey
 
+import scala.util.Try
+
 object Pilot {
   val OM = new ObjectMapper()
+  OM.registerModule(DefaultScalaModule)
 
   /**
     * Create a Pilot from a Map[String, List[String]], as returned by the simple Ldap Client
@@ -28,6 +32,12 @@ object Pilot {
     )
   }
 
+  def fromJson(s: String): Option[Pilot] = {
+    Try {
+      OM.readValue(s, classOf[Pilot])
+    }.toOption
+  }
+
   case class CrestToken(characterID: Long, token: String)
 }
 
@@ -45,9 +55,9 @@ case class Pilot(
                 ) {
   def getCrestTokens: List[CrestToken] = {
     crestTokens.flatMap{t =>
-      val r = t.split(":", -1)
-      if (r.length == 2) {
-        Some(CrestToken(r(0).toLong, r(1)))
+      val i = t.indexOf(":")
+      if (i > -1) {
+        Some(CrestToken(t.substring(0, i).toLong, t.substring(i+1, t.length)))
       } else {
         None
       }
@@ -55,13 +65,22 @@ case class Pilot(
   }
   def getApiKeys: List[ApiKey] = {
     apiKeys.flatMap{k =>
-      val r = k.split(":", -1)
-      if (r.length == 2) {
-        Some(ApiKey(r(0).toInt, r(1)))
+      val i = k.indexOf(":")
+      if (i > -1) {
+        Some(ApiKey(k.substring(0, i).toInt, k.substring(i+1, k.length)))
       } else {
         None
       }
     }
 
   }
+
+  def toJson: String = {
+    Pilot.OM.writeValueAsString(this)
+  }
+
+  def toJsonNode: JsonNode = {
+    Pilot.OM.readTree(this.toJson)
+  }
+
 }

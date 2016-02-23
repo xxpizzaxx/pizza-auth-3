@@ -13,4 +13,5 @@ trait UserDatabase {
   def getUser(uid: String): Option[Pilot]
   def setPassword(p: Pilot, password: String): Boolean
   def getUsers(filter: String): List[Pilot]
+  def getAllUsers(): Seq[Pilot]
 }
