@@ -3,7 +3,7 @@ package moe.pizza.auth.plugins
 import java.security.AlgorithmParameterGenerator
 
 import moe.pizza.auth.models.Pilot
-import moe.pizza.auth.plugins.MembershipPilotGraders.{AlliancePilotGrader, CorporationPilotGrader}
+import moe.pizza.auth.plugins.MembershipPilotGraders.{PublicAccessPilotGrader, AlliancePilotGrader, CorporationPilotGrader}
 import org.scalatest.{WordSpec, MustMatchers}
 
 /**
@@ -37,6 +37,16 @@ class MembershipPilotGradersSpec extends WordSpec with MustMatchers {
         val c = new AlliancePilotGrader("boballiance")
         val p = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
         c.grade(p) must equal(Pilot.Status.internal)
+      }
+    }
+  }
+
+  "PublicAccessPilotGrader" when {
+    "grading" should {
+      "grade pilots as ineligible" in {
+        val c = new PublicAccessPilotGrader
+        val p = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
+        c.grade(p) must equal(Pilot.Status.ineligible)
       }
     }
   }

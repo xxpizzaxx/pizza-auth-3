@@ -27,4 +27,8 @@ object MembershipPilotGraders {
     }
   }
 
+  class PublicAccessPilotGrader extends PilotGrader {
+    override def grade(p: Pilot): Status.Value = Pilot.Status.ineligible
+  }
+
 }
