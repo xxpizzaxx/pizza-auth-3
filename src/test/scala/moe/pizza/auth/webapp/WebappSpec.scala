@@ -2,10 +2,15 @@ package moe.pizza.auth.webapp
 
 import javax.servlet.http.HttpSession
 
+import moe.pizza.auth.interfaces.UserDatabase
+import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.webapp.Types.Alert
 import moe.pizza.auth.webapp.WebappTestSupports._
 import moe.pizza.crestapi.CrestApi
 import moe.pizza.crestapi.CrestApi.{VerifyResponse, CallbackResponse}
+import moe.pizza.eveapi.{XMLApiResponse, EVEAPI}
+import moe.pizza.eveapi.generated.char.CharacterInfo.{Result, Eveapi}
+import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, MustMatchers}
 import org.mockito.Mockito.{when, verify, never, reset, times, spy}
@@ -14,6 +19,7 @@ import spark._
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Try
 
 /**
   * Created by Andi on 19/02/2016.
@@ -120,7 +126,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
   }
 
 
-  "Webapp" should "verify crest callbacks" in {
+  "Webapp" should "verify crest callbacks when doing a login" in {
     withPort { port =>
       val crest = mock[CrestApi]
       val w = new Webapp(readTestConfig(), port, Some(crest))
@@ -132,7 +138,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val resp = mock[Response]
       // arguments
       when(req.queryParams("code")).thenReturn("CRESTCODE")
-      when(req.queryParams("state")).thenReturn("CRESTSTATE")
+      when(req.queryParams("state")).thenReturn("login")
       when(crest.callback("CRESTCODE")).thenReturn(Future{new CallbackResponse("ACCESSTOKEN", "TYPE", 100, Some("REF"))})
       when(crest.verify("ACCESSTOKEN")).thenReturn(Future{new VerifyResponse(1, "Bob", "ages", "scopes", "bearer", "owner", "eve")})
       val res = handler.handle[String](req, resp)
@@ -142,6 +148,39 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       verify(crest).verify("ACCESSTOKEN")
       val finalsession = new Types.Session("ACCESSTOKEN","REF","Bob", 1, List(new Alert("success", "Thanks for logging in %s".format("Bob"))))
       verify(session).attribute(Webapp.SESSION, finalsession)
+      Spark.stop()
+    }
+  }
+
+  "Webapp" should "create a pilot when doing a register" in {
+    withPort { port =>
+      val crest = mock[CrestApi]
+      val ud = mock[UserDatabase]
+      val eveapi = mock[EVEAPI]
+      val char = mock[moe.pizza.eveapi.endpoints.Character]
+      when(eveapi.char).thenReturn(char)
+      val w = new Webapp(readTestConfig(), port, Some(crest), Some(ud), Some(eveapi))
+      w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/callback", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      when(req.session).thenReturn(session)
+      val resp = mock[Response]
+      // arguments
+      when(req.queryParams("code")).thenReturn("CRESTCODE")
+      when(req.queryParams("state")).thenReturn("register")
+      when(crest.callback("CRESTCODE")).thenReturn(Future{new CallbackResponse("ACCESSTOKEN", "TYPE", 100, Some("REF"))})
+      when(crest.verify("ACCESSTOKEN")).thenReturn(Future{new VerifyResponse(1, "Bob", "ages", "scopes", "bearer", "owner", "eve")})
+      when(crest.refresh("REF")).thenReturn(Future{new CallbackResponse("ACCESSTOKEN", "TYPE", 100, Some("REF"))})
+      val bob = new Eveapi("now", new Result(1, "Bob", 0, "who knows", "Dunno", "dunno", "dunno", "male", "bobcorp", 42, "boballiance", 42, null, 0, 0, "nope", 0, 0, 0, "nope", "nope", "nope","nope"), "whenever")
+      when(char.CharacterInfo(1)).thenReturn(Future{Try{new XMLApiResponse[Result](DateTime.now(), DateTime.now(), bob.result)}})
+      val res = handler.handle[String](req, resp)
+      verify(req).queryParams("code")
+      verify(req).queryParams("state")
+      verify(crest).callback("CRESTCODE")
+      verify(crest).verify("ACCESSTOKEN")
+      verify(crest).refresh("REF")
+      verify(ud, times(1)).addUser(new Pilot("bob", "Internal", "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String]))
       Spark.stop()
     }
   }

@@ -31,4 +31,6 @@ object Utils {
     }
   }
 
+  def sanitizeUserName(name: String) = name.toLowerCase.replace("'", "").replace(" ", "_")
+
 }
