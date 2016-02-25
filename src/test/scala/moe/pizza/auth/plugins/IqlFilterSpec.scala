@@ -10,8 +10,8 @@ class IqlFilterSpec extends FlatSpec with MustMatchers {
 
   "IqlFilter" should "filter users using IQL" in {
     val iqlf = new IqlFilter
-    val p = Pilot("bob", "Internal", "myalliance", "mycorp", "Bob", "bob@bob.com", Pilot.OM.readTree("{\"meta\": \"%s\"}".format("metafield")), List("group1", "group3"), List.empty, List.empty )
-    val p2 = Pilot("terry", "Internal", "myalliance", "mycorp", "Terry", "bob@bob.com", Pilot.OM.readTree("{\"meta\": \"%s\"}".format("metafield")), List("group1", "group2"), List.empty, List.empty )
+    val p = Pilot("bob", Pilot.Status.internal, "myalliance", "mycorp", "Bob", "bob@bob.com", Pilot.OM.readTree("{\"meta\": \"%s\"}".format("metafield")), List("group1", "group3"), List.empty, List.empty )
+    val p2 = Pilot("terry", Pilot.Status.internal, "myalliance", "mycorp", "Terry", "bob@bob.com", Pilot.OM.readTree("{\"meta\": \"%s\"}".format("metafield")), List("group1", "group2"), List.empty, List.empty )
     val input = List(p, p2)
     iqlf.filter(input, ".uid == \"bob\"") must equal(List(p))
     iqlf.filter(input, ".uid == \"terry\"") must equal(List(p2))

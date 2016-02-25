@@ -23,9 +23,11 @@ object PilotSpec extends Properties("Pilot") {
 
   property("toJson") = forAll {
     (uid: String, status: String, alliance: String, corp: String, character: String, email: String, meta: String, groups: List[String] ) =>
-      val p = Pilot(uid, status, alliance, corp, character, email, Pilot.OM.readTree("{\"meta\": \"%s\"}".format(meta)), groups, List.empty, List.empty )
+      val p = Pilot(uid, Pilot.Status.lookup.getOrElse(status, Pilot.Status.ineligible), alliance, corp, character, email, Pilot.OM.readTree("{\"meta\": \"%s\"}".format(meta)), groups, List.empty, List.empty )
       val json = p.toJson
       val p2 = Pilot.fromJson(json)
+      println(p)
+      println(p2)
       p2.contains(p)
   }
 

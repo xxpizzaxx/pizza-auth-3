@@ -1,6 +1,8 @@
 package moe.pizza.auth.models
 
-import com.fasterxml.jackson.databind.{ObjectMapper, JsonNode}
+import com.fasterxml.jackson.core.{JsonParser, JsonGenerator, Version}
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.models.Pilot.CrestToken
 import moe.pizza.eveapi.ApiKey
@@ -10,6 +12,34 @@ import scala.util.Try
 object Pilot {
   val OM = new ObjectMapper()
   OM.registerModule(DefaultScalaModule)
+  val sm = new SimpleModule("pizza-auth-serializer", new Version(1, 0, 0, null, "moe.pizza", "pizza-auth-3"))
+  sm.addSerializer(new EnumSerializer)
+  sm.addDeserializer(classOf[Status.Value], new EnumDeserializer)
+  OM.registerModule(sm)
+
+  // ser/der for the Pilot Status enum
+  class EnumDeserializer extends JsonDeserializer[Status.Value] {
+    override def deserialize(p: JsonParser, ctxt: DeserializationContext): Status.Value = {
+      Pilot.Status.lookup.getOrElse(p.getValueAsString, Status.expired)
+    }
+    override def handledType() = classOf[Status.Value]
+  }
+  class EnumSerializer extends JsonSerializer[Status.Value] {
+    override def serialize(value: Status.Value, gen: JsonGenerator, serializers: SerializerProvider): Unit = {
+      gen.writeString(value.toString)
+    }
+    override def handledType() = classOf[Status.Value]
+  }
+
+  object Status extends Enumeration {
+    type Status = Value
+    val internal = Value("Internal")
+    val ally = Value("Ally")
+    val expired = Value("Expired")
+    val banned = Value("Banned")
+    val ineligible = Value("Ineligible")
+    val lookup = Map("Internal" -> internal, "Ally" -> ally, "Expired" -> expired, "Banned" -> banned, "Ineligible" -> ineligible)
+  }
 
   /**
     * Create a Pilot from a Map[String, List[String]], as returned by the simple Ldap Client
@@ -20,7 +50,7 @@ object Pilot {
   def fromMap(m: Map[String, List[String]]): Pilot = {
     new Pilot(
       m.get("uid").flatMap(_.headOption).getOrElse("unknown"),
-      m.get("accountstatus").flatMap(_.headOption).getOrElse("Expired"),
+      Pilot.Status.lookup.getOrElse(m.get("accountstatus").flatMap(_.headOption).getOrElse("Expired"), Status.expired),
       m.get("alliance").flatMap(_.headOption).getOrElse("unknown"),
       m.get("corporation").flatMap(_.headOption).getOrElse("unknown"),
       m.get("charactername").flatMap(_.headOption).getOrElse("unknown"),
@@ -43,7 +73,7 @@ object Pilot {
 
 case class Pilot(
                   uid: String,
-                  accountStatus: String,
+                  accountStatus: Pilot.Status.Status,
                   alliance: String,
                   corporation: String,
                   characterName: String,

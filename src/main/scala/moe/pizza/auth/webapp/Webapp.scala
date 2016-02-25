@@ -73,7 +73,7 @@ class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[Cr
             val refresh = crest.refresh(callbackresults.refresh_token.get).sync()
             new Pilot(
               Utils.sanitizeUserName(ci.result.name),
-              "Internal",
+              Pilot.Status.internal,
               ci.result.allianceName,
               ci.result.corporationName,
               ci.result.name,

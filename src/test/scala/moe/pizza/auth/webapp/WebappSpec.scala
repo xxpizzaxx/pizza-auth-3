@@ -180,7 +180,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       verify(crest).callback("CRESTCODE")
       verify(crest).verify("ACCESSTOKEN")
       verify(crest).refresh("REF")
-      verify(ud, times(1)).addUser(new Pilot("bob", "Internal", "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String]))
+      verify(ud, times(1)).addUser(new Pilot("bob", Pilot.Status.internal, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String]))
       Spark.stop()
     }
   }
