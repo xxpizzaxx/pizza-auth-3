@@ -38,7 +38,8 @@ object Pilot {
     val expired = Value("Expired")
     val banned = Value("Banned")
     val ineligible = Value("Ineligible")
-    val lookup = Map("Internal" -> internal, "Ally" -> ally, "Expired" -> expired, "Banned" -> banned, "Ineligible" -> ineligible)
+    val unclassified = Value("Unclassified")
+    val lookup = Map("Internal" -> internal, "Ally" -> ally, "Expired" -> expired, "Banned" -> banned, "Ineligible" -> ineligible, "Unclassified" -> unclassified)
   }
 
   /**
