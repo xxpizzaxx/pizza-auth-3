@@ -521,5 +521,25 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
       verify(corp, times(2)).ContactList()
     }
   }
+  "cope with failure when there's no contact list" in {
+    val now = DateTime.now()
+    val eveapi = mock[EVEAPI]
+    val corp = mock[Corp]
+    when(eveapi.corp).thenReturn(corp)
+    when(corp.ContactList()).thenReturn(
+      Future {
+        Try[XMLApiResponse[Seq[Rowset]]] {
+          throw new Exception("oh no")
+        }
+      }
+    )
+    implicit val apikey = new ApiKey(1, "hi")
+    val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+    val r = apg.pullAllies()
+    r must equal(None)
+    val bob = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
+    apg.grade(bob) must equal(Pilot.Status.unclassified)
+    verify(corp, times(2)).ContactList()
+  }
 
 }
