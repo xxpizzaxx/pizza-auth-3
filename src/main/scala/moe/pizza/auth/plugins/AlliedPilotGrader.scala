@@ -64,8 +64,13 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
             allies = newallies
             grade(p)
           } else {
-            logger.info("failed to refresh, classifying unclassified")
-            Status.unclassified
+            logger.info("failed to refresh, classifying with old data")
+            p match {
+              case _ if a.pilots contains p.characterName => Status.ally
+              case _ if a.corporations contains p.corporation => Status.ally
+              case _ if a.alliances contains p.alliance => Status.ally
+              case _ => Status.unclassified
+            }
           }
         } else {
           // we've got a valid contact list

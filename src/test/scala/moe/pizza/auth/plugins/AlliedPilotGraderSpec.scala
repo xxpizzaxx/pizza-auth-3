@@ -541,5 +541,78 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
     apg.grade(bob) must equal(Pilot.Status.unclassified)
     verify(corp, times(2)).ContactList()
   }
-
+  "classify with old data if required" in {
+    val now = DateTime.now()
+    val expiry = DateTime.now().plusHours(2)
+    val expired = DateTime.now().minusHours(2)
+    val eveapi = mock[EVEAPI]
+    val corp = mock[Corp]
+    when(eveapi.corp).thenReturn(corp)
+    when(corp.ContactList()).thenReturn(
+      Future {
+        Try {
+          new XMLApiResponse(
+            expired,
+            expired,
+            Seq(
+              new Rowset(
+                Seq(
+                  new Row(
+                    Map(
+                      "@contactTypeID" -> DataRecord.apply(null, BigInt(1373)),
+                      "@contactName" -> DataRecord.apply(null, "Terry"),
+                      "@standing" -> DataRecord.apply(null, BigDecimal(10))
+                    )
+                  ),
+                  new Row(
+                    Map(
+                      "@contactTypeID" -> DataRecord.apply(null, BigInt(1375)),
+                      "@contactName" -> DataRecord.apply(null, "Terry2"),
+                      "@standing" -> DataRecord.apply(null, BigDecimal(10))
+                    )
+                  ),
+                  new Row(
+                    Map(
+                      "@contactTypeID" -> DataRecord.apply(null, BigInt(16159)),
+                      "@contactName" -> DataRecord.apply(null, "Terry's Cool Alliance"),
+                      "@standing" -> DataRecord.apply(null, BigDecimal(10))
+                    )
+                  )
+                ),
+                Map("@name" -> DataRecord.apply(null, "allianceContactList"))
+              ),
+              new Rowset(
+                Seq(
+                  new Row(
+                    Map(
+                      "@contactTypeID" -> DataRecord.apply(null, BigInt(2)),
+                      "@contactName" -> DataRecord.apply(null, "TerryCorp"),
+                      "@standing" -> DataRecord.apply(null, BigDecimal(10))
+                    )
+                  )
+                ),
+                Map("@name" -> DataRecord.apply(null, "corporateContactList"))
+              )
+            )
+          )
+        }
+      }
+    )
+    implicit val apikey = new ApiKey(1, "hi")
+    val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+    when(corp.ContactList()).thenReturn(
+      Future {
+        Try[XMLApiResponse[Seq[Rowset]]] {
+          throw new Exception("oh no")
+        }
+      }
+    )
+    val bob = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
+    apg.grade(bob) must equal(Pilot.Status.unclassified)
+    apg.grade(bob.copy(characterName="Terry"))             must equal(Pilot.Status.ally)
+    apg.grade(bob.copy(corporation="TerryCorp"))           must equal(Pilot.Status.ally)
+    apg.grade(bob.copy(alliance="Terry's Cool Alliance"))  must equal(Pilot.Status.ally)
+    verify(corp, times(5)).ContactList()
+  }
 }
+
