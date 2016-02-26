@@ -6,10 +6,13 @@ import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.models.Pilot.Status
 import moe.pizza.auth.plugins.AlliedPilotGrader.SavedContactList
 import moe.pizza.eveapi.generated.corp
-import moe.pizza.eveapi.{XMLApiResponse, EVEAPI, ApiKey}
+import moe.pizza.eveapi.{ApiKey, EVEAPI}
 import org.joda.time.DateTime
 
-import scala.util.{Success, Failure}
+import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
+import scalaxb._
+
 
 object AlliedPilotGrader {
   case class SavedContactList(cachedUntil: DateTime, pilots: Seq[String], corporations: Seq[String], alliances: Seq[String])
@@ -22,7 +25,7 @@ object AlliedPilotGrader {
     val grouped = contacts.groupBy(_.contactTypeID)
     SavedContactList(
       cachedUntil,
-      grouped.filterKeys(CHARACTERS.contains).values.flatten.map(_.contactName).toSeq,
+      grouped.filterKeys(i => CHARACTERS.contains(i.toInt)).values.flatten.map(_.contactName).toSeq,
       grouped.getOrElse(CORPORATION, Seq.empty).map(_.contactName),
       grouped.getOrElse(ALLIANCE, Seq.empty).map(_.contactName)
     )
@@ -30,16 +33,18 @@ object AlliedPilotGrader {
 }
 
 
-class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolean, val eve: Option[EVEAPI] = None)(implicit apikey: ApiKey) extends PilotGrader with Logging {
+class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolean, val eve: Option[EVEAPI] = None)(implicit apikey: ApiKey, implicit val ec: ExecutionContext) extends PilotGrader with Logging {
   val eveapi = eve.getOrElse(new EVEAPI())
   var allies = pullAllies()
+
+
 
   def pullAllies(): Option[SavedContactList] = {
     val res = eveapi.corp.ContactList().sync()
     res match {
       case Success(r) =>
-        val corp = r.result.filter(_.name == "corporateContactList").flatMap(_.row).filter(_ => usecorp)
-        val alli = r.result.filter(_.name == "allianceContactList").flatMap(_.row).filter(_ => usealliance)
+        val corp = r.result.filter(_.name == "corporateContactList").flatMap(_.row).filter(_ => usecorp).filter(_.standing > threshold)
+        val alli = r.result.filter(_.name == "allianceContactList").flatMap(_.row).filter(_ => usealliance).filter(_.standing > threshold)
         val contacts = corp ++ alli
         logger.info("successfully refreshed contact list")
         Some(AlliedPilotGrader.transformContacts(r.cachedUntil, contacts))
@@ -48,6 +53,7 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
         None
     }
   }
+
   override def grade(p: Pilot): Status.Value = {
     allies match {
       case Some(a) =>

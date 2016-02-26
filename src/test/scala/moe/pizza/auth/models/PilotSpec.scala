@@ -26,8 +26,6 @@ object PilotSpec extends Properties("Pilot") {
       val p = Pilot(uid, Pilot.Status.lookup.getOrElse(status, Pilot.Status.ineligible), alliance, corp, character, email, Pilot.OM.readTree("{\"meta\": \"%s\"}".format(meta)), groups, List.empty, List.empty )
       val json = p.toJson
       val p2 = Pilot.fromJson(json)
-      println(p)
-      println(p2)
       p2.contains(p)
   }
 
