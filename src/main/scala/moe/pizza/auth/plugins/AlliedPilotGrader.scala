@@ -17,9 +17,9 @@ import scalaxb._
 object AlliedPilotGrader {
   case class SavedContactList(cachedUntil: DateTime, pilots: Seq[String], corporations: Seq[String], alliances: Seq[String])
 
-  final val CORPORATION = 2
-  final val ALLIANCE = 16159
-  final val CHARACTERS = Range(1373, 1386)
+  val CORPORATION = 2
+  val ALLIANCE = 16159
+  val CHARACTERS = Range(1373, 1386)
 
   def transformContacts(cachedUntil: DateTime, contacts: Seq[corp.ContactList.Row]) = {
     val grouped = contacts.groupBy(_.contactTypeID)
