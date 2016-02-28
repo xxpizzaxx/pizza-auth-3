@@ -66,6 +66,7 @@ object PilotGraderLike {
           case "CrestKeyGrader" => Some(create[CrestKeyGrader](c))
           case "CorporationPilotGrader" => Some(create[CorporationPilotGrader](c))
           case "AlliancePilotGrader" => Some(create[AlliancePilotGrader](c))
+          case _ => None
         }
         case None => None
       }

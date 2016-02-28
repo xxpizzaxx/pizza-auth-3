@@ -82,6 +82,11 @@ class PilotGraderLikeSpec extends WordSpec with MustMatchers {
           |    vCode: "whatever"
           |    threshold: 4.5
           |    usecorp: false
+          |  -
+          |    nothing: "nope"
+          |  -
+          |    type: "idontexist"
+          |    fakedata: "nope"
         """.stripMargin
       val parsedconfig = OM.readTree(fullconfig)
 
@@ -98,10 +103,17 @@ class PilotGraderLikeSpec extends WordSpec with MustMatchers {
       "create an AlliedPilotGrader from YAML" in {
         val r = PilotGraderFactory.fromYaml(parsedconfig.get(3))
       }
+      "fail gracefully when there is no type" in {
+        PilotGraderFactory.fromYaml(parsedconfig.get(4)) must equal(None)
+      }
+      "fail gracefully when the type doesn't have a mapping from YAML" in {
+        PilotGraderFactory.fromYaml(parsedconfig.get(5)) must equal(None)
+      }
+
       "create a set of PilotGraders from YAML" in {
         import scala.collection.JavaConverters._
         val graders = parsedconfig.iterator().asScala.toList
-        graders.map(PilotGraderFactory.fromYaml)
+        graders.map(PilotGraderFactory.fromYaml).flatten.toList.size must equal(4)
       }
 
     }
