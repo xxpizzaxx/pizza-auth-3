@@ -1,22 +1,19 @@
-package moe.pizza.auth.plugins
+package moe.pizza.auth.plugins.pilotgraders
 
 import moe.pizza.auth.models.Pilot
-import moe.pizza.eveapi.generated.corp.ContactList.{Row, Rowset}
-import moe.pizza.eveapi.{ApiKey, XMLApiResponse, EVEAPI}
+import moe.pizza.auth.plugins.pilotgraders.AlliedPilotGrader.SavedContactList
 import moe.pizza.eveapi.endpoints.Corp
+import moe.pizza.eveapi.generated.corp.ContactList.{Row, Rowset}
+import moe.pizza.eveapi.{ApiKey, EVEAPI, XMLApiResponse}
 import org.joda.time.DateTime
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{WordSpec, MustMatchers}
-import org.mockito.Mockito.{when, verify, never, reset, times, spy}
-import org.mockito.Matchers.{anyString, anyInt}
-import moe.pizza.auth.plugins.AlliedPilotGrader.SavedContactList
-
-import scala.concurrent.Future
-import scala.util.Try
-import scala.xml.Elem
-import scalaxb.{XMLStandardTypes, DataRecord}
+import org.scalatest.{MustMatchers, WordSpec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.Try
+import scalaxb.{DataRecord, XMLStandardTypes}
 
 
 /**

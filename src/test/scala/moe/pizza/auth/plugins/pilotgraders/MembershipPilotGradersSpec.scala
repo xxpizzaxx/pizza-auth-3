@@ -1,10 +1,8 @@
-package moe.pizza.auth.plugins
-
-import java.security.AlgorithmParameterGenerator
+package moe.pizza.auth.plugins.pilotgraders
 
 import moe.pizza.auth.models.Pilot
-import moe.pizza.auth.plugins.MembershipPilotGraders.{PublicAccessPilotGrader, AlliancePilotGrader, CorporationPilotGrader}
-import org.scalatest.{WordSpec, MustMatchers}
+import moe.pizza.auth.plugins.pilotgraders.MembershipPilotGraders.{AlliancePilotGrader, CorporationPilotGrader, PublicAccessPilotGrader}
+import org.scalatest.{MustMatchers, WordSpec}
 
 /**
   * Created by Andi on 25/02/2016.

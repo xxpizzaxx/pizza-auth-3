@@ -1,17 +1,16 @@
-package moe.pizza.auth.plugins
+package moe.pizza.auth.plugins.pilotgraders
 
 import kafka.utils.Logging
 import moe.pizza.auth.interfaces.PilotGrader
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.models.Pilot.Status
-import moe.pizza.auth.plugins.AlliedPilotGrader.SavedContactList
+import moe.pizza.auth.plugins.pilotgraders.AlliedPilotGrader.SavedContactList
 import moe.pizza.eveapi.generated.corp
 import moe.pizza.eveapi.{ApiKey, EVEAPI}
 import org.joda.time.DateTime
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
-import scalaxb._
 
 
 object AlliedPilotGrader {

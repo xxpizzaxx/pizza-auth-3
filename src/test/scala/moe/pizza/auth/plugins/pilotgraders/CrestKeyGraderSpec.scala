@@ -1,17 +1,14 @@
-package moe.pizza.auth.plugins
+package moe.pizza.auth.plugins.pilotgraders
 
 import moe.pizza.auth.models.Pilot
 import moe.pizza.crestapi.CrestApi
 import moe.pizza.crestapi.CrestApi.{CallbackResponse, VerifyResponse}
-import org.scalatest.{FlatSpec, MustMatchers}
+import org.mockito.Mockito.{verify, when}
 import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito.{when, verify, never, reset, times, spy}
-import org.mockito.Matchers.{anyString, anyInt}
+import org.scalatest.{FlatSpec, MustMatchers}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.concurrent.Future
-import scala.util.Try
 
 /**
   * Created by Andi on 28/02/2016.
@@ -21,7 +18,6 @@ class CrestKeyGraderSpec extends FlatSpec with MustMatchers with MockitoSugar {
   "CrestKeyGrader" should "mark users as unclassified if their key is fine" in {
     val crest = mock[CrestApi]
     val p = Pilot("bob", Pilot.Status.internal, "myalliance", "mycorp", "Bob", "bob@bob.com", Pilot.OM.readTree("{\"meta\": \"%s\"}".format("metafield")), List("group1", "group3"), List("123:bobkey"), List.empty )
-    val p2 = Pilot("terry", Pilot.Status.internal, "myalliance", "mycorp", "Terry", "bob@bob.com", Pilot.OM.readTree("{\"meta\": \"%s\"}".format("metafield")), List("group1", "group2"), List.empty, List.empty )
     val c = new CrestKeyGrader(crest)
     when(crest.refresh("bobkey")(global)).thenReturn(Future{new CallbackResponse("bobrefresh", null, 0, None)})
     when(crest.verify("bobrefresh")(global)).thenReturn(Future{new VerifyResponse(123, "Bob", null, null, null, null, null)})

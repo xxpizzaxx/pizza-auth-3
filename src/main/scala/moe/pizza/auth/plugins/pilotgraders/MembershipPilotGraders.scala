@@ -1,4 +1,4 @@
-package moe.pizza.auth.plugins
+package moe.pizza.auth.plugins.pilotgraders
 
 import moe.pizza.auth.interfaces.PilotGrader
 import moe.pizza.auth.models.Pilot

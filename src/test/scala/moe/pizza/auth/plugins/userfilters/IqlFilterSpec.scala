@@ -1,4 +1,4 @@
-package moe.pizza.auth.plugins
+package moe.pizza.auth.plugins.userfilters
 
 import moe.pizza.auth.models.Pilot
 import org.scalatest.{FlatSpec, MustMatchers}

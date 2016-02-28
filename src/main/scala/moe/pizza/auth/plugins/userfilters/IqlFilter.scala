@@ -1,11 +1,11 @@
-package moe.pizza.auth.plugins
+package moe.pizza.auth.plugins.userfilters
 
 import fastparse.core.Parsed.Success
 import moe.pizza.auth.interfaces.UserFilter
 import moe.pizza.auth.models.Pilot
 import net.andimiller.iql.Ast.World
-import net.andimiller.iql.{Ast, Parser}
 import net.andimiller.iql.Evaluator.EvaluatablePipeline
+import net.andimiller.iql.{Ast, Parser}
 
 
 class IqlFilter extends UserFilter {
