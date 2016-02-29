@@ -1,6 +1,7 @@
 package moe.pizza.auth.config
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.JsonNode
 
 /**
   * Created by andi on 19/02/16.
@@ -14,10 +15,10 @@ object ConfigFile {
                                )
   case class AuthGroupConfig(closed: List[String], open: List[String], public: List[String])
   case class AuthConfig(
-                        mode: String,
-                        corporation: Option[String],
-                        alliance: Option[String],
-                        groups: AuthGroupConfig
+                        groupName: String,
+                        groupShortName: String,
+                        groups: AuthGroupConfig,
+                        graders: List[JsonNode]
                        )
   case class CrestConfig(
                         @JsonProperty("login_url")
