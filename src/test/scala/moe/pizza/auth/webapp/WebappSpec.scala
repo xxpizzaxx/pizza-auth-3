@@ -11,7 +11,7 @@ import moe.pizza.auth.webapp.WebappTestSupports._
 import moe.pizza.crestapi.CrestApi
 import moe.pizza.crestapi.CrestApi.{VerifyResponse, CallbackResponse}
 import moe.pizza.eveapi.{XMLApiResponse, EVEAPI}
-import moe.pizza.eveapi.generated.char.CharacterInfo.{Result, Eveapi}
+import moe.pizza.eveapi.generated.eve.CharacterInfo.{Result, Eveapi, Rowset}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, MustMatchers}
@@ -107,6 +107,22 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
     }
   }
 
+  "Webapp" should "redirect to CREST on /signup" in {
+    withPort { port =>
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port)
+      w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/signup", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      when(req.session()).thenReturn(session)
+      when(session.attribute(Webapp.SESSION)).thenReturn(null)
+      val resp = mock[Response]
+      val res = handler.handle[String](req, resp)
+      verify(resp).redirect("https://sisilogin.testeveonline.com/oauth/authorize/?response_type=code&redirect_uri=http://localhost:4567/callback&client_id=f&scope=characterLocationRead&state=signup")
+      Spark.stop()
+    }
+  }
+
   "Webapp" should "clear the session on /logout" in {
     withPort { port =>
       val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port)
@@ -153,13 +169,13 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
     }
   }
 
-  "Webapp" should "create a pilot when doing a register" in {
+  "Webapp" should "look up the pilot in crest and the XML API, create a pilot, then redirect to /signup/confirm" in {
     withPort { port =>
       val crest = mock[CrestApi]
       val ud = mock[UserDatabase]
       val eveapi = mock[EVEAPI]
-      val char = mock[moe.pizza.eveapi.endpoints.Character]
-      when(eveapi.char).thenReturn(char)
+      val eve = mock[moe.pizza.eveapi.endpoints.Eve]
+      when(eveapi.eve).thenReturn(eve)
       val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, Some(crest), Some(ud), Some(eveapi))
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/callback", ACCEPTHTML)
@@ -169,18 +185,42 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val resp = mock[Response]
       // arguments
       when(req.queryParams("code")).thenReturn("CRESTCODE")
-      when(req.queryParams("state")).thenReturn("register")
+      when(req.queryParams("state")).thenReturn("signup")
       when(crest.callback("CRESTCODE")).thenReturn(Future{new CallbackResponse("ACCESSTOKEN", "TYPE", 100, Some("REF"))})
       when(crest.verify("ACCESSTOKEN")).thenReturn(Future{new VerifyResponse(1, "Bob", "ages", "scopes", "bearer", "owner", "eve")})
       when(crest.refresh("REF")).thenReturn(Future{new CallbackResponse("ACCESSTOKEN", "TYPE", 100, Some("REF"))})
-      val bob = new Eveapi("now", new Result(1, "Bob", 0, "who knows", "Dunno", "dunno", "dunno", "male", "bobcorp", 42, "boballiance", 42, null, 0, 0, "nope", 0, 0, 0, "nope", "nope", "nope","nope"), "whenever")
-      when(char.CharacterInfo(1)).thenReturn(Future{Try{new XMLApiResponse[Result](DateTime.now(), DateTime.now(), bob.result)}})
+      val bob = new Eveapi("now", new Result(1, "Bob", "bobrace", 0, "bobbloodline", 0, "bobancestry", 42, "bobcorp", "some date", 42, "boballiance", "some date", 0.0, Rowset()), "whenever")
+      when(eve.CharacterInfo(1)).thenReturn(Future{Try{new XMLApiResponse[Result](DateTime.now(), DateTime.now(), bob.result)}})
       val res = handler.handle[String](req, resp)
       verify(req).queryParams("code")
       verify(req).queryParams("state")
       verify(crest).callback("CRESTCODE")
       verify(crest).verify("ACCESSTOKEN")
-      //verify(ud, times(1)).addUser(new Pilot("bob", Pilot.Status.internal, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String]))
+      verify(resp).redirect("/signup/confirm")
+      Spark.stop()
+    }
+  }
+
+  "Webapp" should "show a confirmation page when confirming a signup with a pilot" in {
+    withPort { port =>
+      val crest = mock[CrestApi]
+      val ud = mock[UserDatabase]
+      val eveapi = mock[EVEAPI]
+      val eve = mock[moe.pizza.eveapi.endpoints.Eve]
+      when(eveapi.eve).thenReturn(eve)
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, Some(crest), Some(ud), Some(eveapi))
+      w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/signup/confirm", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      val p = Pilot("bob", Pilot.Status.internal, "myalliance", "mycorp", "Bob", "bob@bob.com", Pilot.OM.readTree("{\"meta\": \"%s\"}".format("metafield")), List("group1", "group3"), List("123:bobkey"), List.empty )
+      when(req.session).thenReturn(session)
+      when(session.attribute[Pilot](Webapp.PILOT)).thenReturn(p)
+      val resp = mock[Response]
+      // arguments
+      val res = handler.handle[play.twirl.api.Html](req, resp)
+      verify(session).attribute[Pilot](Webapp.PILOT)
+      res must equal(templates.html.base("pizza-auth-3", templates.html.signup(p), None))
       Spark.stop()
     }
   }
