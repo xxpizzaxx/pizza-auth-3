@@ -65,7 +65,9 @@ object Main {
               //new EmbeddedLdapServer()
             }
             if (s.webinterface) {
-              val webapp = new Webapp(configfile.get)
+              import scala.concurrent.ExecutionContext.Implicits.global
+              val graders = configfile.get.auth.constructGraders()
+              val webapp = new Webapp(configfile.get, graders)
               webapp.start()
             }
 

@@ -1,7 +1,7 @@
 package moe.pizza.auth.webapp
 
 import moe.pizza.auth.config.ConfigFile.ConfigFile
-import moe.pizza.auth.interfaces.UserDatabase
+import moe.pizza.auth.interfaces.{PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
 import moe.pizza.crestapi.CrestApi
 import moe.pizza.eveapi.{EVEAPI, SyncableFuture}
@@ -20,7 +20,7 @@ object Webapp {
   val defaultCrestScopes = List("characterLocationRead")
 }
 
-class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[CrestApi] = None, ud: Option[UserDatabase] = None, eve: Option[EVEAPI] = None) {
+class Webapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 9021, crestapi: Option[CrestApi] = None, ud: Option[UserDatabase] = None, eve: Option[EVEAPI] = None) {
 
   val log = org.log4s.getLogger
   val config = fullconfig.crest
@@ -90,7 +90,7 @@ class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[Cr
               val refresh = crest.refresh(callbackresults.refresh_token.get).sync()
               new Pilot(
                 Utils.sanitizeUserName(ci.result.characterName),
-                Pilot.Status.internal,
+                Pilot.Status.unclassified,
                 ci.result.alliance,
                 ci.result.corporation,
                 ci.result.characterName,
@@ -104,14 +104,16 @@ class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[Cr
             }
             pilot match {
               case Success(p) =>
-                // TODO grade pilot here with current grader chain
+                // grade the pilot
+                val gradedpilot = p.copy(accountStatus = graders.grade(p))
+                // store it and forward them on
                 req.session(true)
                 req.setPilot(p)
                 val session = new Types.Session(verify.characterName, List())
                 req.setSession(session)
                 resp.redirect("/signup/confirm")
-              //ud.get.addUser(p)
-              //ud.get.setPassword(p, "whatever")
+                //ud.get.addUser(p)
+                //ud.get.setPassword(p, "whatever")
               case Failure(f) =>
                 req.flash(Alerts.warning, "Unable to unpack CREST response, please try again later")
                 resp.redirect("/")

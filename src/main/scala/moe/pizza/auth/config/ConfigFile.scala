@@ -2,6 +2,11 @@ package moe.pizza.auth.config
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
+import moe.pizza.auth.adapters.GraderChain
+import moe.pizza.auth.adapters.PilotGraderLike.PilotGraderFactory
+import moe.pizza.auth.interfaces.PilotGrader
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Created by andi on 19/02/16.
@@ -19,7 +24,10 @@ object ConfigFile {
                         groupShortName: String,
                         groups: AuthGroupConfig,
                         graders: List[JsonNode]
-                       )
+                       ) {
+    def constructGraders()(implicit ec: ExecutionContext): PilotGrader = new GraderChain(graders.map(PilotGraderFactory.fromYaml).flatten.toList)
+
+  }
   case class CrestConfig(
                         @JsonProperty("login_url")
                         loginUrl: String,

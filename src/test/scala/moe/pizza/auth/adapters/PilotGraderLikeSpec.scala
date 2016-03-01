@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.adapters.PilotGraderLike.PilotGraderFactory
+import moe.pizza.auth.config.ConfigFile.AuthConfig
 import moe.pizza.auth.plugins.pilotgraders.{AlliedPilotGrader, CrestKeyGrader}
 import moe.pizza.auth.plugins.pilotgraders.MembershipPilotGraders.{CorporationPilotGrader, AlliancePilotGrader}
 import org.scalatest.{MustMatchers, WordSpec}
@@ -114,6 +115,12 @@ class PilotGraderLikeSpec extends WordSpec with MustMatchers {
         import scala.collection.JavaConverters._
         val graders = parsedconfig.iterator().asScala.toList
         graders.map(PilotGraderFactory.fromYaml).flatten.toList.size must equal(4)
+      }
+
+      "create a set of PilotGraders from YAML via the config object" in {
+        import scala.collection.JavaConverters._
+        val c = new AuthConfig(null, null, null, parsedconfig.iterator().asScala.toList)
+        c.constructGraders() must not equal(null)
       }
 
     }
