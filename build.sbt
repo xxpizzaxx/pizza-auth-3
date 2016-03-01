@@ -12,7 +12,7 @@ libraryDependencies ++= Seq(
   // frameworks
   "com.sparkjava"                    % "spark-core"                 % "2.3",
   // supporting libraries
-  "moe.pizza"                        %% "eveapi"                    % "0.34",
+  "moe.pizza"                        %% "eveapi"                    % "0.35",
   "org.log4s"                        %% "log4s"                     % "1.2.1",
   "com.github.scopt"                 %% "scopt"                     % "3.3.0",
   "com.googlecode.gettext-commons"   % "gettext-maven-plugin"       % "1.2.4",
