@@ -3,6 +3,15 @@
 ## GET /
 show landing page, swap based on if the user's signed in or not
 
+## GET /signup
+start the signup process, redirect to CREST with the code of register
+
+### GET /signup/confirm
+show summary of their selected CREST character, their expected account status, and boxes for email/password
+
+### POST /signup/confirm
+create account
+
 ## GET /services
 list of services that are linked to this
 
