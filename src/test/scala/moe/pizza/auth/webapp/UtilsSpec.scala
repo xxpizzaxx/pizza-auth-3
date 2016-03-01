@@ -18,7 +18,7 @@ class UtilsSpec extends FlatSpec with MustMatchers with MockitoSugar {
     val r = mock[Request]
     val s = mock[Session]
     when(r.session()).thenReturn(s)
-    val session = new Types.Session("foo", "bar", "Terry", 1, List.empty[Types.Alert])
+    val session = new Types.Session("Terry", List.empty[Types.Alert])
     import Utils.PimpedRequest
     // set a session
     r.setSession(session)
@@ -30,7 +30,7 @@ class UtilsSpec extends FlatSpec with MustMatchers with MockitoSugar {
     val r = mock[Request]
     val s = mock[Session]
     when(r.session()).thenReturn(s)
-    val session = new Types.Session("foo", "bar", "Terry", 1, List.empty[Types.Alert])
+    val session = new Types.Session("Terry", List.empty[Types.Alert])
     import Utils.PimpedRequest
     // get a session
     when(s.attribute[Types.Session](Webapp.SESSION)).thenReturn(session)
@@ -43,8 +43,8 @@ class UtilsSpec extends FlatSpec with MustMatchers with MockitoSugar {
     val r = mock[Request]
     val s = mock[Session]
     when(r.session()).thenReturn(s)
-    val session = new Types.Session("foo", "bar", "Terry", 1, List.empty[Types.Alert])
-    val session2 = new Types.Session("foo", "bar", "Terry", 1, List(Types.Alert("info", "I like turtles")))
+    val session = new Types.Session("Terry", List.empty[Types.Alert])
+    val session2 = new Types.Session("Terry", List(Types.Alert("info", "I like turtles")))
     import Utils.PimpedRequest
     // flash to a session
     when(s.attribute[Types.Session](Webapp.SESSION)).thenReturn(session)
@@ -60,7 +60,7 @@ class UtilsSpec extends FlatSpec with MustMatchers with MockitoSugar {
     val r = mock[Request]
     val s = mock[Session]
     when(r.session()).thenReturn(s)
-    val session = new Types.Session("foo", "bar", "Terry", 1, List(Types.Alert("info", "I like turtles")))
+    val session = new Types.Session("Terry", List(Types.Alert("info", "I like turtles")))
     import Utils.PimpedRequest
     // clear a session
     when(s.attribute[Types.Session](Webapp.SESSION)).thenReturn(session)
@@ -74,7 +74,7 @@ class UtilsSpec extends FlatSpec with MustMatchers with MockitoSugar {
     val r = mock[Request]
     val s = mock[Session]
     when(r.session()).thenReturn(s)
-    val session = new Types.Session("foo", "bar", "Terry", 1, List(Types.Alert("info", "I like turtles")))
+    val session = new Types.Session("Terry", List(Types.Alert("info", "I like turtles")))
     import Utils.PimpedRequest
     // clear a session
     when(s.attribute[Types.Session](Webapp.SESSION)).thenReturn(null)

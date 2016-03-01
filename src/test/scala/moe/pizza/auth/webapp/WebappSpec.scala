@@ -54,7 +54,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
       val req = mock[Request]
       val session = mock[Session]
-      val usersession = new Types.Session("foo", "bar", "Terry", 1, List.empty[Types.Alert])
+      val usersession = new Types.Session("Terry", List.empty[Types.Alert])
       when(req.session()).thenReturn(session)
       when(session.attribute(Webapp.SESSION)).thenReturn(usersession)
       val resp = mock[Response]
@@ -72,7 +72,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val req = mock[Request]
       val session = mock[Session]
       val alert = Types.Alert("info", "ducks are cool too")
-      val usersession = new Types.Session("foo", "bar", "Terry", 1, List(alert))
+      val usersession = new Types.Session("Terry", List(alert))
       when(req.session()).thenReturn(session)
       when(session.attribute(Webapp.SESSION)).thenReturn(usersession)
       val resp = mock[Response]
@@ -100,8 +100,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       when(session.attribute(Webapp.SESSION)).thenReturn(null)
       val resp = mock[Response]
       val res = handler.handle[String](req, resp)
-      verify(req).session(true)
-      verify(resp).redirect("https://sisilogin.testeveonline.com/oauth/authorize/?response_type=code&redirect_uri=http://localhost:4567/callback&client_id=f&scope=characterLocationRead&state=")
+      verify(resp).redirect("https://sisilogin.testeveonline.com/oauth/authorize/?response_type=code&redirect_uri=http://localhost:4567/callback&client_id=f&scope=characterLocationRead&state=login")
       Spark.stop()
     }
   }
@@ -146,7 +145,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       verify(req).queryParams("state")
       verify(crest).callback("CRESTCODE")
       verify(crest).verify("ACCESSTOKEN")
-      val finalsession = new Types.Session("ACCESSTOKEN","REF","Bob", 1, List(new Alert("success", "Thanks for logging in %s".format("Bob"))))
+      val finalsession = new Types.Session("Bob", List(new Alert("success", "Thanks for logging in %s".format("Bob"))))
       verify(session).attribute(Webapp.SESSION, finalsession)
       Spark.stop()
     }
@@ -179,8 +178,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       verify(req).queryParams("state")
       verify(crest).callback("CRESTCODE")
       verify(crest).verify("ACCESSTOKEN")
-      verify(crest).refresh("REF")
-      verify(ud, times(1)).addUser(new Pilot("bob", Pilot.Status.internal, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String]))
+      //verify(ud, times(1)).addUser(new Pilot("bob", Pilot.Status.internal, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String]))
       Spark.stop()
     }
   }

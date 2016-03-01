@@ -1,7 +1,5 @@
 package moe.pizza.auth.webapp
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.config.ConfigFile.ConfigFile
 import moe.pizza.auth.interfaces.UserDatabase
 import moe.pizza.auth.models.Pilot
@@ -10,7 +8,6 @@ import moe.pizza.eveapi.{EVEAPI, SyncableFuture}
 import util.SparkWebScalaHelpers._
 import spark.Spark._
 import spark._
-import scala.concurrent.duration._
 import Types._
 import Utils._
 
@@ -52,7 +49,6 @@ class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[Cr
     })
     // login redirect to use CCP auth
     get("/login", (req: Request, resp: Response) => {
-      req.session(true)
       resp.redirect(crest.redirect("login", Webapp.defaultCrestScopes))
     })
     // logout
@@ -63,22 +59,14 @@ class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[Cr
 
     // signup
     get("/signup", (req: Request, resp: Response) => {
-      req.session(true)
       resp.redirect(crest.redirect("signup", Webapp.defaultCrestScopes))
     })
 
     get("/signup/confirm", new Route {
       override def handle(req: Request, resp: Response): AnyRef = {
-        req.getSession match {
-          case Some(s) =>
-            req.getPilot match {
-              case Some(p) =>
-                templates.html.base("pizza-auth-3", templates.html.signup(p), Some(s))
-              case None =>
-                req.flash(Alerts.warning, "Unable to find session data, please start signup again")
-                resp.redirect("/")
-                ""
-            }
+        req.getPilot match {
+          case Some(p) =>
+            templates.html.base("pizza-auth-3", templates.html.signup(p), req.getSession)
           case None =>
             req.flash(Alerts.warning, "Unable to find session data, please start signup again")
             resp.redirect("/")
@@ -117,7 +105,10 @@ class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[Cr
             pilot match {
               case Success(p) =>
                 // TODO grade pilot here with current grader chain
+                req.session(true)
                 req.setPilot(p)
+                val session = new Types.Session(verify.characterName, List())
+                req.setSession(session)
                 resp.redirect("/signup/confirm")
               //ud.get.addUser(p)
               //ud.get.setPassword(p, "whatever")
@@ -129,14 +120,14 @@ class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[Cr
             resp.redirect("/")
           // add it to this user's list of pilots
           case "login" =>
-            val session = new Types.Session(callbackresults.access_token, callbackresults.refresh_token.get, verify.characterName, verify.characterID, List(new Alert("success", "Thanks for logging in %s".format(verify.characterName))))
+            val session = new Types.Session(verify.characterName, List(new Alert("success", "Thanks for logging in %s".format(verify.characterName))))
             req.setSession(session)
             // go back to the index since we've just logged in
             resp.redirect("/")
           case _ =>
             resp.redirect("/")
         }
-        ""
+        null
       }
     })
   }
