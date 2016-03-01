@@ -19,6 +19,7 @@ import scala.util.{Failure, Success}
 
 object Webapp {
   val SESSION = "session"
+  val PILOT = "pilot"
   val defaultCrestScopes = List("characterLocationRead")
 }
 
@@ -52,7 +53,7 @@ class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[Cr
     // login redirect to use CCP auth
     get("/login", (req: Request, resp: Response) => {
       req.session(true)
-      resp.redirect(crest.redirect("", Webapp.defaultCrestScopes))
+      resp.redirect(crest.redirect("login", Webapp.defaultCrestScopes))
     })
     // logout
     get("/logout", (req: Request, resp: Response) => {
@@ -60,49 +61,83 @@ class Webapp(fullconfig: ConfigFile, portnumber: Int = 9021, crestapi: Option[Cr
       resp.redirect("/")
     })
 
-    // callback for when CCP auth sends them back
-    get("/callback", (req: Request, resp: Response) => {
-      val code = req.queryParams("code")
-      val state = req.queryParams("state")
-      val callbackresults = crest.callback(code).sync()
-      val verify = crest.verify(callbackresults.access_token).sync()
-      state match {
-        case "register" =>
-          val charinfo = eveapi.char.CharacterInfo(verify.characterID.toInt).sync()
-          val pilot = charinfo.map { ci =>
-            val refresh = crest.refresh(callbackresults.refresh_token.get).sync()
-            new Pilot(
-              Utils.sanitizeUserName(ci.result.name),
-              Pilot.Status.internal,
-              ci.result.allianceName,
-              ci.result.corporationName,
-              ci.result.name,
-              "none@none",
-              Pilot.OM.createObjectNode(),
-              List.empty[String],
-              List("%d:%s".format(ci.result.characterID, refresh.refresh_token.get)),
-              List.empty[String]
-            )
+    // signup
+    get("/signup", (req: Request, resp: Response) => {
+      req.session(true)
+      resp.redirect(crest.redirect("signup", Webapp.defaultCrestScopes))
+    })
 
-          }
-          pilot match {
-            case Success(p) =>
-              ud.get.addUser(p)
-              ud.get.setPassword(p, "whatever")
-            case Failure(f) =>
-              println("oh no")
-              println(f)
-              ()
-          }
-        case "add" =>
-          // add it to this user's list of pilots
-        case "login" =>
-          val session = new Types.Session(callbackresults.access_token, callbackresults.refresh_token.get, verify.characterName, verify.characterID, List(new Alert("success", "Thanks for logging in %s".format(verify.characterName))))
-          req.setSession(session)
-          // go back to the index since we've just logged in
-          resp.redirect("/")
+    get("/signup/confirm", new Route {
+      override def handle(req: Request, resp: Response): AnyRef = {
+        req.getSession match {
+          case Some(s) =>
+            req.getPilot match {
+              case Some(p) =>
+                templates.html.base("pizza-auth-3", templates.html.signup(p), Some(s))
+              case None =>
+                req.flash(Alerts.warning, "Unable to find session data, please start signup again")
+                resp.redirect("/")
+                ""
+            }
+          case None =>
+            req.flash(Alerts.warning, "Unable to find session data, please start signup again")
+            resp.redirect("/")
+            ""
+        }
       }
-      resp.redirect("/")
+    })
+
+
+    // callback for when CCP auth sends them back
+    get("/callback", new Route {
+      override def handle(req: Request, resp: Response): AnyRef = {
+        val code = req.queryParams("code")
+        val state = req.queryParams("state")
+        val callbackresults = crest.callback(code).sync()
+        val verify = crest.verify(callbackresults.access_token).sync()
+        val r = state match {
+          case "signup" =>
+            val charinfo = eveapi.eve.CharacterInfo(verify.characterID.toInt).sync()
+            val pilot = charinfo.map { ci =>
+              val refresh = crest.refresh(callbackresults.refresh_token.get).sync()
+              new Pilot(
+                Utils.sanitizeUserName(ci.result.characterName),
+                Pilot.Status.internal,
+                ci.result.alliance,
+                ci.result.corporation,
+                ci.result.characterName,
+                "none@none",
+                Pilot.OM.createObjectNode(),
+                List.empty[String],
+                List("%d:%s".format(ci.result.characterID, refresh.refresh_token.get)),
+                List.empty[String]
+              )
+
+            }
+            pilot match {
+              case Success(p) =>
+                // TODO grade pilot here with current grader chain
+                req.setPilot(p)
+                resp.redirect("/signup/confirm")
+              //ud.get.addUser(p)
+              //ud.get.setPassword(p, "whatever")
+              case Failure(f) =>
+                req.flash(Alerts.warning, "Unable to unpack CREST response, please try again later")
+                resp.redirect("/")
+            }
+          case "add" =>
+            resp.redirect("/")
+          // add it to this user's list of pilots
+          case "login" =>
+            val session = new Types.Session(callbackresults.access_token, callbackresults.refresh_token.get, verify.characterName, verify.characterID, List(new Alert("success", "Thanks for logging in %s".format(verify.characterName))))
+            req.setSession(session)
+            // go back to the index since we've just logged in
+            resp.redirect("/")
+          case _ =>
+            resp.redirect("/")
+        }
+        ""
+      }
     })
   }
 }

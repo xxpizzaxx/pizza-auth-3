@@ -1,5 +1,6 @@
 package moe.pizza.auth.webapp
 
+import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.webapp.Utils.Alerts.Alerts
 
 
@@ -21,6 +22,8 @@ object Utils {
     }
     def getSession = Option(r.session.attribute[Types.Session](Webapp.SESSION))
     def setSession(s: Types.Session): Unit = r.session.attribute(Webapp.SESSION, s)
+    def getPilot = Option(r.session.attribute[Pilot](Webapp.PILOT))
+    def setPilot(p: Pilot): Unit = r.session.attribute(Webapp.PILOT, p)
     def clearAlerts(): Unit = {
       val session = getSession
       session match {
