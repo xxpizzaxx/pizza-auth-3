@@ -225,4 +225,27 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
     }
   }
 
+  "Webapp" should "redirect the user back to the index if they didn't have a stored pilot on the signup page" in {
+    withPort { port =>
+      val crest = mock[CrestApi]
+      val ud = mock[UserDatabase]
+      val eveapi = mock[EVEAPI]
+      val eve = mock[moe.pizza.eveapi.endpoints.Eve]
+      when(eveapi.eve).thenReturn(eve)
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, Some(crest), Some(ud), Some(eveapi))
+      w.start()
+      val handler = resolve(spark.route.HttpMethod.get, "/signup/confirm", ACCEPTHTML)
+      val req = mock[Request]
+      val session = mock[Session]
+      when(req.session).thenReturn(session)
+      when(session.attribute[Pilot](Webapp.PILOT)).thenReturn(null)
+      val resp = mock[Response]
+      // arguments
+      val res = handler.handle[AnyRef](req, resp)
+      verify(session).attribute[Pilot](Webapp.PILOT)
+      verify(resp).redirect("/")
+      Spark.stop()
+    }
+  }
+
 }
