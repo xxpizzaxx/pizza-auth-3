@@ -1,0 +1,49 @@
+@import moe.pizza.auth.models.Pilot
+@(pilot: Pilot)
+
+<h2>Account Management</h2>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+            <div class="panel-heading"><h3 class="panel-title">Your Account</h3></div>
+            <div class="panel-body">
+                <form role="form" id="update_account" action="/account/update" method="post">
+                    <table class="table table-striped">
+                        <tr>
+                            <th>Account</th><td>@pilot.uid</td>
+                        </tr>
+                        <tr>
+                            <th>Main Character</th><td>@pilot.characterName</td>
+                        </tr>
+                        <tr>
+                            <th>Email</th><td><input name="email" value="@pilot.email" required/></td>
+                        </tr>
+                        <tr>
+                            <th>New Password</th><td><input type="password" name="password" id="password" /></td>
+                        </tr>
+                        <tr>
+                            <th>Confirm New Password</th><td><input type="password" name="password_confirm" id="password_confirm" /></td>
+                        </tr>
+                        <tr>
+                            <th>Confirm Old Password</th><td><input type="password" name="oldpassword" id="oldpassword" /></td>
+                        </tr>
+                    </table>
+                    <button type="submit" class="btn btn-default">Update</button>
+                </form>
+                <script>
+                        $( "#update_account" ).validate({
+                            rules: {
+                                email: {
+                                    required: true,
+                                    email: true
+                                }
+                            }
+                        });
+                </script>
+
+
+            </div>
+        </div>
+    </div>
+</div>

@@ -40,4 +40,10 @@ object PilotSpec extends Properties("Pilot") {
     s.contains(":") == !p.getApiKeys.isEmpty
   }
 
+  property("getGroups") = forAll { (g: String, g2: String) =>
+    val p = Pilot(null, null, null, null, null, null, null, null, null, null)
+    val p2 = p.copy(authGroups = List(g, g2+"-pending"))
+    p2.getGroups == List(g) && p2.getPendingGroups == List(g2)
+  }
+
 }

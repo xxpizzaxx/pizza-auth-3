@@ -1,0 +1,54 @@
+@import moe.pizza.auth.models.Pilot
+@(pilot: Pilot, closedGroups: List[String], openGroups: List[String])
+
+<h2>Groups</h2>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+            <div class="panel-heading"><h3 class="panel-title">Your Groups</h3></div>
+            <div class="panel-body">
+                <ul class="list-group">
+                    @for(group <- pilot.getGroups()) {
+                        <li class="list-group-item">{{ group }}
+                        <a class="btn btn-xs btn-danger pull-right" href="/groups/remove/{{ group }}">Remove</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+            <div class="panel-heading"><h3 class="panel-title">Your Pending Groups</h3></div>
+            <div class="panel-body">
+                <ul class="list-group">
+                    @for(group <- pilot.getPendingGroups()) {
+                        <li class="list-group-item">{{ group }}
+                            <a class="btn btn-xs btn-danger pull-right" href="/groups/remove/{{ group }}-pending">Remove</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-primary">
+            <div class="panel-heading"><h3 class="panel-title">Available Groups</h3></div>
+            <div class="panel-body">
+                <ul class="list-group">
+                    <li class="list-group-item active">Closed Groups</li>
+                    @for(group <- closedGroups) {
+                        <a href="/groups/apply/{{ group }}" class="list-group-item">{{ group }}</a>
+                    }
+                <ul class="list-group">
+                    <li class="list-group-item active">Open Groups</li>
+                    @for(group <- openGroups) {
+                        <a href="/groups/apply/{{ group }}" class="list-group-item">{{ group }}</a>
+                    }
+                </ul>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

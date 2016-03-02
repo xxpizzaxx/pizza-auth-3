@@ -1,5 +1,6 @@
 package moe.pizza.auth.models
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.core.{JsonParser, JsonGenerator, Version}
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind._
@@ -105,6 +106,12 @@ case class Pilot(
     }
 
   }
+
+  @JsonIgnore
+  def getGroups: List[String] = authGroups.filter{!_.endsWith("-pending")}
+  @JsonIgnore
+  def getPendingGroups: List[String] = authGroups.filter{_.endsWith("-pending")}.map(_.stripSuffix("-pending"))
+
 
   def toJson: String = {
     Pilot.OM.writeValueAsString(this)
