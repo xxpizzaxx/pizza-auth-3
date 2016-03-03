@@ -25,7 +25,7 @@ class UserLoadingSpec extends FlatSpec with MustMatchers {
   "loading a user out of LDAP" should "extract correctly" in {
     val tempfolder = createTempFolder("loadusertest")
     try {
-      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3389)
+      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3389, instanceName = "pizza-auth-userloading-spec")
       server.setPassword("testpassword")
       server.start()
       val schema = server.directoryService.getSchemaManager

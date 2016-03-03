@@ -38,12 +38,13 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
   }
 
   override def addUser(p: Pilot): Boolean = {
+    var res = false
     client.withConnection{ c =>
       val r = c.add(p.toAddRequest(schema))
-      if (r.getLdapResult == ResultCodeEnum.SUCCESS)
-        return true
+      if (r.getLdapResult.getResultCode == ResultCodeEnum.SUCCESS)
+        res = true
     }
-    false
+    res
   }
 
   override def deleteUser(p: Pilot): Boolean = true

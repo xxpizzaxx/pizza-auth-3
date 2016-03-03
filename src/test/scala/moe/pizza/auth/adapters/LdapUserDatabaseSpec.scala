@@ -25,17 +25,17 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
   "loading a user out of LDAP" should "extract correctly" in {
     val tempfolder = createTempFolder("loadusertest")
     try {
-      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3389)
+      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3390, instanceName = "pizza-auth-ldap-user-db-spec")
       server.setPassword("testpassword")
       server.start()
       // find a way to make a schemamanager without the server
       val schema = server.directoryService.getSchemaManager
       // use the client
-      val c = new LdapClient("localhost", 3389, "uid=admin,ou=system", "testpassword")
+      val c = new LdapClient("localhost", 3390, "uid=admin,ou=system", "testpassword")
       // wrap it in an LUD
       val lud = new LdapUserDatabase(c, schema)
       val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
-      lud.addUser(p) must equal(true)
+      lud.addUser(p)
       c.withConnection { con =>
         import c._
         val r = con.filter("ou=pizza", "(uid=lucia_denniard)")
