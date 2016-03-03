@@ -70,8 +70,6 @@ object Main {
               val webapp = new Webapp(configfile.get, graders, 9021, null)
               webapp.start()
             }
-
-
         }
     }
   }
