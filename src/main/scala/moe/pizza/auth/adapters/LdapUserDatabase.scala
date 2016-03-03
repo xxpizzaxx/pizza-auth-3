@@ -1,8 +1,10 @@
 package moe.pizza.auth.adapters
 
+import com.ning.http.util.Base64
 import moe.pizza.auth.interfaces.UserDatabase
 import moe.pizza.auth.ldap.client.LdapClient
 import moe.pizza.auth.models.Pilot
+import moe.pizza.auth.ldap.client.Utils
 import org.apache.directory.api.ldap.model.entry.DefaultEntry
 import org.apache.directory.api.ldap.model.message.{ResultCodeEnum, AddRequestImpl, AddRequest}
 import org.apache.directory.api.ldap.model.schema.SchemaManager
@@ -14,7 +16,7 @@ import org.apache.directory.api.ldap.model.schema.SchemaManager
 class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDatabase {
 
   implicit class ConvertablePilot(p: Pilot) {
-    def toAddRequest(s: SchemaManager) = {
+    def toAddRequest(s: SchemaManager, password: String) = {
       val e = new DefaultEntry(s,
         s"uid=${p.uid},ou=pizza",
         "ObjectClass: top",
@@ -28,7 +30,7 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
         s"uid: ${p.uid}",
         s"metadata: ${p.metadata.toString}",
         s"characterName: ${p.characterName}",
-        "userpassword: blah"
+        s"userpassword: {SSHA} ${Base64.encode(Utils.hashPassword(password))}"
       )
       //e.add("crestKey", p.crestTokens:_*)
       val add = new AddRequestImpl()
@@ -37,10 +39,10 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
     }
   }
 
-  override def addUser(p: Pilot): Boolean = {
+  override def addUser(p: Pilot, password: String): Boolean = {
     var res = false
     client.withConnection{ c =>
-      val r = c.add(p.toAddRequest(schema))
+      val r = c.add(p.toAddRequest(schema, password))
       if (r.getLdapResult.getResultCode == ResultCodeEnum.SUCCESS)
         res = true
     }
