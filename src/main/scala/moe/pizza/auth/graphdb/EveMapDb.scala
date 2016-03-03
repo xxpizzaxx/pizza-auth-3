@@ -1,17 +1,16 @@
 package moe.pizza.auth.graphdb
 
-import java.io.{File, InputStreamReader, BufferedReader}
-import java.nio.file.Path
+import java.io.{BufferedReader, File, InputStreamReader}
 import java.util
 
 import com.github.tototoshi.csv._
-import com.orientechnologies.orient.`object`.db.OObjectDatabaseTx
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
 import com.orientechnologies.orient.core.metadata.schema.OType
 import com.orientechnologies.orient.core.record.impl.ODocument
-import com.orientechnologies.orient.core.sql.query.{OResultSet, OSQLSynchQuery}
-import com.tinkerpop.blueprints.impls.orient.{OrientGraphNoTx, OrientVertex, OrientGraphFactory, OrientGraph}
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery
+import com.tinkerpop.blueprints.impls.orient.{OrientGraph, OrientGraphFactory, OrientGraphNoTx, OrientVertex}
 import org.apache.commons.io.FileUtils
+
 import scala.collection.JavaConverters._
 
 
