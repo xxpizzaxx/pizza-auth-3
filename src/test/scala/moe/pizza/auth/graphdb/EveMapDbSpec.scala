@@ -10,6 +10,7 @@ class EveMapDbSpec extends WordSpec with MustMatchers with MockitoSugar {
       "do all of the normal expected things" in {
         val e = new EveMapDb("map-tests1")
         // initialise the database
+        e.provisionIfRequired()
         e.withGraph{ g =>
           g.getEdgeType("gate") must not equal(null)
         }

@@ -34,10 +34,16 @@ class EveMapDb(dbname: String = "map") {
     r
   }
 
-  withGraph{ graph =>
-    // if the database doesn't look provisioned, provision it
-    if(graph.getEdgeType("gate")==null)
+  def provisionIfRequired() = {
+    var provision: Boolean = false
+    withGraph { graph =>
+      // if the database doesn't look provisioned, provision it
+      if (graph.getEdgeType("gate") == null)
+        provision = true
+    }
+    if (provision) {
       initialize()
+    }
   }
 
 
