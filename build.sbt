@@ -6,8 +6,6 @@ scalaVersion := "2.11.7"
 
 resolvers += Resolver.jcenterRepo
 
-parallelExecution in Test := false
-
 // main dependencies
 libraryDependencies ++= Seq(
   // frameworks
@@ -21,15 +19,13 @@ libraryDependencies ++= Seq(
   "net.andimiller"                   %% "integrated-query-language" % "1.1",
   "com.github.tototoshi"             %% "scala-csv"                 % "1.3.0",
   "javax.persistence"                % "persistence-api"            % "1.0.2",
-  "com.orientechnologies"            % "orientdb-client"            % "2.2.0-beta",
-  "com.orientechnologies"            % "orientdb-graphdb"           % "2.2.0-beta",
+  "com.orientechnologies"            % "orientdb-client"            % "2.1.12",
+  "com.orientechnologies"            % "orientdb-graphdb"           % "2.1.12",
   "com.tinkerpop.blueprints"         % "blueprints"                 % "2.6.0",
-
   // embedded services
   "org.apache.directory.server"      % "apacheds-all"               % "2.0.0-M21",
   "org.apache.kafka"                 %% "kafka"                     % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12"),
-  "com.orientechnologies"            % "orientdb-server"            % "2.2.0-beta"
-
+  "com.orientechnologies"            % "orientdb-server"            % "2.1.12"
 )
 
 // test frameworks and tools
