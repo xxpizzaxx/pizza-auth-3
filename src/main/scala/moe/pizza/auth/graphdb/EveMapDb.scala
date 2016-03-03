@@ -98,6 +98,9 @@ class EveMapDb(dbname: String = "map") {
   }
 
   def getDistanceBetweenSystemsByName(s1: String, s2: String): Option[Int] = {
+    if (s1==s2) {
+      return Some(0)
+    }
     withGraph { graph =>
       val s1v = graph.getVertices("solarSystemName", s1).iterator().asScala.toList.headOption.map{_.getId.toString}
       val s2v = graph.getVertices("solarSystemName", s2).iterator().asScala.toList.headOption.map(_.getId.toString)
@@ -111,6 +114,9 @@ class EveMapDb(dbname: String = "map") {
   }
 
   def getDistanceBetweenSystemsById(s1: Int, s2: Int): Option[Int] = {
+    if (s1==s2) {
+      return Some(0)
+    }
     withGraph { graph =>
       val s1v = graph.getVertices("solarSystemID", s1).iterator().asScala.toList.headOption.map{_.getId.toString}
       val s2v = graph.getVertices("solarSystemID", s2).iterator().asScala.toList.headOption.map(_.getId.toString)

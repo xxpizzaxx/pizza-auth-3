@@ -36,6 +36,12 @@ class EveMapDbSpec extends WordSpec with MustMatchers with MockitoSugar {
         e.getDistanceBetweenSystemsById(30000142, 30004711) must equal(Some(40))
         e.cleanUp()
       }
+      "describe the distance between the same system and itself as 0" in {
+        val e = new EveMapDb("map-tests2")
+        e.getDistanceBetweenSystemsById(30000142, 30000142) must equal(Some(0))
+        e.getDistanceBetweenSystemsByName("Amarr", "Amarr") must equal(Some(0))
+        e.cleanUp()
+      }
     }
   }
 
