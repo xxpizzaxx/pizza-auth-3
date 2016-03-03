@@ -20,7 +20,7 @@ object Webapp {
   val defaultCrestScopes = List("characterLocationRead")
 }
 
-class Webapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 9021, crestapi: Option[CrestApi] = None, ud: Option[UserDatabase] = None, eve: Option[EVEAPI] = None) {
+class Webapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 9021, ud: UserDatabase, crestapi: Option[CrestApi] = None, eve: Option[EVEAPI] = None) {
 
   val log = org.log4s.getLogger
   val config = fullconfig.crest

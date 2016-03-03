@@ -32,7 +32,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
 
   "Webapp" should "serve the landing page" in {
     withPort { port =>
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port)
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null)
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
       val req = mock[Request]
@@ -51,7 +51,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
 
   "Webapp" should "serve the main page" in {
     withPort { port =>
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port)
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null)
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
       val req = mock[Request]
@@ -68,7 +68,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
 
   "Webapp" should "serve the main page with alerts" in {
     withPort { port =>
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port)
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null)
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
       val req = mock[Request]
@@ -93,7 +93,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
 
   "Webapp" should "redirect to CREST on /login" in {
     withPort { port =>
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port)
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null)
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/login", ACCEPTHTML)
       val req = mock[Request]
@@ -109,7 +109,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
 
   "Webapp" should "redirect to CREST on /signup" in {
     withPort { port =>
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port)
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null)
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/signup", ACCEPTHTML)
       val req = mock[Request]
@@ -125,7 +125,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
 
   "Webapp" should "clear the session on /logout" in {
     withPort { port =>
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port)
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null)
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/logout", ACCEPTHTML)
       val req = mock[Request]
@@ -146,7 +146,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
   "Webapp" should "verify crest callbacks when doing a login" in {
     withPort { port =>
       val crest = mock[CrestApi]
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, Some(crest))
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null, Some(crest))
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/callback", ACCEPTHTML)
       val req = mock[Request]
@@ -176,7 +176,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val eveapi = mock[EVEAPI]
       val eve = mock[moe.pizza.eveapi.endpoints.Eve]
       when(eveapi.eve).thenReturn(eve)
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, Some(crest), Some(ud), Some(eveapi))
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null, Some(crest), Some(eveapi))
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/callback", ACCEPTHTML)
       val req = mock[Request]
@@ -208,7 +208,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val eveapi = mock[EVEAPI]
       val eve = mock[moe.pizza.eveapi.endpoints.Eve]
       when(eveapi.eve).thenReturn(eve)
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, Some(crest), Some(ud), Some(eveapi))
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null, Some(crest), Some(eveapi))
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/signup/confirm", ACCEPTHTML)
       val req = mock[Request]
@@ -232,7 +232,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val eveapi = mock[EVEAPI]
       val eve = mock[moe.pizza.eveapi.endpoints.Eve]
       when(eveapi.eve).thenReturn(eve)
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, Some(crest), Some(ud), Some(eveapi))
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null, Some(crest), Some(eveapi))
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/signup/confirm", ACCEPTHTML)
       val req = mock[Request]

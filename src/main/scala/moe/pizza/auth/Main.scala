@@ -67,7 +67,7 @@ object Main {
             if (s.webinterface) {
               import scala.concurrent.ExecutionContext.Implicits.global
               val graders = configfile.get.auth.constructGraders()
-              val webapp = new Webapp(configfile.get, graders)
+              val webapp = new Webapp(configfile.get, graders, 9021, null)
               webapp.start()
             }
 

@@ -9,9 +9,9 @@
             <div class="panel-heading"><h3 class="panel-title">Your Groups</h3></div>
             <div class="panel-body">
                 <ul class="list-group">
-                    @for(group <- pilot.getGroups()) {
-                        <li class="list-group-item">{{ group }}
-                        <a class="btn btn-xs btn-danger pull-right" href="/groups/remove/{{ group }}">Remove</a>
+                    @for(group <- pilot.getGroups) {
+                        <li class="list-group-item">@group
+                        <a class="btn btn-xs btn-danger pull-right" href="/groups/remove/@group">Remove</a>
                         </li>
                     }
                 </ul>
@@ -23,9 +23,9 @@
             <div class="panel-heading"><h3 class="panel-title">Your Pending Groups</h3></div>
             <div class="panel-body">
                 <ul class="list-group">
-                    @for(group <- pilot.getPendingGroups()) {
-                        <li class="list-group-item">{{ group }}
-                            <a class="btn btn-xs btn-danger pull-right" href="/groups/remove/{{ group }}-pending">Remove</a>
+                    @for(group <- pilot.getPendingGroups) {
+                        <li class="list-group-item">@group
+                            <a class="btn btn-xs btn-danger pull-right" href="/groups/remove/@group-pending">Remove</a>
                         </li>
                     }
                 </ul>
@@ -39,12 +39,12 @@
                 <ul class="list-group">
                     <li class="list-group-item active">Closed Groups</li>
                     @for(group <- closedGroups) {
-                        <a href="/groups/apply/{{ group }}" class="list-group-item">{{ group }}</a>
+                        <a href="/groups/apply/@group" class="list-group-item">@group</a>
                     }
                 <ul class="list-group">
                     <li class="list-group-item active">Open Groups</li>
                     @for(group <- openGroups) {
-                        <a href="/groups/apply/{{ group }}" class="list-group-item">{{ group }}</a>
+                        <a href="/groups/apply/@group" class="list-group-item">@group</a>
                     }
                 </ul>
                 </ul>
