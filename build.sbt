@@ -5,7 +5,8 @@ version := "1.0"
 scalaVersion := "2.11.7"
 
 resolvers += Resolver.jcenterRepo
-resolvers += Resolver.bintrayRepo("andimiller", "maven") // while things sync to jcenter
+
+fork := true
 
 // main dependencies
 libraryDependencies ++= Seq(
