@@ -63,6 +63,9 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
+      val p2 = new Pilot("lucia_denniard2", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List("cresttoken"), List())
+      lud.addUser(p2, "luciapassword") must equal(true)
+      lud.getUser("lucia_denniard2") must equal(Some(p2))
       server.stop()
     } finally {
       tempfolder.delete()
