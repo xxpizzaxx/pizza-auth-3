@@ -76,7 +76,13 @@ object Main {
               val webapp = new Webapp(configfile.get, graders, 9021, null)
               webapp.start()
             }
+          case None =>
+            println("You must pick a set of servers to run")
+            sys.exit(1)
         }
+      case None =>
+        println("Configuration couldn't be parsed")
+        sys.exit(1)
     }
   }
 
