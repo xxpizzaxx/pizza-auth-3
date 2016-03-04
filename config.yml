@@ -26,8 +26,8 @@
     #mode: public
 
     # Pick your alliance or corporation
-    #alliance: Confederation of xXPIZZAXx
-    #corporation: Love Squad
+    alliance: Confederation of xXPIZZAXx
+    corporation: Love Squad
 
     # Groups that users can sign up to or be in
     groups:
@@ -44,19 +44,23 @@
       # public groups are the list of open groups that can be joined by random neutrals
       public:
         - dota
+    graders:
+      -
+        type: "AlliancePilotGrader"
+      -
+        type: "CorporationPilotGrader"
+      -
+        type: "CrestKeyGrader"
 
   #############################################################################
   ## embedded ldap settings
   #############################################################################
-  #embeddedldap:
+  embeddedldap:
     # folder to store the database in
-    #instancePath: /var/lib/pizza-auth/ldap/
-
+    instancePath: ./ldap
     # port to run on
-    #port: 389
-
+    port: 3389
     # base DN
-    #basedn: ou=pizza
-
+    basedn: ou=pizza
     # host to bind to (leave this as localhost for security reasons unless you really know what you're doing)
-    #host: localhost
+    host: localhost

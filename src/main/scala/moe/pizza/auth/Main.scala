@@ -17,7 +17,7 @@ import scala.util.{Failure, Try}
   */
 object Main {
   case class RunOptions(servers: Option[ServerOptions], config: File = new File("./config.yml"))
-  case class ServerOptions(ldap: Boolean = false, webinterface: Boolean = false, restapi: Boolean = false)
+  case class ServerOptions(ldap: Boolean = true, webinterface: Boolean = true, restapi: Boolean = false)
 
   val parser = new OptionParser[RunOptions]("pizza-auth") {
     head("pizza-auth-3 command line interface")
@@ -62,11 +62,17 @@ object Main {
         c.servers match {
           case Some(s) =>
             if (s.ldap) {
-              //new EmbeddedLdapServer()
+              val ldap = new EmbeddedLdapServer(
+                configfile.get.embeddedldap.instancePath,
+                configfile.get.embeddedldap.basedn,
+                configfile.get.embeddedldap.host,
+                configfile.get.embeddedldap.port
+              )
+              ldap.start()
             }
             if (s.webinterface) {
               import scala.concurrent.ExecutionContext.Implicits.global
-              val graders = configfile.get.auth.constructGraders()
+              val graders = configfile.get.auth.constructGraders(configfile.get)
               val webapp = new Webapp(configfile.get, graders, 9021, null)
               webapp.start()
             }

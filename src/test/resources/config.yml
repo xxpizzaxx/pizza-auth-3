@@ -26,8 +26,8 @@
     #mode: public
 
     # Pick your alliance or corporation
-    #alliance: Confederation of xXPIZZAXx
-    #corporation: Love Squad
+    alliance: Confederation of xXPIZZAXx
+    corporation: Love Squad
 
     # Groups that users can sign up to or be in
     groups:

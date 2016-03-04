@@ -14,18 +14,20 @@ import scala.concurrent.ExecutionContext
 object ConfigFile {
   case class EmbeddedLdapConfig(
                                  instancePath: String = "./ldap",
-                                 port: Long = 389,
+                                 port: Int = 389,
                                  basedn: String = "ou=pizza",
                                  host: String = "localhost"
                                )
   case class AuthGroupConfig(closed: List[String], open: List[String], public: List[String])
   case class AuthConfig(
+                        corporation: String,
+                        alliance: String,
                         groupName: String,
                         groupShortName: String,
                         groups: AuthGroupConfig,
                         graders: List[JsonNode]
                        ) {
-    def constructGraders()(implicit ec: ExecutionContext): PilotGrader = new GraderChain(graders.map(PilotGraderFactory.fromYaml).flatten.toList)
+    def constructGraders(c: ConfigFile)(implicit ec: ExecutionContext): PilotGrader = new GraderChain(graders.map(g => PilotGraderFactory.fromYaml(g, c)).flatten.toList)
 
   }
   case class CrestConfig(
