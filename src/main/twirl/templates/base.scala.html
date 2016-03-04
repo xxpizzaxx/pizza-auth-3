@@ -1,4 +1,4 @@
-@(title: String, content: Html, session: Option[moe.pizza.auth.webapp.Types.Session])
+@(title: String, content: Html, session: Option[moe.pizza.auth.webapp.Types.Session], pilot: Option[moe.pizza.auth.models.Pilot])
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -33,9 +33,9 @@
             </ul>
 
             <ul class="nav navbar-nav navbar-right">
-                @if(session.isDefined) {
+                @if(pilot.isDefined) {
                     <li class="navbar-text">
-                        @session.get.characterName
+                        @pilot.get.characterName
                     </li>
                     <li>
                         <a href="/logout" class="btn btn-primary" role="button">Logout</a>

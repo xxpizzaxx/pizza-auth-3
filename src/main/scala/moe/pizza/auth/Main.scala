@@ -1,10 +1,13 @@
 package moe.pizza.auth
 
 import java.io.File
+import java.util.UUID
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import moe.pizza.auth.adapters.LdapUserDatabase
+import moe.pizza.auth.ldap.client.LdapClient
 import moe.pizza.auth.ldap.server.EmbeddedLdapServer
 import moe.pizza.auth.webapp.Webapp
 import scopt.OptionParser
@@ -61,19 +64,22 @@ object Main {
       case Some(c) =>
         c.servers match {
           case Some(s) =>
+            val internalpassword = UUID.randomUUID().toString
+            val ldap = new EmbeddedLdapServer(
+              configfile.get.embeddedldap.instancePath,
+              configfile.get.embeddedldap.basedn,
+              configfile.get.embeddedldap.host,
+              configfile.get.embeddedldap.port
+            )
             if (s.ldap) {
-              val ldap = new EmbeddedLdapServer(
-                configfile.get.embeddedldap.instancePath,
-                configfile.get.embeddedldap.basedn,
-                configfile.get.embeddedldap.host,
-                configfile.get.embeddedldap.port
-              )
+              ldap.setPassword(internalpassword)
               ldap.start()
             }
             if (s.webinterface) {
               import scala.concurrent.ExecutionContext.Implicits.global
               val graders = configfile.get.auth.constructGraders(configfile.get)
-              val webapp = new Webapp(configfile.get, graders, 9021, null)
+              val lc = new LdapClient("localhost", configfile.get.embeddedldap.port, "uid=admin,ou=system", internalpassword)
+              val webapp = new Webapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager))
               webapp.start()
             }
           case None =>

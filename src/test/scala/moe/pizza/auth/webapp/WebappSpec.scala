@@ -41,7 +41,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       when(session.attribute(Webapp.SESSION)).thenReturn(null)
       val resp = mock[Response]
       val res = handler.handle[String](req, resp)
-      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.landing.apply(), None).toString().trim)
+      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.landing.apply(), None, None).toString().trim)
       val posthandler = resolve(spark.route.HttpMethod.after, "/", ACCEPTHTML)
       val res2 = posthandler.filter[Any](req, resp)
       verify(session, times(2)).attribute[Types.Session](Webapp.SESSION)
@@ -56,12 +56,12 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val handler = resolve(spark.route.HttpMethod.get, "/", ACCEPTHTML)
       val req = mock[Request]
       val session = mock[Session]
-      val usersession = new Types.Session("Terry", List.empty[Types.Alert])
+      val usersession = new Types.Session(List.empty[Types.Alert])
       when(req.session()).thenReturn(session)
       when(session.attribute(Webapp.SESSION)).thenReturn(usersession)
       val resp = mock[Response]
       val res = handler.handle[String](req, resp)
-      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession)).toString().trim)
+      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession), None).toString().trim)
       Spark.stop()
     }
   }
@@ -74,12 +74,12 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val req = mock[Request]
       val session = mock[Session]
       val alert = Types.Alert("info", "ducks are cool too")
-      val usersession = new Types.Session("Terry", List(alert))
+      val usersession = new Types.Session(List(alert))
       when(req.session()).thenReturn(session)
       when(session.attribute(Webapp.SESSION)).thenReturn(usersession)
       val resp = mock[Response]
       val res = handler.handle[String](req, resp)
-      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession)).toString().trim)
+      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession), None).toString().trim)
       // ensure that our alert got shown
       res contains "ducks are cool too" must equal(true)
       // run the post-filter
@@ -163,7 +163,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       verify(req).queryParams("state")
       verify(crest).callback("CRESTCODE")
       verify(crest).verify("ACCESSTOKEN")
-      val finalsession = new Types.Session("Bob", List(new Alert("success", "Thanks for logging in %s".format("Bob"))))
+      val finalsession = new Types.Session(List(new Alert("success", "Thanks for logging in %s".format("Bob"))))
       verify(session).attribute(Webapp.SESSION, finalsession)
       Spark.stop()
     }
@@ -220,7 +220,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       // arguments
       val res = handler.handle[play.twirl.api.Html](req, resp)
       verify(session).attribute[Pilot](Webapp.PILOT)
-      res must equal(templates.html.base("pizza-auth-3", templates.html.signup(p), None))
+      res must equal(templates.html.base("pizza-auth-3", templates.html.signup(p), None, Some(p)))
       Spark.stop()
     }
   }
