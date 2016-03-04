@@ -150,7 +150,59 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       tempfolder.delete()
     }
   }
-
+  "updating users" should "update users" in {
+    val tempfolder = createTempFolder("loadusertest2")
+    try {
+      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3390, instanceName = "pizza-auth-ldap-user-db-spec")
+      server.setPassword("testpassword")
+      server.start()
+      // TODO find a way to make a schemamanager without the server
+      val schema = server.directoryService.getSchemaManager
+      // use the client
+      val c = new LdapClient("localhost", 3390, "uid=admin,ou=system", "testpassword")
+      // wrap it in an LUD
+      val lud = new LdapUserDatabase(c, schema)
+      val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
+      lud.addUser(p, "luciapassword") must equal(true)
+      val r = lud.getUser("lucia_denniard")
+      val p2 = p.copy(alliance = "No Alliance")
+      lud.updateUser(p2) must equal(true)
+      lud.getUser("lucia_denniard") must equal(Some(p2))
+      val p3 = p2.copy(corporation = "nocorp")
+      lud.updateUser(p3) must equal(true)
+      lud.getUser("lucia_denniard") must equal(Some(p3))
+      val p4 = p3.copy(email = "otheremail")
+      lud.updateUser(p4)
+      lud.getUser("lucia_denniard") must equal(Some(p4))
+      val p5 = p4.copy(accountStatus = Pilot.Status.ineligible)
+      lud.updateUser(p5)
+      lud.getUser("lucia_denniard") must equal(Some(p5))
+      val p6 = p5.copy(authGroups = List("onegroup"))
+      lud.updateUser(p6) must equal(true)
+      lud.getUser("lucia_denniard") must equal(Some(p6))
+      val p7 = p6.copy(authGroups = List("othergroup"))
+      lud.updateUser(p7)
+      lud.getUser("lucia_denniard") must equal(Some(p7))
+      val p8 = p7.copy(crestTokens = List("mycresttoken"))
+      lud.updateUser(p8)
+      lud.getUser("lucia_denniard") must equal(Some(p8))
+      val p9 = p8.copy(crestTokens = List("newcresttoken"))
+      lud.updateUser(p9)
+      lud.getUser("lucia_denniard") must equal(Some(p9))
+      val p10 = p9.copy(apiKeys = List("apikey"))
+      lud.updateUser(p10)
+      lud.getUser("lucia_denniard") must equal(Some(p10))
+      val p11 = p10.copy(apiKeys = List("newerapikey"))
+      lud.updateUser(p11)
+      lud.getUser("lucia_denniard") must equal(Some(p11))
+      val p12 = p11.copy(metadata = Pilot.OM.readTree("{\"value\":\"imcool\"}"))
+      lud.updateUser(p12)
+      lud.getUser("lucia_denniard") must equal(Some(p12))
+      server.stop()
+    } finally {
+      tempfolder.delete()
+    }
+  }
 
 
 }

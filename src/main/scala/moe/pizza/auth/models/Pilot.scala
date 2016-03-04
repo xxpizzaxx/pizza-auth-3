@@ -58,9 +58,9 @@ object Pilot {
       m.get("charactername").flatMap(_.headOption).getOrElse("unknown"),
       m.get("email").flatMap(_.headOption).getOrElse("unknown"),
       m.get("metadata").flatMap(_.headOption).map(OM.readTree).getOrElse(OM.createObjectNode()),
-      m.getOrElse("authGroups", List.empty[String]),
-      m.getOrElse("crestTokens", List.empty[String]),
-      m.getOrElse("apiKey", List.empty[String])
+      m.getOrElse("authgroup", List.empty[String]),
+      m.getOrElse("cresttoken", List.empty[String]),
+      m.getOrElse("apikey", List.empty[String])
     )
   }
 

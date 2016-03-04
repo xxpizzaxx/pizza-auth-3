@@ -83,7 +83,93 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
     }
   }
 
-  override def updateUser(p: Pilot): Boolean = true
+  override def updateUser(p: Pilot): Boolean = {
+    val op = getUser(p.uid).get
+    client.withConnection { c =>
+      val modrequest = new ModifyRequestImpl
+      if (p.corporation != op.corporation) {
+        modrequest.addModification(
+          new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "corporation", p.corporation)
+        )
+      }
+      if (p.alliance != op.alliance) {
+        modrequest.addModification(
+          new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "alliance", p.alliance)
+        )
+      }
+      if (p.accountStatus != op.accountStatus) {
+        modrequest.addModification(
+          new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "accountStatus", p.accountStatus.toString)
+        )
+      }
+      if (p.email != op.email) {
+        modrequest.addModification(
+          new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "email", p.email)
+        )
+      }
+      if (p.characterName != op.characterName) {
+        modrequest.addModification(
+          new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "characterName", p.characterName)
+        )
+      }
+      if (p.metadata.toString != op.metadata.toString) {
+        modrequest.addModification(
+          new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "metadata", p.metadata.toString)
+        )
+      }
+      if (p.authGroups != op.authGroups) {
+        val newgroups = p.authGroups.toSet
+        val oldgroups = op.authGroups.toSet
+        val addme    = newgroups diff oldgroups
+        val removeme = oldgroups diff newgroups
+        for (a <- addme) {
+          modrequest.addModification(
+            new DefaultModification(ModificationOperation.ADD_ATTRIBUTE, "authGroup", a)
+          )
+        }
+        for (r <- removeme) {
+          modrequest.addModification(
+            new DefaultModification(ModificationOperation.REMOVE_ATTRIBUTE, "authGroup", r)
+          )
+        }
+      }
+      if (p.crestTokens != op.crestTokens) {
+        val newtokens = p.crestTokens.toSet
+        val oldtokens = op.crestTokens.toSet
+        val addme    = newtokens diff oldtokens
+        val removeme = oldtokens diff newtokens
+        for (a <- addme) {
+          modrequest.addModification(
+            new DefaultModification(ModificationOperation.ADD_ATTRIBUTE, "crestToken", a)
+          )
+        }
+        for (r <- removeme) {
+          modrequest.addModification(
+            new DefaultModification(ModificationOperation.REMOVE_ATTRIBUTE, "crestToken", r)
+          )
+        }
+      }
+      if (p.apiKeys != op.apiKeys) {
+        val newkeys = p.apiKeys.toSet
+        val oldkeys = op.apiKeys.toSet
+        val addme    = newkeys diff oldkeys
+        val removeme = oldkeys diff newkeys
+        for (a <- addme) {
+          modrequest.addModification(
+            new DefaultModification(ModificationOperation.ADD_ATTRIBUTE, "apiKey", a)
+          )
+        }
+        for (r <- removeme) {
+          modrequest.addModification(
+            new DefaultModification(ModificationOperation.REMOVE_ATTRIBUTE, "apiKey", r)
+          )
+        }
+      }
+      modrequest.setName(new Dn(s"uid=${p.uid},ou=pizza"))
+      val res = c.modify(modrequest)
+      res.getLdapResult.getResultCode == ResultCodeEnum.SUCCESS
+    }
+  }
 
   override def setPassword(p: Pilot, password: String): Boolean = {
     client.withConnection{ c =>
@@ -92,11 +178,7 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
       modrequest.addModification(mod)
       modrequest.setName(new Dn(s"uid=${p.uid},ou=pizza"))
       val res = c.modify(modrequest)
-      if (res.getLdapResult.getResultCode == ResultCodeEnum.SUCCESS) {
-        true
-      } else {
-        false
-      }
+      res.getLdapResult.getResultCode == ResultCodeEnum.SUCCESS
     }
   }
 
