@@ -46,11 +46,13 @@
         - dota
     graders:
       -
-        type: "AlliancePilotGrader"
+        type: "AlliancePilotGrader" # mark all members of an alliance as Internal
+        # alliance: Black Legion.   # uncomment this to run the plugin with an alliance that's not your configured one
       -
-        type: "CorporationPilotGrader"
+        type: "CorporationPilotGrader"        # mark all members of a corporation as Internal
+        # corporation: Higher than Everest    # uncomment this to run the plugin with a corp that's not your configured one
       -
-        type: "CrestKeyGrader"
+        type: "CrestKeyGrader"           # use this to validate CREST keys, uses your CREST config from above
 
   #############################################################################
   ## embedded ldap settings
