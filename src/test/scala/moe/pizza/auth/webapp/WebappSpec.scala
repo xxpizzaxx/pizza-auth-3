@@ -57,11 +57,13 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val req = mock[Request]
       val session = mock[Session]
       val usersession = new Types.Session(List.empty[Types.Alert])
+      val p = Pilot("bob", Pilot.Status.internal, "myalliance", "mycorp", "Bob", "bob@bob.com", Pilot.OM.readTree("{\"meta\": \"%s\"}".format("metafield")), List("group1", "group3"), List("123:bobkey"), List.empty )
       when(req.session()).thenReturn(session)
       when(session.attribute(Webapp.SESSION)).thenReturn(usersession)
+      when(session.attribute(Webapp.PILOT)).thenReturn(p)
       val resp = mock[Response]
       val res = handler.handle[String](req, resp)
-      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession), None).toString().trim)
+      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession), Some(p)).toString().trim)
       Spark.stop()
     }
   }
@@ -79,7 +81,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       when(session.attribute(Webapp.SESSION)).thenReturn(usersession)
       val resp = mock[Response]
       val res = handler.handle[String](req, resp)
-      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.main.apply(), Some(usersession), None).toString().trim)
+      res.trim must equal(templates.html.base.apply("pizza-auth-3", templates.html.landing.apply(), Some(usersession), None).toString().trim)
       // ensure that our alert got shown
       res contains "ducks are cool too" must equal(true)
       // run the post-filter
@@ -146,9 +148,11 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
   "Webapp" should "verify crest callbacks when doing a login" in {
     withPort { port =>
       val crest = mock[CrestApi]
-      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, null, Some(crest))
+      val ud = mock[UserDatabase]
+      val w = new Webapp(readTestConfig(), new GraderChain(Seq()), port, ud, Some(crest), None)
       w.start()
       val handler = resolve(spark.route.HttpMethod.get, "/callback", ACCEPTHTML)
+      val p = Pilot("bob", Pilot.Status.internal, "myalliance", "mycorp", "Bob", "bob@bob.com", Pilot.OM.readTree("{\"meta\": \"%s\"}".format("metafield")), List("group1", "group3"), List("123:bobkey"), List.empty )
       val req = mock[Request]
       val session = mock[Session]
       when(req.session).thenReturn(session)
@@ -158,13 +162,14 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       when(req.queryParams("state")).thenReturn("login")
       when(crest.callback("CRESTCODE")).thenReturn(Future{new CallbackResponse("ACCESSTOKEN", "TYPE", 100, Some("REF"))})
       when(crest.verify("ACCESSTOKEN")).thenReturn(Future{new VerifyResponse(1, "Bob", "ages", "scopes", "bearer", "owner", "eve")})
+      when(ud.getUser("bob")).thenReturn(Some(p))
       val res = handler.handle[String](req, resp)
       verify(req).queryParams("code")
       verify(req).queryParams("state")
       verify(crest).callback("CRESTCODE")
       verify(crest).verify("ACCESSTOKEN")
-      val finalsession = new Types.Session(List(new Alert("success", "Thanks for logging in %s".format("Bob"))))
-      verify(session).attribute(Webapp.SESSION, finalsession)
+      verify(ud).getUser("bob")
+      verify(session).attribute(Webapp.PILOT, p)
       Spark.stop()
     }
   }
@@ -219,7 +224,7 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       val resp = mock[Response]
       // arguments
       val res = handler.handle[play.twirl.api.Html](req, resp)
-      verify(session).attribute[Pilot](Webapp.PILOT)
+      verify(session, times(2)).attribute[Pilot](Webapp.PILOT)
       res must equal(templates.html.base("pizza-auth-3", templates.html.signup(p), None, Some(p)))
       Spark.stop()
     }

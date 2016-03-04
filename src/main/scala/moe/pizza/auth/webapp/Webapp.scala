@@ -1,6 +1,7 @@
 package moe.pizza.auth.webapp
 
 import moe.pizza.auth.config.ConfigFile.ConfigFile
+import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
 import moe.pizza.crestapi.CrestApi
@@ -23,13 +24,22 @@ object Webapp {
   val defaultCrestScopes = List("characterLocationRead")
 }
 
-class Webapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 9021, ud: UserDatabase, crestapi: Option[CrestApi] = None, eve: Option[EVEAPI] = None) {
+class Webapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 9021, ud: UserDatabase, crestapi: Option[CrestApi] = None, eve: Option[EVEAPI] = None, mapper: Option[EveMapDb] = None) {
 
   val log = org.log4s.getLogger
   val config = fullconfig.crest
 
+
+
   val crest = crestapi.getOrElse(new CrestApi(baseurl = config.loginUrl, cresturl = config.crestUrl, config.clientID, config.secretKey, config.redirectUrl))
   val eveapi = eve.getOrElse(new EVEAPI())
+  val map = mapper.getOrElse{
+    // make the graph database in the webapp for the MVP version
+    val map = new EveMapDb("internal-map")
+    // initialise the database
+    map.provisionIfRequired()
+    map
+  }
 
   def start(): Unit = {
 
@@ -90,6 +100,39 @@ class Webapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 902
         res match {
           case true => request.flash(Alerts.success, s"Successfully created and signed in as ${pilot.uid}")
           case false => request.flash(Alerts.danger, "Unable to create user, please try again later or talk to a sysadmin")
+        }
+        response.redirect("/")
+        ""
+      }
+    })
+
+    // proof of concept broadcaster
+    // TODO use a location cache
+    // TODO move this into the properly gated area
+    // TODO aggregate a result for all of that User's characters
+    post("/broadcast", new Route {
+      override def handle(request: Request, response: Response): AnyRef = {
+        val params = new QueryStringDecoder("?"+request.body()).getParameters.asScala
+        val message = params("message").asScala.head
+        val target = params("target").asScala.head
+        val range = params("range").asScala.head.toInt
+        ud.getAllUsers().foreach{u =>
+          val pilot = u
+          pilot.getCrestTokens.foreach { token =>
+            val refresh = crest.refresh(token.token).sync()
+            val accesstoken = refresh.access_token
+            val location = crest.character.location(token.characterID, accesstoken).sync()
+            location.solarSystem match {
+              case Some(solarsystem) =>
+                val currentrange = map.getDistanceBetweenSystemsByName(solarsystem.name, target)
+                currentrange match {
+                  case Some(r) if r <= range => request.flash(Alerts.info, s"I should send a broadcast to ${u.uid}, who has a character ${r} jumps away from ${target} in ${solarsystem.name}")
+                  case Some(r) if r > range => request.flash(Alerts.info, s"I should not send a broadcast to ${u.uid} yet, their character is ${r} jumps away from ${target} in ${solarsystem.name}")
+                  case None => request.flash(Alerts.info, s"I should not send a broadcast to ${u.uid} because I can't tell how far their character is from the target")
+                }
+              case None => request.flash(Alerts.info, s"I should not send a broadcast to ${u.uid} because their character is not logged in")
+            }
+          }
         }
         response.redirect("/")
         ""
