@@ -60,18 +60,15 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
   }
 
   override def authenticateUser(uid: String, password: String): Option[Pilot] = {
-    val success = client.withConnection { c =>
+    Option(client.withConnection { c =>
       val bindreq = new BindRequestImpl()
       bindreq.setDn(new Dn(s"uid=$uid,ou=pizza"))
       bindreq.setCredentials(password)
       val r = c.bind(bindreq)
       r.getLdapResult.getResultCode == ResultCodeEnum.SUCCESS
-    }
-    if (success) {
-      getUser(uid)
-    } else {
-      None
-    }
+    })
+      .filter(_==true)
+      .flatMap(_ => getUser(uid))
   }
 
   override def getUser(uid: String): Option[Pilot] = {
