@@ -6,7 +6,7 @@ scalaVersion := "2.11.7"
 
 resolvers += Resolver.jcenterRepo
 
-fork := false
+fork := true
 parallelExecution in Test := false
 
 // main dependencies
