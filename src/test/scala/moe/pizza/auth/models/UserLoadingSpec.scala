@@ -8,6 +8,7 @@ import moe.pizza.auth.ldap.server.EmbeddedLdapServer
 import org.apache.directory.api.ldap.model.entry.{Attribute, DefaultAttribute, DefaultEntry}
 import org.apache.directory.api.ldap.model.name.Dn
 import org.scalatest.{FlatSpec, MustMatchers}
+import LdapClient._
 
 /**
   * Created by andi on 18/02/16.
@@ -48,7 +49,6 @@ class UserLoadingSpec extends FlatSpec with MustMatchers {
       // use the client
       val c = new LdapClient("localhost", 3389, "uid=admin,ou=system", "testpassword")
       c.withConnection { con =>
-        import c._
         val r = con.filter("ou=pizza", "(uid=lucia_denniard)")
         val user = r.toList.headOption.map(_.toMap).map(Pilot.fromMap)
         user must equal(Some(Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())))

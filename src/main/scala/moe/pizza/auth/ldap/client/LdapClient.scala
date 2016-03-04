@@ -6,21 +6,9 @@ import org.apache.directory.ldap.client.api._
 
 import scala.collection.JavaConverters._
 
-/**
-  * Created by Andi on 18/02/2016.
-  */
-class LdapClient(host: String, port: Int, user: String, password: String) {
-  val config = new LdapConnectionConfig()
-  config.setLdapHost(host)
-  config.setLdapPort(port)
-  config.setName(user)
-  config.setCredentials(password)
-  val factory = new DefaultPoolableLdapConnectionFactory(config)
-  val pool = new LdapConnectionPool(factory)
-  pool.setTestOnBorrow(true)
 
-
-  implicit class PimpedEntry(e: Entry) {
+object LdapClient {
+   implicit class PimpedEntry(e: Entry) {
     def toMap = {
       e.getAttributes.asScala.toList.map(e =>
         e.get().getValue match {
@@ -37,14 +25,29 @@ class LdapClient(host: String, port: Int, user: String, password: String) {
       p.iterator().asScala
     }
   }
+}
 
-  def withConnection(block: LdapConnection => Unit) {
+class LdapClient(host: String, port: Int, user: String, password: String) {
+  val config = new LdapConnectionConfig()
+  config.setLdapHost(host)
+  config.setLdapPort(port)
+  config.setName(user)
+  config.setCredentials(password)
+  val factory = new DefaultPoolableLdapConnectionFactory(config)
+  val pool = new LdapConnectionPool(factory)
+  pool.setTestOnBorrow(true)
+
+
+
+  def withConnection[T](block: LdapConnection => T): T = {
+    var result: Option[T] = None
     val con = pool.getConnection
     try {
-      block(con)
+      result = Some(block(con))
     } finally {
       pool.releaseConnection(con)
     }
+    result.get
   }
 
 
