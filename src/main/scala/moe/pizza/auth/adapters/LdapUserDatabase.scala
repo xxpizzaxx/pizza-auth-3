@@ -33,7 +33,9 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
         s"metadata: ${p.metadata.toString}",
         s"characterName: ${p.characterName}"
       )
-      e.add("crestToken", p.crestTokens:_*)
+      if (p.crestTokens.size>0) {
+        e.add("crestToken", p.crestTokens: _*)
+      }
       e.add("userpassword", makePassword(password))
       val add = new AddRequestImpl()
       add.setEntry(e)

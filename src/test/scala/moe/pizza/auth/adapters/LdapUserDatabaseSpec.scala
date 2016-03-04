@@ -38,7 +38,6 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
       lud.addUser(p, "luciapassword") must equal(true)
       c.withConnection { con =>
-        import c._
         val r = con.filter("ou=pizza", "(uid=lucia_denniard)")
         val user = r.toList.headOption.map(_.toMap).map(Pilot.fromMap)
         user must equal(Some(p))
