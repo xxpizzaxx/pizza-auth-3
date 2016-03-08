@@ -10,7 +10,7 @@ import moe.pizza.eveapi.{ApiKey, EVEAPI}
 import org.joda.time.DateTime
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
+import scala.util.{Try, Failure, Success}
 
 
 object AlliedPilotGrader {
@@ -39,7 +39,7 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
 
 
   def pullAllies(): Option[SavedContactList] = {
-    val res = eveapi.corp.ContactList().sync()
+    val res = Try{eveapi.corp.ContactList().sync()}
     res match {
       case Success(r) =>
         val corp = r.result.filter(_.name == "corporateContactList").flatMap(_.row).filter(_ => usecorp).filter(_.standing > threshold)

@@ -195,7 +195,8 @@ class WebappSpec extends FlatSpec with MustMatchers with MockitoSugar {
       when(crest.verify("ACCESSTOKEN")).thenReturn(Future{new VerifyResponse(1, "Bob", "ages", "scopes", "bearer", "owner", "eve")})
       when(crest.refresh("REF")).thenReturn(Future{new CallbackResponse("ACCESSTOKEN", "TYPE", 100, Some("REF"))})
       val bob = new Eveapi("now", new Result(1, "Bob", "bobrace", 0, "bobbloodline", 0, "bobancestry", 42, "bobcorp", "some date", 42, "boballiance", "some date", 0.0, Rowset()), "whenever")
-      when(eve.CharacterInfo(1)).thenReturn(Future{Try{new XMLApiResponse[Result](DateTime.now(), DateTime.now(), bob.result)}})
+      val charresult: Future[Either[XMLApiResponse[moe.pizza.eveapi.generated.eve.CharacterInfo2.Result], XMLApiResponse[moe.pizza.eveapi.generated.eve.CharacterInfo.Result]]] = Future{Right(new XMLApiResponse[Result](DateTime.now(), DateTime.now(), bob.result))}
+      when(eve.CharacterInfo(1)).thenReturn(charresult)
       val res = handler.handle[String](req, resp)
       verify(req).queryParams("code")
       verify(req).queryParams("state")

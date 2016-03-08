@@ -16,7 +16,7 @@ import Utils._
 import scala.collection.JavaConverters._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
+import scala.util.{Try, Failure, Success}
 
 object Webapp {
   val SESSION = "session"
@@ -148,24 +148,42 @@ class Webapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 902
         val verify = crest.verify(callbackresults.access_token).sync()
         val r = state match {
           case "signup" =>
-            val charinfo = eveapi.eve.CharacterInfo(verify.characterID.toInt).sync()
+            val charinfo = eveapi.eve.CharacterInfo(verify.characterID.toInt)
             val pilot = charinfo.map { ci =>
               val refresh = crest.refresh(callbackresults.refresh_token.get).sync()
-              new Pilot(
-                Utils.sanitizeUserName(ci.result.characterName),
-                Pilot.Status.unclassified,
-                ci.result.alliance,
-                ci.result.corporation,
-                ci.result.characterName,
-                "none@none",
-                Pilot.OM.createObjectNode(),
-                List.empty[String],
-                List("%d:%s".format(ci.result.characterID, refresh.refresh_token.get)),
-                List.empty[String]
-              )
+              ci match {
+                case Right(r) =>
+                  // has an alliance
+                  new Pilot(
+                    Utils.sanitizeUserName(r.result.characterName),
+                    Pilot.Status.unclassified,
+                    r.result.alliance,
+                    r.result.corporation,
+                    r.result.characterName,
+                    "none@none",
+                    Pilot.OM.createObjectNode(),
+                    List.empty[String],
+                    List("%d:%s".format(r.result.characterID, refresh.refresh_token.get)),
+                    List.empty[String]
+                  )
+                case Left(l)  =>
+                  // does not have an alliance
+                  new Pilot(
+                    Utils.sanitizeUserName(l.result.characterName),
+                    Pilot.Status.unclassified,
+                    "",
+                    l.result.corporation,
+                    l.result.characterName,
+                    "none@none",
+                    Pilot.OM.createObjectNode(),
+                    List.empty[String],
+                    List("%d:%s".format(l.result.characterID, refresh.refresh_token.get)),
+                    List.empty[String]
+                  )
 
+              }
             }
-            pilot match {
+            Try{pilot.sync()} match {
               case Success(p) =>
                 // grade the pilot
                 val gradedpilot = p.copy(accountStatus = graders.grade(p))
