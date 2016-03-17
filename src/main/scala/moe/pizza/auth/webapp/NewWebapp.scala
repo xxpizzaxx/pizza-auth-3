@@ -75,7 +75,6 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
         issuedAt = Some(Instant.now.getEpochSecond)
       ) +("id", sessionid)
       val token = JwtCirce.encode(claim, secretKey, JwtAlgorithm.HS256)
-      println(token)
       sessions.put(sessionid, session)
       val r = s(req.copy(attributes = req.attributes.put(SESSION, session))).map {
         _.addCookie(COOKIESESSION, token, Some(DateTime.now().plusHours(24).toInstant))
@@ -129,10 +128,8 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
   def dynamicrouter = HttpService {
     case req@GET -> Root => {
       val newsession = req.flash(Alerts.info, "hi, you have a session")
-      println(req.headers.get(headers.Cookie))
-      println(req.getSession)
-      Ok(templates.html.base("test-page", templates.html.landing(), req.getSession, None))
-          .map(_.withAttribute(SESSION, newsession.get))
+      Ok(templates.html.base("test-page", templates.html.landing(), newsession, None))
+        .map(r => newsession.foldLeft(r){(r, s) => r.withSession(s) })
     }
   }
 

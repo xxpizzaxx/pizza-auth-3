@@ -3,7 +3,7 @@ package moe.pizza.auth.webapp
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.webapp.Types.Session
 import moe.pizza.auth.webapp.Utils.Alerts.Alerts
-import org.http4s.Request
+import org.http4s.{Response, Request}
 
 
 object Utils {
@@ -54,6 +54,9 @@ object Utils {
     }
   }
 
+  implicit class PimpedResponse(r: Response) {
+    def withSession(s: Session): Response = r.withAttribute(NewWebapp.SESSION, s)
+  }
 
   def sanitizeUserName(name: String) = name.toLowerCase.replace("'", "").replace(" ", "_")
 
