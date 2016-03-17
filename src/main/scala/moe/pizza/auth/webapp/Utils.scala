@@ -5,6 +5,8 @@ import moe.pizza.auth.webapp.Types.Session
 import moe.pizza.auth.webapp.Utils.Alerts.Alerts
 import org.http4s.{Response, Request}
 
+import scalaz.concurrent.Task
+
 
 object Utils {
   object Alerts extends Enumeration {
@@ -56,6 +58,11 @@ object Utils {
 
   implicit class PimpedResponse(r: Response) {
     def withSession(s: Session): Response = r.withAttribute(NewWebapp.SESSION, s)
+  }
+
+  implicit class PimpedTaskResponse(r: Task[Response]) {
+    def attachSessionifDefined(s: Option[Session]): Task[Response] =
+      r.map(res => s.foldLeft(res){(resp, sess) => resp.withSession(sess)})
   }
 
   def sanitizeUserName(name: String) = name.toLowerCase.replace("'", "").replace(" ", "_")

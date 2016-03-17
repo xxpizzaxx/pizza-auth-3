@@ -129,7 +129,7 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
     case req@GET -> Root => {
       val newsession = req.flash(Alerts.info, "hi, you have a session")
       Ok(templates.html.base("test-page", templates.html.landing(), newsession, None))
-        .map(r => newsession.foldLeft(r){(r, s) => r.withSession(s) })
+        .attachSessionifDefined(newsession)
     }
   }
 
