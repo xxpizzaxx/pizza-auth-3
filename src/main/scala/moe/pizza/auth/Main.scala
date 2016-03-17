@@ -9,7 +9,8 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.adapters.LdapUserDatabase
 import moe.pizza.auth.ldap.client.LdapClient
 import moe.pizza.auth.ldap.server.EmbeddedLdapServer
-import moe.pizza.auth.webapp.Webapp
+import moe.pizza.auth.webapp.{NewWebapp, Webapp}
+import org.http4s.server.blaze.BlazeBuilder
 import scopt.OptionParser
 
 import scala.io.Source
@@ -79,8 +80,12 @@ object Main {
               import scala.concurrent.ExecutionContext.Implicits.global
               val graders = configfile.get.auth.constructGraders(configfile.get)
               val lc = new LdapClient("localhost", configfile.get.embeddedldap.port, "uid=admin,ou=system", internalpassword)
-              val webapp = new Webapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager))
-              webapp.start()
+              val webapp = new NewWebapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager))
+              val builder = BlazeBuilder.mountService(webapp.router)
+              val server = builder.run
+              println(server)
+              //val webapp = new Webapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager))
+              //webapp.start()
             }
           case None =>
             println("You must pick a set of servers to run")
