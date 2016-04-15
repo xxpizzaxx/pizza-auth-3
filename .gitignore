@@ -22,3 +22,6 @@ project/plugins/project/
 # common files for this project
 server
 config.yml
+
+internal-map
+.gitignore

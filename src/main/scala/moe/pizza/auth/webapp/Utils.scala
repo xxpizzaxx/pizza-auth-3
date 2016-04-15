@@ -1,7 +1,7 @@
 package moe.pizza.auth.webapp
 
 import moe.pizza.auth.models.Pilot
-import moe.pizza.auth.webapp.Types.Session
+import moe.pizza.auth.webapp.Types.{Session2, Session}
 import moe.pizza.auth.webapp.Utils.Alerts.Alerts
 import org.http4s.{Response, Request}
 
@@ -39,13 +39,13 @@ object Utils {
   }
 
   implicit class PimpedRequest2(r: Request) {
-    def flash(level: Alerts, message: String): Option[Session] = {
+    def flash(level: Alerts, message: String): Option[Session2] = {
       getSession.map( s =>
         s.copy(alerts = s.alerts :+ Types.Alert(level.toString, message))
       )
     }
     def getSession = r.attributes.get(NewWebapp.SESSION)
-    def setSession(s: Types.Session): Unit = r.attributes.put(NewWebapp.SESSION, s)
+    def setSession(s: Types.Session2): Unit = r.attributes.put(NewWebapp.SESSION, s)
     def clearAlerts(): Unit = {
       val session = getSession
       session match {
@@ -57,11 +57,11 @@ object Utils {
   }
 
   implicit class PimpedResponse(r: Response) {
-    def withSession(s: Session): Response = r.withAttribute(NewWebapp.SESSION, s)
+    def withSession(s: Session2): Response = r.withAttribute(NewWebapp.SESSION, s)
   }
 
   implicit class PimpedTaskResponse(r: Task[Response]) {
-    def attachSessionifDefined(s: Option[Session]): Task[Response] =
+    def attachSessionifDefined(s: Option[Session2]): Task[Response] =
       r.map(res => s.foldLeft(res){(resp, sess) => resp.withSession(sess)})
   }
 
