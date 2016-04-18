@@ -84,6 +84,10 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
         case _ => InternalServerError("unable to construct url")
       }
     }
+    case req@GET -> Root / "logout" => {
+      TemporaryRedirect(Uri(path = "/"))
+        .clearSession()
+    }
   }
 
   val secretKey = "SECRET IS GOING HERE"

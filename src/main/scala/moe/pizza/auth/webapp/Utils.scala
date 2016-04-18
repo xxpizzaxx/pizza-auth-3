@@ -58,11 +58,14 @@ object Utils {
 
   implicit class PimpedResponse(r: Response) {
     def withSession(s: Session2): Response = r.withAttribute(NewWebapp.SESSION, s)
+    def withNoSession(): Response = r.copy(attributes = r.attributes.remove(NewWebapp.SESSION))
   }
 
   implicit class PimpedTaskResponse(r: Task[Response]) {
     def attachSessionifDefined(s: Option[Session2]): Task[Response] =
       r.map(res => s.foldLeft(res){(resp, sess) => resp.withSession(sess)})
+    def clearSession(): Task[Response] =
+      r.map(res => res.withNoSession())
   }
 
   def sanitizeUserName(name: String) = name.toLowerCase.replace("'", "").replace(" ", "_")
