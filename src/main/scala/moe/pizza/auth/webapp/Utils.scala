@@ -44,8 +44,8 @@ object Utils {
         s.copy(alerts = s.alerts :+ Types.Alert(level.toString, message))
       )
     }
-    def getSession = r.attributes.get(NewWebapp.SESSION)
-    def setSession(s: Types.Session2): Unit = r.attributes.put(NewWebapp.SESSION, s)
+    def getSession = r.attributes.get(SessionManager.SESSION)
+    def setSession(s: Types.Session2): Unit = r.attributes.put(SessionManager.SESSION, s)
     def clearAlerts(): Unit = {
       val session = getSession
       session match {
@@ -57,8 +57,8 @@ object Utils {
   }
 
   implicit class PimpedResponse(r: Response) {
-    def withSession(s: Session2): Response = r.withAttribute(NewWebapp.SESSION, s)
-    def withNoSession(): Response = r.copy(attributes = r.attributes.remove(NewWebapp.SESSION))
+    def withSession(s: Session2): Response = r.withAttribute(SessionManager.SESSION, s)
+    def withNoSession(): Response = r.copy(attributes = r.attributes.remove(SessionManager.SESSION))
   }
 
   implicit class PimpedTaskResponse(r: Task[Response]) {

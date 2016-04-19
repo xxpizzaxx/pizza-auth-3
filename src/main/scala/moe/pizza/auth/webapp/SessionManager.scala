@@ -4,7 +4,7 @@ import java.time.Instant
 import java.util.UUID
 
 import moe.pizza.auth.webapp.SessionManager._
-import moe.pizza.auth.webapp.Types.Session
+import moe.pizza.auth.webapp.Types.{Session2, Session}
 import org.http4s.{HttpService, _}
 import org.http4s.server._
 import org.joda.time.DateTime
@@ -17,19 +17,19 @@ import scalaz.concurrent.Task
 
 
 object SessionManager {
-  val SESSION = AttributeKey[Session]("SESSION")
-  val SESSIONID = AttributeKey[Session]("SESSIONID")
+  val SESSION = AttributeKey[Session2]("SESSION")
+  val SESSIONID = AttributeKey[Session2]("SESSIONID")
   val COOKIESESSION = "jwetsession"
 }
 
 class SessionManager(secretKey: String) extends HttpMiddleware {
-    val sessions = TrieMap[String, Session]()
+    val sessions = TrieMap[String, Session2]()
 
     implicit def jodainstant2javainstant(jodai: org.joda.time.Instant): Instant = Instant.parse(jodai.toString)
 
     def newSession(s: HttpService)(req: Request): (Task[Response], String) = {
       val sessionid = UUID.randomUUID().toString
-      val session = new Session(List.empty)
+      val session = new Session2(List.empty, None)
       val claim = JwtClaim(
         expiration = Some(Instant.now.plusSeconds(86400).getEpochSecond), // lasts one day
         issuedAt = Some(Instant.now.getEpochSecond)

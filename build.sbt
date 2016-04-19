@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
   "com.tinkerpop.blueprints"         % "blueprints"                 % "2.6.0",
   "com.pauldijou"                    %% "jwt-circe"                 % "0.6.0",
   // embedded services
-  "org.apache.directory.server"      % "apacheds-all"               % "2.0.0-M20",
+  "org.apache.directory.server"      % "apacheds-all"               % "2.0.0-M21",
   "org.apache.kafka"                 %% "kafka"                     % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12"),
   "com.orientechnologies"            % "orientdb-server"            % "2.1.12"
 )

@@ -20,9 +20,6 @@ import Scalaz._
 import scalaz.\/-
 
 object NewWebapp {
-  val SESSION = AttributeKey[Session2]("SESSION")
-  val SESSIONID = AttributeKey[Session2]("SESSIONID")
-  val COOKIESESSION = "jwetsession"
   val PILOT = "pilot"
   val defaultCrestScopes = List("characterLocationRead")
 }
@@ -62,7 +59,7 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
     def toNormalSession = new Session(s.alerts)
   }
 
-  def dynamicrouter = HttpService {
+  def dynamicWebRouter = HttpService {
     case req@GET -> Root => {
       req.getSession match {
         case Some(s) =>
@@ -94,6 +91,6 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
   //UUID.randomUUID().toString
   val sessions = new SessionManager(secretKey)
 
-  def router = staticrouter orElse sessions(dynamicrouter)
+  def router = staticrouter orElse sessions(dynamicWebRouter)
 
 }

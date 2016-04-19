@@ -1,6 +1,7 @@
 package moe.pizza.auth
 
 import java.io.File
+import java.net.InetSocketAddress
 import java.util.UUID
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -81,7 +82,7 @@ object Main {
               val graders = configfile.get.auth.constructGraders(configfile.get)
               val lc = new LdapClient("localhost", configfile.get.embeddedldap.port, "uid=admin,ou=system", internalpassword)
               val webapp = new NewWebapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager))
-              val builder = BlazeBuilder.mountService(webapp.router)
+              val builder = BlazeBuilder.mountService(webapp.router).bindSocketAddress(new InetSocketAddress("127.0.0.1", 9021))
               val server = builder.run
               println(server)
               //val webapp = new Webapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager))
