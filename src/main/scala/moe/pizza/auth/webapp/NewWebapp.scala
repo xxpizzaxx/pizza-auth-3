@@ -5,13 +5,13 @@ import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{PilotGrader, UserDatabase}
 import moe.pizza.auth.webapp.Types.{Session2, Session}
 import moe.pizza.crestapi.CrestApi
-import moe.pizza.eveapi.EVEAPI
 import org.http4s.{HttpService, _}
 import org.http4s.dsl.{Root, _}
 import org.http4s.server._
 import org.http4s.server.staticcontent.ResourceService
 import org.http4s.server.syntax.ServiceOps
 import play.twirl.api.Html
+import moe.pizza.eveapi._
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.http4s.twirl._
 import scalaz._
@@ -21,7 +21,7 @@ import scalaz.\/-
 
 object NewWebapp {
   val PILOT = "pilot"
-  val defaultCrestScopes = List("characterLocationRead")
+  val defaultCrestScopes = List("characterLocationRead", "characterAccountRead", "characterSkillsRead")
 }
 
 class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 9021, ud: UserDatabase, crestapi: Option[CrestApi] = None, eve: Option[EVEAPI] = None, mapper: Option[EveMapDb] = None) {
@@ -76,6 +76,7 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
       }
     }
     case req@GET -> Root / "login" => {
+      println(crest.redirect("login state", NewWebapp.defaultCrestScopes))
       Uri.fromString(crest.redirect("login state", NewWebapp.defaultCrestScopes)) match {
         case \/-(url) => TemporaryRedirect(url)
         case _ => InternalServerError("unable to construct url")
@@ -85,7 +86,19 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
       TemporaryRedirect(Uri(path = "/"))
         .clearSession()
     }
+
+    case req@GET -> Root / "callback" => {
+      val code = req.params("code")
+      val state = req.params("state")
+      val callbackResults = crest.callback(code).sync()
+      val verify = crest.verify(callbackResults.access_token).sync()
+      val characterEveApi = new EVEAPI(key = Some(new CrestApiKey(callbackResults.access_token)))
+      val queue = characterEveApi.char.SkillQueue(verify.characterID.toInt).sync()
+      Ok("hi")
+    }
   }
+
+  val foo = List(1,2,3).drop(1).take(1)
 
   val secretKey = "SECRET IS GOING HERE"
   //UUID.randomUUID().toString
