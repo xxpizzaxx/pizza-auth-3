@@ -63,14 +63,24 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
     case req@GET -> Root => {
       req.getSession match {
         case Some(s) =>
-          Ok(
-            templates.html.base(
-              "pizza-auth-3",
-              templates.html.main(),
-              req.getSession.map(_.toNormalSession),
-              req.getSession.flatMap(_.pilot)
-            )
-          ).attachSessionifDefined(req.getSession.map(_.copy(alerts = List())))
+          s.pilot match {
+            case Some(pilot) =>
+              Ok(
+                templates.html.base(
+                  "pizza-auth-3",
+                  templates.html.main(),
+                  req.getSession.map(_.toNormalSession),
+                  req.getSession.flatMap(_.pilot)
+                )
+              ).attachSessionifDefined(req.getSession.map(_.copy(alerts = List())))
+            case None =>
+              Ok(templates.html.base(
+                "pizza-auth-3",
+                templates.html.landing(),
+                req.getSession.map(_.toNormalSession),
+                None
+              )).attachSessionifDefined(req.getSession.map(_.copy(alerts = List())))
+          }
         case None =>
           InternalServerError(templates.html.base("pizza-auth-3", Html("An error occurred with the session handler"), None, None))
       }
@@ -97,8 +107,6 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
       Ok("hi")
     }
   }
-
-  val foo = List(1,2,3).drop(1).take(1)
 
   val secretKey = "SECRET IS GOING HERE"
   //UUID.randomUUID().toString
