@@ -3,6 +3,7 @@ package moe.pizza.auth.webapp
 import moe.pizza.auth.config.ConfigFile.ConfigFile
 import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{PilotGrader, UserDatabase}
+import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.webapp.Types.{Session2, Session}
 import moe.pizza.crestapi.CrestApi
 import org.http4s.{HttpService, _}
@@ -14,8 +15,12 @@ import play.twirl.api.Html
 import moe.pizza.eveapi._
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.http4s.twirl._
+import scala.util.Try
 import scalaz._
 import Scalaz._
+import scala.util.{Success => TSuccess}
+import scala.util.{Failure => TFailure}
+
 
 import scalaz.\/-
 
@@ -86,8 +91,13 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
       }
     }
     case req@GET -> Root / "login" => {
-      println(crest.redirect("login state", NewWebapp.defaultCrestScopes))
-      Uri.fromString(crest.redirect("login state", NewWebapp.defaultCrestScopes)) match {
+      Uri.fromString(crest.redirect("login", NewWebapp.defaultCrestScopes)) match {
+        case \/-(url) => TemporaryRedirect(url)
+        case _ => InternalServerError("unable to construct url")
+      }
+    }
+    case req@GET -> Root / "signup" => {
+      Uri.fromString(crest.redirect("signup", NewWebapp.defaultCrestScopes)) match {
         case \/-(url) => TemporaryRedirect(url)
         case _ => InternalServerError("unable to construct url")
       }
@@ -100,11 +110,82 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
     case req@GET -> Root / "callback" => {
       val code = req.params("code")
       val state = req.params("state")
-      val callbackResults = crest.callback(code).sync()
-      val verify = crest.verify(callbackResults.access_token).sync()
-      val characterEveApi = new EVEAPI(key = Some(new CrestApiKey(callbackResults.access_token)))
-      val queue = characterEveApi.char.SkillQueue(verify.characterID.toInt).sync()
-      Ok("hi")
+      val callbackresults = crest.callback(code).sync()
+      val verify = crest.verify(callbackresults.access_token).sync()
+      state match {
+        case "signup" =>
+          val charinfo = eveapi.eve.CharacterInfo(verify.characterID.toInt)
+          val pilot = charinfo.map { ci =>
+            val refresh = crest.refresh(callbackresults.refresh_token.get).sync()
+            ci match {
+              case Right(r) =>
+                // has an alliance
+                new Pilot(
+                  Utils.sanitizeUserName(r.result.characterName),
+                  Pilot.Status.unclassified,
+                  r.result.alliance,
+                  r.result.corporation,
+                  r.result.characterName,
+                  "none@none",
+                  Pilot.OM.createObjectNode(),
+                  List.empty[String],
+                  List("%d:%s".format(r.result.characterID, refresh.refresh_token.get)),
+                  List.empty[String]
+                )
+              case Left(l) =>
+                // does not have an alliance
+                new Pilot(
+                  Utils.sanitizeUserName(l.result.characterName),
+                  Pilot.Status.unclassified,
+                  "",
+                  l.result.corporation,
+                  l.result.characterName,
+                  "none@none",
+                  Pilot.OM.createObjectNode(),
+                  List.empty[String],
+                  List("%d:%s".format(l.result.characterID, refresh.refresh_token.get)),
+                  List.empty[String]
+                )
+
+            }
+          }
+          Try {
+            pilot.sync()
+          } match {
+            case TSuccess(p) =>
+              // grade the pilot
+              val gradedpilot = p.copy(accountStatus = graders.grade(p))
+              // mark it as ineligible if it fell through
+              val gradedpilot2 = if (gradedpilot.accountStatus == Pilot.Status.unclassified) {
+                gradedpilot.copy(accountStatus = Pilot.Status.ineligible)
+              } else {
+                gradedpilot
+              }
+              // store it and forward them on
+              TemporaryRedirect(Uri(path = "/signup/confirm")).attachSessionifDefined(
+                req.getSession.map(_.copy(pilot = Some(gradedpilot)))
+              )
+            case TFailure(f) =>
+              val newsession = req.flash(Alerts.warning, "Unable to unpack CREST response, please try again later")
+              TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(newsession)
+          }
+        case "add" =>
+          TemporaryRedirect(Uri(path = "/"))
+        case "login" =>
+          val uid = Utils.sanitizeUserName(verify.characterName)
+          val pilot = ud.getUser(uid)
+          val session = pilot match {
+            case Some(p) =>
+              req.flash(Alerts.success, "Thanks for logging in %s".format(verify.characterName))
+                .map(_.copy(pilot = Some(p)))
+            case None =>
+              req.flash(Alerts.warning,
+                "Unable to find a user associated with that EVE character, please sign up or use another character")
+          }
+          TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(session)
+        case _ =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
     }
   }
 
