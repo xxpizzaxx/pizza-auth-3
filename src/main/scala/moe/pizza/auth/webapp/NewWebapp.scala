@@ -107,6 +107,15 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
         .clearSession()
     }
 
+    case req@GET -> Root / "signup" / "confirm" => {
+      req.getSession.flatMap(_.pilot) match {
+        case Some(p) =>
+          Ok(templates.html.base("pizza-auth-3", templates.html.signup(p), req.getSession.map(_.toNormalSession), req.getSession.flatMap(_.pilot)))
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
     case req@GET -> Root / "callback" => {
       val code = req.params("code")
       val state = req.params("state")
