@@ -104,20 +104,21 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
     partition.setSchemaManager(directoryService.getSchemaManager)
     partition.setSuffixDn(new Dn(basedn))
     partition.setCacheService(directoryService.getCacheService)
-    partition.initialize
 
     val partitionroot = createEntry("ou=pizza", "pizza", directoryService.getSchemaManager)
-    if (!partition.hasEntry(new HasEntryOperationContext(directoryService.getAdminSession, new Dn("ou=pizza")))) {
-      partition.add(new AddOperationContext(directoryService.getAdminSession, partitionroot))
-    }
 
+
+    loadSchemas(directoryService.getAdminSession)
     directoryService.addPartition(partition)
     directoryService.getPartitions
     ldapService = new LdapServer
     ldapService.setTransports(new TcpTransport(host, port))
     ldapService.setDirectoryService(directoryService)
+    partition.initialize
+    if (!partition.hasEntry(new HasEntryOperationContext(directoryService.getAdminSession, new Dn("ou=pizza")))) {
+      partition.add(new AddOperationContext(directoryService.getAdminSession, partitionroot))
+    }
     log.info("partition was set up for %s".format(partition.getSuffixDn.toString))
-    loadSchemas(directoryService.getAdminSession)
   }
 
   def start() {

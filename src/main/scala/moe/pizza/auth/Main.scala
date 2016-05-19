@@ -84,7 +84,8 @@ object Main {
               val webapp = new NewWebapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager))
               val builder = BlazeBuilder.mountService(webapp.router).bindSocketAddress(new InetSocketAddress("127.0.0.1", 9021))
               val server = builder.run
-              println(server)
+              println(s"LDAP server started on localhost:${configfile.get.embeddedldap.port} with admin password ${internalpassword}")
+              println("Web server started on 127.0.0.1:9021")
               //val webapp = new Webapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager))
               //webapp.start()
             }
