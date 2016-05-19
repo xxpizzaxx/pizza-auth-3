@@ -116,6 +116,35 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
       }
     }
 
+
+    case req@POST -> Root / "signup" / "confirm" => {
+      req.getSession.flatMap(_.pilot) match {
+        case Some(p) =>
+          req.decode[UrlForm] { data =>
+            val newemail = data.getFirstOrElse("email", "none")
+            val pilotwithemail = p.copy(email = newemail)
+            val password = data.getFirst("password").get
+            val res = ud.addUser(pilotwithemail, password)
+            TemporaryRedirect(Uri(path = "/"))
+                .attachSessionifDefined(
+                  req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}")
+                )
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
+    case req@GET -> Root / "groups" => {
+      req.getSession.flatMap(_.pilot) match {
+        case Some(p) =>
+          val groups = fullconfig.auth.groups
+          Ok(templates.html.base("pizza-auth-3", templates.html.groups(p, groups.closed, groups.open), req.getSession.map(_.toNormalSession), req.getSession.flatMap(_.pilot)))
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
     case req@GET -> Root / "callback" => {
       val code = req.params("code")
       val state = req.params("state")
