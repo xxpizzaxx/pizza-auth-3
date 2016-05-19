@@ -4,11 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode
 import moe.pizza.auth.config.ConfigFile.ConfigFile
 import moe.pizza.auth.interfaces.PilotGrader
 import moe.pizza.auth.plugins.pilotgraders.MembershipPilotGraders.{AlliancePilotGrader, CorporationPilotGrader}
-import moe.pizza.auth.plugins.pilotgraders.{CrestKeyGrader, AlliedPilotGrader}
+import moe.pizza.auth.plugins.pilotgraders.{InternalWhitelistPilotGrader, CrestKeyGrader, AlliedPilotGrader}
 import moe.pizza.crestapi.CrestApi
 import moe.pizza.eveapi.ApiKey
 import org.slf4j.LoggerFactory
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 
 /**
@@ -65,6 +66,22 @@ object PilotGraderLike {
         logger.info("registering AlliancePilotGrader with configuration %s".format(j.toString))
         new AlliancePilotGrader(
           Option(j.get("alliance")).map(_.asText()).getOrElse(c.auth.alliance)
+        )
+      }
+    }
+
+    implicit object InternalWhitelistPilotGrader extends PilotGraderLike[InternalWhitelistPilotGrader] {
+      override def apply(j: JsonNode, c: ConfigFile)(implicit ec: ExecutionContext): InternalWhitelistPilotGrader = {
+        logger.info("registering InternalWhitelistPilotGrader with configuration %s".format(j.toString))
+        new InternalWhitelistPilotGrader(
+          new CrestApi(
+            Option(j.get("baseurl")).map(_.asText).getOrElse(c.crest.crestUrl),
+            Option(j.get("loginurl")).map(_.asText).getOrElse(c.crest.loginUrl),
+            Option(j.get("clientID")).map(_.asText()).getOrElse(c.crest.clientID),
+            Option(j.get("secretKey")).map(_.asText()).getOrElse(c.crest.secretKey),
+            Option(j.get("redirectUrl")).map(_.asText()).getOrElse(c.crest.secretKey)
+          ),
+          j.get("ids").iterator().asScala.toList.filter(_.isLong).map(_.asLong())
         )
       }
     }
