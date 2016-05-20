@@ -41,14 +41,14 @@ object PilotGraderLike {
       override def apply(j: JsonNode, c: ConfigFile)(implicit ec: ExecutionContext): CrestKeyGrader = {
         logger.info("registering CrestKeyGrader with configuration %s".format(j.toString))
         new CrestKeyGrader(
-        new CrestApi(
-          baseurl = Option(j.get("baseurl")).map(_.asText).getOrElse(c.crest.crestUrl),
-          cresturl = Option(j.get("loginurl")).map(_.asText).getOrElse(c.crest.loginUrl),
-          Option(j.get("clientID")).map(_.asText()).getOrElse(c.crest.clientID),
-          Option(j.get("secretKey")).map(_.asText()).getOrElse(c.crest.secretKey),
-          Option(j.get("redirectUrl")).map(_.asText()).getOrElse(c.crest.secretKey)
+          new CrestApi(
+            baseurl = Option(j.get("baseurl")).map(_.asText).getOrElse(c.crest.crestUrl),
+            cresturl = Option(j.get("loginurl")).map(_.asText).getOrElse(c.crest.loginUrl),
+            Option(j.get("clientID")).map(_.asText()).getOrElse(c.crest.clientID),
+            Option(j.get("secretKey")).map(_.asText()).getOrElse(c.crest.secretKey),
+            Option(j.get("redirectUrl")).map(_.asText()).getOrElse(c.crest.secretKey)
+          )
         )
-      )
       }
     }
 
@@ -90,6 +90,7 @@ object PilotGraderLike {
 
   object PilotGraderFactory {
     def create[T](j: JsonNode, config: ConfigFile)(implicit pg: PilotGraderLike[T], ec: ExecutionContext): T = pg(j, config)
+
     def fromYaml(c: JsonNode, config: ConfigFile)(implicit ec: ExecutionContext): Option[PilotGrader] = {
       Option(c.get("type")).map(_.asText()) match {
         case Some(t) => t match {
@@ -103,4 +104,5 @@ object PilotGraderLike {
       }
     }
   }
+
 }
