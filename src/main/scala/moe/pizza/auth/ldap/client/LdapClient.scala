@@ -10,12 +10,7 @@ import scala.collection.JavaConverters._
 object LdapClient {
    implicit class PimpedEntry(e: Entry) {
     def toMap = {
-      e.getAttributes.asScala.toList.map(e =>
-        e.get().getValue match {
-          case s: String => (e.getId, s)
-          case _ => (e.getId, "UNKNOWN")
-        }
-      ).groupBy{_._1}.mapValues(_.map{_._2})
+      e.iterator().asScala.map(kv => (kv.getId, kv.iterator().asScala.toList.map(_.toString))).toMap
     }
   }
 

@@ -51,18 +51,11 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
 
   import Utils._
 
-  /*
-  def dynamicrouter = HttpService {
-    case req@GET -> Root => {
-      val newsession = req.flash(Alerts.info, "hi, you have a session")
-      Ok(templates.html.base("test-page", templates.html.landing(), newsession, None))
-        .attachSessionifDefined(newsession)
-    }
-  }
-  */
-
-  implicit class ConvertableSession2(s: Session2) {
+  implicit class RichSession2(s: Session2) {
     def toNormalSession = new Session(s.alerts)
+     def updatePilot: Session2 = {
+       s.copy(pilot = ud.getUser(s.pilot.get.uid))
+     }
   }
 
   def dynamicWebRouter = HttpService {
@@ -137,7 +130,7 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
     }
 
     case req@GET -> Root / "groups" => {
-      req.getSession.flatMap(_.pilot) match {
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
         case Some(p) =>
           val groups = fullconfig.auth.groups
           Ok(templates.html.base("pizza-auth-3", templates.html.groups(p, groups.closed, groups.open), req.getSession.map(_.toNormalSession), req.getSession.flatMap(_.pilot)))
@@ -154,14 +147,14 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
           case g if groupconfig.open.contains(g) =>
             ud.updateUser(p.copy(authGroups = p.authGroups :+ group)) match {
               case true =>
-                goback.attachSessionifDefined(req.flash(Alerts.success, s"Joined $group"))
+                goback.attachSessionifDefined(req.flash(Alerts.success, s"Joined $group").map(_.updatePilot))
               case false =>
                 goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to join $group"))
             }
           case g if groupconfig.closed.contains(g) =>
             ud.updateUser(p.copy(authGroups = p.authGroups :+ s"$group-pending" )) match {
               case true =>
-                goback.attachSessionifDefined(req.flash(Alerts.success, s"Applied to $group"))
+                goback.attachSessionifDefined(req.flash(Alerts.success, s"Applied to $group").map(_.updatePilot))
               case false =>
                 goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to join $group"))
             }
@@ -180,7 +173,7 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
           case g if p.authGroups.contains(g) =>
             ud.updateUser(p.copy(authGroups = p.authGroups.filter(_ != null) )) match {
               case true =>
-                goback.attachSessionifDefined(req.flash(Alerts.success, s"Joined $group"))
+                goback.attachSessionifDefined(req.flash(Alerts.success, s"Joined $group").map(_.updatePilot))
               case false =>
                 goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to join $group"))
             }

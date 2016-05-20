@@ -61,4 +61,46 @@ class UserLoadingSpec extends FlatSpec with MustMatchers {
 
   }
 
+  "loading a user out of LDAP who has groups" should "extract correctly" in {
+    val tempfolder = createTempFolder("loadusertest")
+    try {
+      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3389, instanceName = "pizza-auth-userloading-spec")
+      server.setPassword("testpassword")
+      server.start()
+      val schema = server.directoryService.getSchemaManager
+      val e = new DefaultEntry(schema, "uid=lucia_denniard,ou=pizza",
+        "ObjectClass: top",
+        "ObjectClass: pilot",
+        "ObjectClass: simpleSecurityObject",
+        "objectclass: account",
+        "accountStatus: Internal",
+        "alliance: Confederation of xXPIZZAXx",
+        "characterName: Lucia Denniard",
+        "corporation: Love Squad",
+        "email: lucia@pizza.moe",
+        "authgroup: timerboard",
+        "authgroup: admin",
+        "authgroup: at-pending",
+        "metadata: {}",
+        "uid: lucia_denniard",
+        "userpassword: blah"
+      )
+      server.createEntry("uid=lucia_denniard,ou=pizza", e)
+
+      // use the client
+      val c = new LdapClient("localhost", 3389, "uid=admin,ou=system", "testpassword")
+      c.withConnection { con =>
+        val r = con.filter("ou=pizza", "(uid=lucia_denniard)")
+        val user = r.toList.headOption.map(_.toMap).map(Pilot.fromMap)
+        user must equal(Some(Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List("timerboard", "admin", "at-pending"), List(), List())))
+        user.map(_.getPendingGroups) must equal(Some(List("at")))
+      }
+      server.stop()
+    } finally {
+      tempfolder.delete()
+
+    }
+
+  }
+
 }
