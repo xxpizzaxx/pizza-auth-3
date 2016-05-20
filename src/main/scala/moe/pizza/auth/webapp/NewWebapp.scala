@@ -26,7 +26,7 @@ import scalaz.\/-
 
 object NewWebapp {
   val PILOT = "pilot"
-  val defaultCrestScopes = List("characterLocationRead", "characterAccountRead", "characterSkillsRead")
+  val defaultCrestScopes = List("characterLocationRead", "characterAccountRead", "fleetRead")
 }
 
 class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 9021, ud: UserDatabase, crestapi: Option[CrestApi] = None, eve: Option[EVEAPI] = None, mapper: Option[EveMapDb] = None) {
