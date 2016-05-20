@@ -134,6 +134,7 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
         case Some(p) =>
           val groups = fullconfig.auth.groups
           Ok(templates.html.base("pizza-auth-3", templates.html.groups(p, groups.closed, groups.open), req.getSession.map(_.toNormalSession), req.getSession.flatMap(_.pilot)))
+            .attachSessionifDefined(req.getSession.map(_.copy(alerts = List())))
         case None =>
           TemporaryRedirect(Uri(path = "/"))
       }
@@ -161,7 +162,6 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
           case _ =>
             goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to find a group named $group"))
         }
-
       }
     }
 
@@ -171,9 +171,9 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
         // TODO extend for public users
         group match {
           case g if p.authGroups.contains(g) =>
-            ud.updateUser(p.copy(authGroups = p.authGroups.filter(_ != null) )) match {
+            ud.updateUser(p.copy(authGroups = p.authGroups.filter(_ != group) )) match {
               case true =>
-                goback.attachSessionifDefined(req.flash(Alerts.success, s"Joined $group").map(_.updatePilot))
+                goback.attachSessionifDefined(req.flash(Alerts.success, s"Left $group").map(_.updatePilot))
               case false =>
                 goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to join $group"))
             }
