@@ -3,7 +3,8 @@ package moe.pizza.auth.webapp
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.webapp.Types.{Session2, Session}
 import moe.pizza.auth.webapp.Utils.Alerts.Alerts
-import org.http4s.{Response, Request}
+import org.http4s.{Uri, Response, Request}
+import org.http4s.dsl.{Root, _}
 
 import scalaz.concurrent.Task
 
@@ -52,7 +53,14 @@ object Utils {
         case Some(s) => r.setSession(s.copy(alerts = List()))
         case None => ()
       }
-
+    }
+    def sessionResponse(f: ((Session2, Pilot) => Task[Response]), error: String = "You must be signed in to do that" ): Task[Response] = {
+      (getSession, getSession.flatMap(_.pilot)) match {
+        case (Some(s), Some(p)) =>
+          f(s, p)
+        case _ =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
     }
   }
 

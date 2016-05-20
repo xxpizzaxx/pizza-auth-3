@@ -33,6 +33,7 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
 
   val log = org.log4s.getLogger
   val config = fullconfig.crest
+  val groupconfig = fullconfig.auth.groups
 
   val crest = crestapi.getOrElse(new CrestApi(baseurl = config.loginUrl, cresturl = config.crestUrl, config.clientID, config.secretKey, config.redirectUrl))
   val eveapi = eve.getOrElse(new EVEAPI())
@@ -144,6 +145,51 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
           TemporaryRedirect(Uri(path = "/"))
       }
     }
+
+    case req@GET -> Root / "groups" / "apply" / group => {
+      val goback = TemporaryRedirect(Uri(path = "/groups"))
+      req.sessionResponse { (s: Session2, p: Pilot) =>
+        // TODO extend for public users
+        group match {
+          case g if groupconfig.open.contains(g) =>
+            ud.updateUser(p.copy(authGroups = p.authGroups :+ group)) match {
+              case true =>
+                goback.attachSessionifDefined(req.flash(Alerts.success, s"Joined $group"))
+              case false =>
+                goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to join $group"))
+            }
+          case g if groupconfig.closed.contains(g) =>
+            ud.updateUser(p.copy(authGroups = p.authGroups :+ s"$group-pending" )) match {
+              case true =>
+                goback.attachSessionifDefined(req.flash(Alerts.success, s"Applied to $group"))
+              case false =>
+                goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to join $group"))
+            }
+          case _ =>
+            goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to find a group named $group"))
+        }
+
+      }
+    }
+
+    case req@GET -> Root / "groups" / "remove" / group => {
+      val goback = TemporaryRedirect(Uri(path = "/groups"))
+      req.sessionResponse { (s: Session2, p: Pilot) =>
+        // TODO extend for public users
+        group match {
+          case g if p.authGroups.contains(g) =>
+            ud.updateUser(p.copy(authGroups = p.authGroups.filter(_ != null) )) match {
+              case true =>
+                goback.attachSessionifDefined(req.flash(Alerts.success, s"Joined $group"))
+              case false =>
+                goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to join $group"))
+            }
+          case _ =>
+            goback.attachSessionifDefined(req.flash(Alerts.warning, s"You are not in a group named $group"))
+        }
+      }
+    }
+
 
     case req@GET -> Root / "callback" => {
       val code = req.params("code")
