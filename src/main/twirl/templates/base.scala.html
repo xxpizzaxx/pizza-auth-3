@@ -30,6 +30,9 @@
         </div>
         <nav id="navcbars" class="collapse navbar-collapse navbar-ex1-collapse" role="navigtion">
             <ul class="nav navbar-nav">
+                @if(pilot.isDefined) {
+                    <li><a href="/groups">Groups</a></li>
+                }
             </ul>
 
             <ul class="nav navbar-nav navbar-right">

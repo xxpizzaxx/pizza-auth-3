@@ -1,21 +1,19 @@
+@(pilot: moe.pizza.auth.models.Pilot)
 
 <div class="row well form-inline custom-form">
-    <h3>Broadcast</h3>
-    <form id="broadcast" name="broadcast" action="/broadcast" method="post">
-        <table class="table">
-            <tr>
-                <th scope="row">Message</th>
-                <td><input id="message" type="text" name="message" class="form-control"/></td>
-            </tr>
-            <tr>
-                <th scope="row">Target System</th>
-                <td><input id="target" type="text" name="target" class="form-control"/></td>
-            </tr>
-            <tr>
-                <th scope="row">Range</th>
-                <td><input id="range" type="text" name="range" class="form-control" placeholder="1"/></td>
-            </tr>
-        </table>
-        <button type="submit" class="btn btn-primary" value="submit">Submit</button>
-    </form>
+    <h3>Jabber</h3>
+    <table>
+        <tr>
+            <td>Server</td>
+            <td>luv2.faith</td>
+        </tr>
+        <tr>
+            <td>Username</td>
+            <td>@{pilot.uid}</td>
+        </tr>
+        <tr>
+            <td>jabber ID</td>
+            <td>@{pilot.uid}@@luv2.faith</td>
+        </tr>
+    </table>
 </div>

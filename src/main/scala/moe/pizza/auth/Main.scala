@@ -10,7 +10,7 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.adapters.LdapUserDatabase
 import moe.pizza.auth.ldap.client.LdapClient
 import moe.pizza.auth.ldap.server.EmbeddedLdapServer
-import moe.pizza.auth.webapp.{NewWebapp, Webapp}
+import moe.pizza.auth.webapp.{NewWebapp}
 import org.http4s.server.blaze.BlazeBuilder
 import scopt.OptionParser
 

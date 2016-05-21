@@ -60,6 +60,7 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
 
   def dynamicWebRouter = HttpService {
     case req@GET -> Root => {
+      println("rendering /")
       req.getSession match {
         case Some(s) =>
           s.pilot match {
@@ -67,7 +68,7 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
               Ok(
                 templates.html.base(
                   "pizza-auth-3",
-                  templates.html.main(),
+                  templates.html.main(pilot),
                   req.getSession.map(_.toNormalSession),
                   req.getSession.flatMap(_.pilot)
                 )
@@ -119,13 +120,13 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
             val pilotwithemail = p.copy(email = newemail)
             val password = data.getFirst("password").get
             val res = ud.addUser(pilotwithemail, password)
-            TemporaryRedirect(Uri(path = "/"))
+            SeeOther(Uri(path = "/"))
                 .attachSessionifDefined(
-                  req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}")
+                  req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}").map{_.updatePilot}
                 )
           }
         case None =>
-          TemporaryRedirect(Uri(path = "/"))
+          SeeOther(Uri(path = "/"))
       }
     }
 
