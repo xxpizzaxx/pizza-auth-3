@@ -60,7 +60,6 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
 
   def dynamicWebRouter = HttpService {
     case req@GET -> Root => {
-      println("rendering /")
       req.getSession match {
         case Some(s) =>
           s.pilot match {
