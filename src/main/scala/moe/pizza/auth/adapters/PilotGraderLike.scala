@@ -42,8 +42,8 @@ object PilotGraderLike {
         logger.info("registering CrestKeyGrader with configuration %s".format(j.toString))
         new CrestKeyGrader(
           new CrestApi(
-            baseurl = Option(j.get("baseurl")).map(_.asText).getOrElse(c.crest.crestUrl),
-            cresturl = Option(j.get("loginurl")).map(_.asText).getOrElse(c.crest.loginUrl),
+            baseurl = Option(j.get("login_url")).map(_.asText).getOrElse(c.crest.loginUrl),
+            cresturl = Option(j.get("crest_url")).map(_.asText).getOrElse(c.crest.crestUrl),
             Option(j.get("clientID")).map(_.asText()).getOrElse(c.crest.clientID),
             Option(j.get("secretKey")).map(_.asText()).getOrElse(c.crest.secretKey),
             Option(j.get("redirectUrl")).map(_.asText()).getOrElse(c.crest.secretKey)
