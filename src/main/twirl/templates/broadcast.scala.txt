@@ -1,0 +1,4 @@
+@(message: String, to: String, from: String, at: org.joda.time.DateTime)
+@message
+
+== broadcast at @at (UTC/EVE) from @from to @to ==

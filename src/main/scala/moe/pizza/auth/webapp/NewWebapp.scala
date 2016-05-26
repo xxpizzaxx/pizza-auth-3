@@ -2,7 +2,7 @@ package moe.pizza.auth.webapp
 
 import moe.pizza.auth.config.ConfigFile.ConfigFile
 import moe.pizza.auth.graphdb.EveMapDb
-import moe.pizza.auth.interfaces.{PilotGrader, UserDatabase}
+import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.webapp.Types.{Session2, Session}
 import moe.pizza.crestapi.CrestApi
@@ -11,6 +11,7 @@ import org.http4s.dsl.{Root, _}
 import org.http4s.server._
 import org.http4s.server.staticcontent.ResourceService
 import org.http4s.server.syntax.ServiceOps
+import org.joda.time.DateTime
 import play.twirl.api.Html
 import moe.pizza.eveapi._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,7 +30,15 @@ object NewWebapp {
   val defaultCrestScopes = List("characterLocationRead", "characterAccountRead", "fleetRead")
 }
 
-class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 9021, ud: UserDatabase, crestapi: Option[CrestApi] = None, eve: Option[EVEAPI] = None, mapper: Option[EveMapDb] = None) {
+class NewWebapp(fullconfig: ConfigFile,
+                graders: PilotGrader,
+                portnumber: Int = 9021,
+                ud: UserDatabase,
+                crestapi: Option[CrestApi] = None,
+                eve: Option[EVEAPI] = None,
+                mapper: Option[EveMapDb] = None,
+                broadcasters: List[BroadcastService] = List.empty[BroadcastService]
+               ) {
 
   val log = org.log4s.getLogger
   val config = fullconfig.crest
@@ -138,6 +147,47 @@ class NewWebapp(fullconfig: ConfigFile, graders: PilotGrader, portnumber: Int = 
         case None =>
           TemporaryRedirect(Uri(path = "/"))
       }
+    }
+
+    case req@GET -> Root / "ping" => {
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          p.getGroups contains "ping" match {
+            case true =>
+              Ok(templates.html.base("pizza-auth-3", templates.html.ping(), req.getSession.map(_.toNormalSession), req.getSession.flatMap(_.pilot)))
+                .attachSessionifDefined(req.getSession.map(_.copy(alerts = List())))
+            case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
+    case req@POST -> Root / "ping" / "global" => {
+       req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          p.getGroups contains "ping" match {
+            case true =>
+              req.decode[UrlForm] { form =>
+                val users = form.getFirst("internal").map( _ =>
+                  ud.getUsers("accountStatus = Internal")
+                ).getOrElse(List())
+                val message = form.getFirstOrElse("message", "This message is left intentionally blank.")
+                val templatedMessage = templates.txt.broadcast(message, "Internal", p.uid, DateTime.now())
+                val totals = broadcasters.map { b=>
+                  b.sendAnnouncement(templatedMessage.toString(), p.uid, users)
+                }
+
+                SeeOther(Uri(path = "/ping"))
+              }
+
+            case false =>
+              SeeOther(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
+          }
+        case None =>
+          SeeOther(Uri(path = "/"))
+      }
+
     }
 
     case req@GET -> Root / "groups" / "apply" / group => {

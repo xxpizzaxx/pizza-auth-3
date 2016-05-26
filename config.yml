@@ -5,16 +5,16 @@
   crest:
     # login server URL, uncomment the one you want
     #login_url: "https://sisilogin.testeveonline.com"  # singularity
-    #login_url: "https://login.eveonline.com"          # tranquility
+    login_url: "https://login.eveonline.com"          # tranquility
 
     # CREST server URL
     #crest_url: "https://api-sisi.testeveonline.com/"  # singularity
-    #crest_url: "https://crest-tq.eveonline.com/"      # tranquility
+    crest_url: "https://crest-tq.eveonline.com/"      # tranquility
 
     # Your app settings from https://developers.eveonline.com/ or https://developers.testeveonline.com/
-    clientID: "f"
-    secretKey: "4"
-    redirectUrl: "http://localhost:4567/callback"
+    clientID: "9e68b690834a46e2adc3dcdf04613ec5"
+    secretKey: "65LTBpPHlT76UEVxicNnu2et6tWfqhy1LohaH3zd"
+    redirectUrl: "http://localhost:9021/callback"
 
   #############################################################################
   ## auth settings
