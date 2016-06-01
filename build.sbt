@@ -14,7 +14,6 @@ val HTTP4S_VERSION = "0.12.3"
 // main dependencies
 libraryDependencies ++= Seq(
   // frameworks
-  "com.sparkjava"                    % "spark-core"                 % "2.3",
   "org.http4s"                       %% "http4s-core"               % HTTP4S_VERSION,
   "org.http4s"                       %% "http4s-dsl"                % HTTP4S_VERSION,
   "org.http4s"                       %% "http4s-blaze-server"       % HTTP4S_VERSION,
@@ -34,7 +33,13 @@ libraryDependencies ++= Seq(
   "com.orientechnologies"            % "orientdb-graphdb"           % "2.1.12",
   "com.tinkerpop.blueprints"         % "blueprints"                 % "2.6.0",
   "com.pauldijou"                    %% "jwt-circe"                 % "0.6.0",
-  // embedded services
+  // xmpp client
+  "org.igniterealtime.smack"         % "smack-core"                 % "4.1.7",
+  "org.igniterealtime.smack"         % "smack-tcp"                  % "4.1.7",
+  "org.igniterealtime.smack"         % "smack-extensions"           % "4.1.7",
+  "org.igniterealtime.smack"         % "smack-java7"                % "4.1.7",
+
+// embedded services
   "org.apache.directory.server"      % "apacheds-all"               % "2.0.0-M21",
   "org.apache.kafka"                 %% "kafka"                     % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12"),
   "com.orientechnologies"            % "orientdb-server"            % "2.1.12"
