@@ -10,7 +10,7 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.adapters.{XmppBroadcastService, LdapUserDatabase}
 import moe.pizza.auth.ldap.client.LdapClient
 import moe.pizza.auth.ldap.server.EmbeddedLdapServer
-import moe.pizza.auth.webapp.NewWebapp
+import moe.pizza.auth.webapp.Webapp
 import org.http4s.server.blaze.BlazeBuilder
 import scopt.OptionParser
 
@@ -83,7 +83,7 @@ object Main {
               val lc = new LdapClient("localhost", configfile.get.embeddedldap.port, "uid=admin,ou=system", internalpassword)
               val broadcasters = configfile.get.auth.pingbot.map{c => new XmppBroadcastService(c.host, c.password)}.toList
               println(s"constructed broadcasters from ${configfile.get.auth.pingbot}")
-              val webapp = new NewWebapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager), None, None, None, broadcasters)
+              val webapp = new Webapp(configfile.get, graders, 9021, new LdapUserDatabase(lc, ldap.directoryService.getSchemaManager), None, None, None, broadcasters)
               val builder = BlazeBuilder.mountService(webapp.router).bindSocketAddress(new InetSocketAddress("127.0.0.1", 9021))
               val server = builder.run
               println(s"LDAP server started on localhost:${configfile.get.embeddedldap.port} with admin password ${internalpassword}")

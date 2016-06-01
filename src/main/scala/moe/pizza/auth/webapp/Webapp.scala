@@ -25,19 +25,19 @@ import scala.util.{Failure => TFailure}
 
 import scalaz.\/-
 
-object NewWebapp {
+object Webapp {
   val PILOT = "pilot"
   val defaultCrestScopes = List("characterLocationRead", "characterAccountRead", "fleetRead")
 }
 
-class NewWebapp(fullconfig: ConfigFile,
-                graders: PilotGrader,
-                portnumber: Int = 9021,
-                ud: UserDatabase,
-                crestapi: Option[CrestApi] = None,
-                eve: Option[EVEAPI] = None,
-                mapper: Option[EveMapDb] = None,
-                broadcasters: List[BroadcastService] = List.empty[BroadcastService]
+class Webapp(fullconfig: ConfigFile,
+             graders: PilotGrader,
+             portnumber: Int = 9021,
+             ud: UserDatabase,
+             crestapi: Option[CrestApi] = None,
+             eve: Option[EVEAPI] = None,
+             mapper: Option[EveMapDb] = None,
+             broadcasters: List[BroadcastService] = List.empty[BroadcastService]
                ) {
 
   val log = org.log4s.getLogger
@@ -94,13 +94,13 @@ class NewWebapp(fullconfig: ConfigFile,
       }
     }
     case req@GET -> Root / "login" => {
-      Uri.fromString(crest.redirect("login", NewWebapp.defaultCrestScopes)) match {
+      Uri.fromString(crest.redirect("login", Webapp.defaultCrestScopes)) match {
         case \/-(url) => TemporaryRedirect(url)
         case _ => InternalServerError("unable to construct url")
       }
     }
     case req@GET -> Root / "signup" => {
-      Uri.fromString(crest.redirect("signup", NewWebapp.defaultCrestScopes)) match {
+      Uri.fromString(crest.redirect("signup", Webapp.defaultCrestScopes)) match {
         case \/-(url) => TemporaryRedirect(url)
         case _ => InternalServerError("unable to construct url")
       }
