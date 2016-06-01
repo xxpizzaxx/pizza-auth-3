@@ -16,11 +16,14 @@ import play.twirl.api.Html
 import moe.pizza.eveapi._
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.http4s.twirl._
+import scala.concurrent.Future
 import scala.util.Try
 import scalaz._
 import Scalaz._
 import scala.util.{Success => TSuccess}
 import scala.util.{Failure => TFailure}
+import scala.concurrent.duration._
+import scala.concurrent.Await
 
 
 import scalaz.\/-
@@ -177,8 +180,8 @@ class Webapp(fullconfig: ConfigFile,
                 val totals = broadcasters.map { b=>
                   b.sendAnnouncement(templatedMessage.toString(), p.uid, users)
                 }
-
-                SeeOther(Uri(path = "/ping"))
+                val total = Await.result(Future.sequence(totals), 2 seconds)
+                SeeOther(Uri(path = "/ping")).attachSessionifDefined(req.flash(Alerts.info, s"Message sent to ${total} users."))
               }
 
             case false =>
