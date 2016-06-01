@@ -12,6 +12,10 @@ import scala.concurrent.ExecutionContext
   * Created by andi on 19/02/16.
   */
 object ConfigFile {
+  case class PingBotConfig(
+                          host: String,
+                          password: String
+                          )
   case class EmbeddedLdapConfig(
                                  instancePath: String = "./ldap",
                                  port: Int = 389,
@@ -25,7 +29,8 @@ object ConfigFile {
                         groupName: String,
                         groupShortName: String,
                         groups: AuthGroupConfig,
-                        graders: List[JsonNode]
+                        graders: List[JsonNode],
+                        pingbot: Option[PingBotConfig]
                        ) {
     def constructGraders(c: ConfigFile)(implicit ec: ExecutionContext): PilotGrader = new GraderChain(graders.map(g => PilotGraderFactory.fromYaml(g, c)).flatten.toList)
 

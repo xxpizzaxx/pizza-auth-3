@@ -5,6 +5,7 @@ import moe.pizza.auth.interfaces.BroadcastService
 import moe.pizza.auth.models.Pilot
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class XmppBroadcastService(host: String, password: String) extends BroadcastService {
 

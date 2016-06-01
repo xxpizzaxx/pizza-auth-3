@@ -6,7 +6,7 @@ package moe.pizza.auth.bots
 object XmppBotTest extends App {
 
   val bot = new XmppBot()
-  bot.connect()
+  bot.connect("test", "test", "test")
   bot.sendMessage("liara_denniard@luv2.faith", "hi")
   readLine()
 
