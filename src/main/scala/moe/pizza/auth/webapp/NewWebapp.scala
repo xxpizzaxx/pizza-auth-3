@@ -170,7 +170,7 @@ class NewWebapp(fullconfig: ConfigFile,
             case true =>
               req.decode[UrlForm] { form =>
                 val users = form.getFirst("internal").map( _ =>
-                  ud.getUsers("accountStatus = Internal")
+                  ud.getUsers("accountStatus=Internal")
                 ).getOrElse(List())
                 val message = form.getFirstOrElse("message", "This message is left intentionally blank.")
                 val templatedMessage = templates.txt.broadcast(message, "Internal", p.uid, DateTime.now())
