@@ -58,7 +58,6 @@ class Webapp(fullconfig: ConfigFile,
   }
 
 
-
   def staticrouter = staticcontent.resourceService(ResourceService.Config("/static/static/", "/static/"))
 
   import Utils._
