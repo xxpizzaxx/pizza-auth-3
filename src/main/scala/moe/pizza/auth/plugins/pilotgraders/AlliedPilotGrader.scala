@@ -6,8 +6,9 @@ import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.models.Pilot.Status
 import moe.pizza.auth.plugins.pilotgraders.AlliedPilotGrader.SavedContactList
 import moe.pizza.eveapi.generated.corp
-import moe.pizza.eveapi.{ApiKey, EVEAPI}
+import moe.pizza.eveapi.{XmlApiKey, ApiKey, EVEAPI}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Try, Failure, Success}
@@ -32,11 +33,21 @@ object AlliedPilotGrader {
 }
 
 
-class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolean, val eve: Option[EVEAPI] = None)(implicit apikey: ApiKey, implicit val ec: ExecutionContext) extends PilotGrader with Logging {
-  val eveapi = eve.getOrElse(new EVEAPI())
+class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolean, val eve: Option[EVEAPI] = None, apikey: XmlApiKey)(implicit val ec: ExecutionContext) extends PilotGrader {
+
+  val logger = LoggerFactory.getLogger(getClass)
+  val eveapi = eve.getOrElse(new EVEAPI(key = Some(apikey)))
   var allies = pullAllies()
 
-
+  allies match {
+    case Some(a) =>
+      logger.info(s"loaded AlliedPilotGrader with these entities loaded:")
+      logger.info(s"characters: ${a.pilots}")
+      logger.info(s"corps: ${a.corporations}")
+      logger.info(s"alliances: ${a.alliances}")
+    case None =>
+      logger.info(s"loaded AlliedPilotGrader, but failed to load a configuration from CCP")
+  }
 
   def pullAllies(): Option[SavedContactList] = {
     val res = Try{eveapi.corp.ContactList().sync()}
@@ -45,7 +56,7 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
         val corp = r.result.filter(_.name == "corporateContactList").flatMap(_.row).filter(_ => usecorp).filter(_.standing > threshold)
         val alli = r.result.filter(_.name == "allianceContactList").flatMap(_.row).filter(_ => usealliance).filter(_.standing > threshold)
         val contacts = corp ++ alli
-        logger.info("successfully refreshed contact list")
+        logger.info(s"successfully refreshed contact list")
         Some(AlliedPilotGrader.transformContacts(r.cachedUntil, contacts))
       case Failure(f) =>
         logger.info("failed to refresh contact list")

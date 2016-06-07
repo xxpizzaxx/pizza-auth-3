@@ -35,7 +35,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
           }
         )
         implicit val apikey = new ApiKey(1, "hi")
-        val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+        val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
         val r = apg.pullAllies()
         r must equal(None)
       }
@@ -67,7 +67,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
           }
         )
         implicit val apikey = new ApiKey(1, "hi")
-        val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+        val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
         val r = apg.pullAllies()
         r must equal(Some(new SavedContactList(now, List(), List("Terry"), List())))
       }
@@ -99,7 +99,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
           }
         )
         implicit val apikey = new ApiKey(1, "hi")
-        val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+        val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
         val r = apg.pullAllies()
         r must equal(Some(new SavedContactList(now, List(), List("Terry"), List())))
       }
@@ -144,7 +144,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         }
       )
       implicit val apikey = new ApiKey(1, "hi")
-      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
       val r = apg.pullAllies()
       r must equal(Some(new SavedContactList(now, List(), List("Terry2", "Terry"), List())))
     }
@@ -202,7 +202,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         }
       )
       implicit val apikey = new ApiKey(1, "hi")
-      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
       val r = apg.pullAllies()
       r must equal(Some(new SavedContactList(now, List("Terry2", "Terry"), List("TerryCorp"), List("Terry's Cool Alliance"))))
     }
@@ -260,7 +260,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         }
       )
       implicit val apikey = new ApiKey(1, "hi")
-      val apg = new AlliedPilotGrader(5.0, true, usealliance = false, Some(eveapi))
+      val apg = new AlliedPilotGrader(5.0, true, usealliance = false, Some(eveapi), null)
       val r = apg.pullAllies()
       r must equal(Some(new SavedContactList(now, List(), List("TerryCorp"), List())))
     }
@@ -319,7 +319,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         }
       )
       implicit val apikey = new ApiKey(1, "hi")
-      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
       val r = apg.pullAllies()
       r must equal(Some(new SavedContactList(now, List("Terry2"), List(), List("Terry's Cool Alliance"))))
     }
@@ -380,7 +380,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         }
       )
       implicit val apikey = new ApiKey(1, "hi")
-      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
       val bob = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
       apg.grade(bob) must equal(Pilot.Status.unclassified)
       apg.grade(bob.copy(characterName = "Terry")) must equal(Pilot.Status.ally)
@@ -444,7 +444,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         }
       )
       implicit val apikey = new ApiKey(1, "hi")
-      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+      val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
       when(corp.ContactList()).thenReturn(
         Future {
           new XMLApiResponse(
@@ -509,7 +509,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
       }
     )
     implicit val apikey = new ApiKey(1, "hi")
-    val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+    val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
     val r = apg.pullAllies()
     r must equal(None)
     val bob = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
@@ -572,7 +572,7 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
       }
     )
     implicit val apikey = new ApiKey(1, "hi")
-    val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi))
+    val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
     when(corp.ContactList()).thenReturn(
       Future {
         throw new Exception("oh no")

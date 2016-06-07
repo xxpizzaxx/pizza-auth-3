@@ -27,7 +27,7 @@
 
     # Pick your alliance or corporation
     alliance: Confederation of xXPIZZAXx
-    corporation: Love Squad
+    corporation: Hard Knocks Inc.
 
     # Groups that users can sign up to or be in
     groups:
@@ -46,13 +46,17 @@
         - dota
     graders:
       -
-        type: "AlliancePilotGrader" # mark all members of an alliance as Internal
-        # alliance: Black Legion.   # uncomment this to run the plugin with an alliance that's not your configured one
-      -
-        type: "CorporationPilotGrader"        # mark all members of a corporation as Internal
-        # corporation: Higher than Everest    # uncomment this to run the plugin with a corp that's not your configured one
-      -
         type: "CrestKeyGrader"           # use this to validate CREST keys, uses your CREST config from above
+      -
+        type: "AlliancePilotGrader"       # mark all members of an alliance as Internal
+        alliance: Play Hard Pray Harder   # uncomment this to run the plugin with an alliance that's not your configured one
+      -
+        type: "AlliedPilotGrader"        # used to mark blue pilots as Allies
+        threshold: 4.9                   # the level of "blue" to require
+        keyId: 1                         # a corp key with standings ticked to read the standings from
+        vCode: whatever
+        usealliance: true                # enable these to turn on corp or alliance standings, if both are on, alliance takes precedence
+        usecorp: false
 
   #############################################################################
   ## embedded ldap settings

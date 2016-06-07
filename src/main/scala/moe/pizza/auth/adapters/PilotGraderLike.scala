@@ -6,7 +6,7 @@ import moe.pizza.auth.interfaces.PilotGrader
 import moe.pizza.auth.plugins.pilotgraders.MembershipPilotGraders.{AlliancePilotGrader, CorporationPilotGrader}
 import moe.pizza.auth.plugins.pilotgraders.{InternalWhitelistPilotGrader, CrestKeyGrader, AlliedPilotGrader}
 import moe.pizza.crestapi.CrestApi
-import moe.pizza.eveapi.ApiKey
+import moe.pizza.eveapi.{XmlApiKey, ApiKey}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -27,12 +27,14 @@ object PilotGraderLike {
 
     implicit object AlliedPilotGrader extends PilotGraderLike[AlliedPilotGrader] {
       override def apply(j: JsonNode, c: ConfigFile)(implicit ec: ExecutionContext): AlliedPilotGrader = {
-        implicit val apikey = new ApiKey(j.get("keyId").asInt(), j.get("vCode").asText())
+        val apikey = new ApiKey(j.get("keyId").asInt(), j.get("vCode").asText())
         logger.info("registering AlliedPilotGrader with configuration %s".format(j.toString))
         new AlliedPilotGrader(
           Option(j.get("threshold")).map(_.asDouble).getOrElse(4.9),
           Option(j.get("usecorp")).map(_.asBoolean()).getOrElse(true),
-          Option(j.get("usealliance")).map(_.asBoolean()).getOrElse(true)
+          Option(j.get("usealliance")).map(_.asBoolean()).getOrElse(true),
+          None,
+          apikey
         )
       }
     }
