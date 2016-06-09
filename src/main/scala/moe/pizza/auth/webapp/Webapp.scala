@@ -187,9 +187,10 @@ class Webapp(fullconfig: ConfigFile,
           p.getGroups contains "ping" match {
             case true =>
               val locations = LocationManager.locateUsers(crest)(ud.getUsers("accountStatus=Internal")).flatten.map { kv =>
-                kv._2.map { v => PlayerWithLocation(kv._1.characterName, v)}
-              }
-              val res = Await.result(Future.sequence(locations), 10 seconds)
+                Try{
+                  (kv._1, Await.result(kv._2, 2 seconds))
+                }.toOption
+              }.flatten
               Ok(OM.writeValueAsString(res))
             case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
           }
@@ -204,6 +205,7 @@ class Webapp(fullconfig: ConfigFile,
             case true =>
               req.decode[UrlForm] { form =>
                 val groups = List(form.getFirst("internal"), form.getFirst("ally"), form.getFirst("public")).flatten.map(_.capitalize)
+                log.info(s"sending a ping to groups ${groups}")
                 val users = groups.map( name => (name, ud.getUsers(s"accountStatus=${name}")))
                 val message = form.getFirstOrElse("message", "This message is left intentionally blank.")
                 val total = users.map { kv =>
