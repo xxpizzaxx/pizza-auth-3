@@ -10,7 +10,6 @@ import scala.concurrent.ExecutionContext
   */
 object LocationManager {
 
-  /*
   def locateUsers(crest: CrestApi)(pilots: List[Pilot])(implicit ec: ExecutionContext) = {
 
     pilots.map { p =>
@@ -19,6 +18,5 @@ object LocationManager {
       }
     }
   }
-  */
 
 }

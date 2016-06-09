@@ -1,9 +1,12 @@
 package moe.pizza.auth.webapp
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.config.ConfigFile.ConfigFile
 import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
+import moe.pizza.auth.plugins.LocationManager
 import moe.pizza.auth.webapp.Types.{Session2, Session}
 import moe.pizza.crestapi.CrestApi
 import org.http4s.{HttpService, _}
@@ -24,6 +27,7 @@ import scala.util.{Success => TSuccess}
 import scala.util.{Failure => TFailure}
 import scala.concurrent.duration._
 import scala.concurrent.Await
+import moe.pizza.crestapi.character.location.Types.Location
 
 
 import scalaz.\/-
@@ -57,6 +61,11 @@ class Webapp(fullconfig: ConfigFile,
     map
   }
 
+  // used for serializing JSON responses, for now
+  val OM = new ObjectMapper()
+  OM.registerModules(DefaultScalaModule)
+
+  case class PlayerWithLocation(name: String, location: Location)
 
   def staticrouter = staticcontent.resourceService(ResourceService.Config("/static/static/", "/static/"))
 
@@ -69,6 +78,13 @@ class Webapp(fullconfig: ConfigFile,
      }
   }
 
+  def getJabberServer(u: Pilot): String = u.accountStatus match {
+    case Pilot.Status.internal => fullconfig.auth.domain
+    case Pilot.Status.ally => s"allies.${fullconfig.auth.domain}"
+    case Pilot.Status.ineligible => s"public.${fullconfig.auth.domain}"
+    case _ => "none"
+  }
+
   def dynamicWebRouter = HttpService {
     case req@GET -> Root => {
       req.getSession match {
@@ -78,7 +94,7 @@ class Webapp(fullconfig: ConfigFile,
               Ok(
                 templates.html.base(
                   "pizza-auth-3",
-                  templates.html.main(pilot),
+                  templates.html.main(pilot, getJabberServer(pilot)),
                   req.getSession.map(_.toNormalSession),
                   req.getSession.flatMap(_.pilot)
                 )
@@ -165,24 +181,41 @@ class Webapp(fullconfig: ConfigFile,
       }
     }
 
+    case req@GET -> Root / "locations" => {
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          p.getGroups contains "ping" match {
+            case true =>
+              val locations = LocationManager.locateUsers(crest)(ud.getUsers("accountStatus=Internal")).flatten.map { kv =>
+                kv._2.map { v => PlayerWithLocation(kv._1.characterName, v)}
+              }
+              val res = Await.result(Future.sequence(locations), 10 seconds)
+              Ok(OM.writeValueAsString(res))
+            case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
     case req@POST -> Root / "ping" / "global" => {
        req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
         case Some(p) =>
           p.getGroups contains "ping" match {
             case true =>
               req.decode[UrlForm] { form =>
-                val users = form.getFirst("internal").map( _ =>
-                  ud.getUsers("accountStatus=Internal")
-                ).getOrElse(List())
+                val groups = List(form.getFirst("internal"), form.getFirst("ally"), form.getFirst("public")).flatten.map(_.capitalize)
+                val users = groups.map( name => (name, ud.getUsers(s"accountStatus=${name}")))
                 val message = form.getFirstOrElse("message", "This message is left intentionally blank.")
-                val templatedMessage = templates.txt.broadcast(message, "Internal", p.uid, DateTime.now())
-                val totals = broadcasters.map { b=>
-                  b.sendAnnouncement(templatedMessage.toString(), p.uid, users)
-                }
-                val total = Await.result(Future.sequence(totals), 2 seconds)
+                val total = users.map { kv =>
+                  val (label, us) = kv
+                  val templatedMessage = templates.txt.broadcast(message, label, p.uid, DateTime.now())
+                  val totals = broadcasters.map { b=>
+                    b.sendAnnouncement(templatedMessage.toString(), p.uid, us)
+                  }
+                  Await.result(Future.sequence(totals), 2 seconds)
+                }.map{_.sum}.sum
                 SeeOther(Uri(path = "/ping")).attachSessionifDefined(req.flash(Alerts.info, s"Message sent to ${total} users."))
               }
-
             case false =>
               SeeOther(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
           }

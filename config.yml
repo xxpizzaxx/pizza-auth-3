@@ -25,6 +25,7 @@
     #mode: corporation
     #mode: public
 
+    domain: luv2.faith # domain you're running on
     # Pick your alliance or corporation
     alliance: Confederation of xXPIZZAXx
     corporation: Hard Knocks Inc.

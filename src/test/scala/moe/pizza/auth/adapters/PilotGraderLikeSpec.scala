@@ -137,7 +137,7 @@ class PilotGraderLikeSpec extends WordSpec with MustMatchers {
 
       "create a set of PilotGraders from YAML via the config object" in {
         import scala.collection.JavaConverters._
-        val c = new AuthConfig(null, null, null, null, null, parsedconfig.iterator().asScala.toList, null)
+        val c = new AuthConfig(null, null, null, null, null, null, parsedconfig.iterator().asScala.toList, null)
         c.constructGraders(configfile) must not equal(null)
       }
 

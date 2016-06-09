@@ -24,6 +24,7 @@ object ConfigFile {
                                )
   case class AuthGroupConfig(closed: List[String], open: List[String], public: List[String])
   case class AuthConfig(
+                        domain: String,
                         corporation: String,
                         alliance: String,
                         groupName: String,

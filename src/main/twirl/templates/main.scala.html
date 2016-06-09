@@ -1,11 +1,11 @@
-@(pilot: moe.pizza.auth.models.Pilot)
+@(pilot: moe.pizza.auth.models.Pilot, server: String)
 
 <div class="row well form-inline custom-form">
     <h3>Jabber</h3>
     <table class="table">
         <tr>
             <td>Server</td>
-            <td>luv2.faith</td>
+            <td>@{server}</td>
         </tr>
         <tr>
             <td>Username</td>
@@ -13,7 +13,7 @@
         </tr>
         <tr>
             <td>jabber ID</td>
-            <td>@{pilot.uid}@@luv2.faith</td>
+            <td>@{pilot.uid}@@@{server}</td>
         </tr>
     </table>
 </div>
