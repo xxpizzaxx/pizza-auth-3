@@ -191,7 +191,7 @@ class Webapp(fullconfig: ConfigFile,
                   (kv._1, Await.result(kv._2, 2 seconds))
                 }.toOption
               }.flatten
-              Ok(OM.writeValueAsString(res))
+              Ok(OM.writeValueAsString(locations))
             case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
           }
         case None =>
