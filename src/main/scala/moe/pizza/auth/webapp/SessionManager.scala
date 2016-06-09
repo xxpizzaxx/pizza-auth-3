@@ -73,8 +73,9 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
           }
       }
       r.map{ resp =>
-        resp.attributes.get(SESSION).foreach { newsession =>
-          sessions.put(id, newsession)
+        resp.attributes.get(SESSION) match {
+          case Some(newsession) => sessions.put(id, newsession)
+          case None => sessions.remove(id)
         }
         resp
       }

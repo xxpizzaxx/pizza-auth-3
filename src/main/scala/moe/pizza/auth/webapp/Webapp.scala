@@ -188,10 +188,12 @@ class Webapp(fullconfig: ConfigFile,
             case true =>
               val locations = LocationManager.locateUsers(crest)(ud.getUsers("accountStatus=Internal")).flatten.map { kv =>
                 Try{
-                  (kv._1, Await.result(kv._2, 2 seconds))
-                }.toOption
-              }.flatten
-              Ok(OM.writeValueAsString(locations))
+                  (kv._1, Await.result(kv._2, 10 seconds))
+                }
+              }
+              log.info(locations.toString)
+              val res = locations.map(_.toOption).flatten
+              Ok(OM.writeValueAsString(res))
             case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
           }
         case None =>
