@@ -205,7 +205,7 @@ class Webapp(fullconfig: ConfigFile,
             case true =>
               req.decode[UrlForm] { form =>
                 val flags = List("internal", "ally", "public")
-                val groups = flags.flatMap{g => form.getFirst(g).map(_ => g)}
+                val groups = flags.flatMap{g => form.getFirst(g).map(_ => g.capitalize)}
                 log.info(s"sending a ping to groups ${groups}")
                 val users = groups.map( name => (name, ud.getUsers(s"accountStatus=${name}")))
                 val message = form.getFirstOrElse("message", "This message is left intentionally blank.")
