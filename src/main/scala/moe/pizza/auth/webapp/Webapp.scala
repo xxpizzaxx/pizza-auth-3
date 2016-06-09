@@ -65,7 +65,7 @@ class Webapp(fullconfig: ConfigFile,
   val OM = new ObjectMapper()
   OM.registerModules(DefaultScalaModule)
 
-  case class PlayerWithLocation(name: String, system: String)
+  case class PlayerWithLocation(name: String, system: String, station: Option[String])
 
   def staticrouter = staticcontent.resourceService(ResourceService.Config("/static/static/", "/static/"))
 
@@ -192,7 +192,7 @@ class Webapp(fullconfig: ConfigFile,
                 }
               }
               log.info(locations.toString)
-              val res = locations.map(_.toOption).flatten.filter{x => x._2.solarSystem.isDefined}.map{x => PlayerWithLocation(x._1.characterName, x._2.solarSystem.get.name)}
+              val res = locations.map(_.toOption).flatten.filter{x => x._2.solarSystem.isDefined}.map{x => PlayerWithLocation(x._1.characterName, x._2.solarSystem.get.name, x._2.station.map{_.name})}
               Ok(OM.writeValueAsString(res))
             case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
           }
