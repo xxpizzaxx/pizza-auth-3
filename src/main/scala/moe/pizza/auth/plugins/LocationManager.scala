@@ -2,6 +2,7 @@ package moe.pizza.auth.plugins
 
 import moe.pizza.auth.models.Pilot
 import moe.pizza.crestapi.CrestApi
+import moe.pizza.eveapi._
 
 import scala.concurrent.ExecutionContext
 
@@ -14,7 +15,8 @@ object LocationManager {
 
     pilots.map { p =>
       p.getCrestTokens.map { token =>
-        (p, crest.character.location(token.characterID, token.token))
+        val refreshed = crest.refresh(token.token).sync()
+        (p, crest.character.location(token.characterID, refreshed.access_token))
       }
     }
   }
