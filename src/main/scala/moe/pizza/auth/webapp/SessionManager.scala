@@ -20,6 +20,7 @@ import scalaz.concurrent.Task
 object SessionManager {
   val SESSION = AttributeKey[Session2]("SESSION")
   val SESSIONID = AttributeKey[Session2]("SESSIONID")
+  val LOGOUT = AttributeKey[String]("LOGOUT")
   val COOKIESESSION = "jwetsession"
 }
 
@@ -90,7 +91,12 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
           log.info("No session found")
           //sessions.remove(id)
       }
-      resp
+      resp.attributes.get(LOGOUT) match {
+        case Some(_) =>
+          log.info("logout flag set, logging out")
+          resp.removeCookie(COOKIESESSION)
+        case None => resp
+      }
     }
   }
 }

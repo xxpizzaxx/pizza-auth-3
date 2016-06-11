@@ -45,7 +45,7 @@ object Utils {
 
   implicit class PimpedResponse(r: Response) {
     def withSession(s: Session2): Response = r.withAttribute(SessionManager.SESSION, s)
-    def withNoSession(): Response = r.copy(attributes = r.attributes.remove(SessionManager.SESSION))
+    def withNoSession(): Response = r.withAttribute(SessionManager.LOGOUT, "")
   }
 
   implicit class PimpedTaskResponse(r: Task[Response]) {
