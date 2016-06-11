@@ -29,6 +29,7 @@ import scala.util.{Failure => TFailure}
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import moe.pizza.crestapi.character.location.Types.Location
+import org.slf4j.LoggerFactory
 
 
 import scalaz.\/-
@@ -48,7 +49,7 @@ class Webapp(fullconfig: ConfigFile,
              broadcasters: List[BroadcastService] = List.empty[BroadcastService]
                ) {
 
-  val log = org.log4s.getLogger
+  val log = LoggerFactory.getLogger(getClass)
   val config = fullconfig.crest
   val groupconfig = fullconfig.auth.groups
 
