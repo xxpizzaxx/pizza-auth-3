@@ -134,6 +134,7 @@ class Webapp(fullconfig: ConfigFile,
     }
 
     case req@GET -> Root / "signup" / "confirm" => {
+      log.info("following route for GET signup/confirm")
       req.getSession.flatMap(_.pilot) match {
         case Some(p) =>
           Ok(templates.html.base("pizza-auth-3", templates.html.signup(p), req.getSession.map(_.toNormalSession), req.getSession.flatMap(_.pilot)))
