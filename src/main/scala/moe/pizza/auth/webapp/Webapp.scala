@@ -50,6 +50,7 @@ class Webapp(fullconfig: ConfigFile,
                ) {
 
   val log = LoggerFactory.getLogger(getClass)
+  log.info("created Webapp")
   val config = fullconfig.crest
   val groupconfig = fullconfig.auth.groups
 
@@ -141,26 +142,32 @@ class Webapp(fullconfig: ConfigFile,
       }
     }
 
-
     case req@POST -> Root / "signup" / "confirm" => {
-      req.getSession.flatMap(_.pilot) match {
-        case Some(p) =>
-          req.decode[UrlForm] { data =>
-            val newemail = data.getFirstOrElse("email", "none")
-            val pilotwithemail = p.copy(email = newemail)
-            val password = data.getFirst("password").get
-            log.info(s"signing up ${pilotwithemail.uid}")
-            log.info(OM.writeValueAsString(pilotwithemail))
-            val res = ud.addUser(pilotwithemail, password)
-            log.info(s"$res")
-            SeeOther(Uri(path = "/"))
+      log.info("signup confirm called")
+      val res = Try {
+        req.getSession.flatMap(_.pilot) match {
+          case Some(p) =>
+            req.decode[UrlForm] { data =>
+              val newemail = data.getFirstOrElse("email", "none")
+              val pilotwithemail = p.copy(email = newemail)
+              val password = data.getFirst("password").get
+              log.info(s"signing up ${pilotwithemail.uid}")
+              log.info(OM.writeValueAsString(pilotwithemail))
+              val res = ud.addUser(pilotwithemail, password)
+              log.info(s"$res")
+              SeeOther(Uri(path = "/"))
                 .attachSessionifDefined(
-                  req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}").map{_.updatePilot}
+                  req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}").map {
+                    _.updatePilot
+                  }
                 )
-          }
-        case None =>
-          SeeOther(Uri(path = "/"))
+            }
+          case None =>
+            SeeOther(Uri(path = "/"))
+        }
       }
+      println(res)
+      res.get
     }
 
     case req@GET -> Root / "groups" => {
