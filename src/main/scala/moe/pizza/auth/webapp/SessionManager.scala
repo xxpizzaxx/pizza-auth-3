@@ -33,7 +33,7 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
     val sessionid = UUID.randomUUID().toString
     val session = new Session2(List.empty, None)
     val claim = JwtClaim(
-      expiration = Some(Instant.now.plusSeconds(86400 * 30).getEpochSecond), // lasts thirty days
+      expiration = Some(Instant.now.plusSeconds(86400).getEpochSecond), // lasts one day, for now
       issuedAt = Some(Instant.now.getEpochSecond)
     ) +("id", sessionid)
     val token = JwtCirce.encode(claim, secretKey, JwtAlgorithm.HS256)
