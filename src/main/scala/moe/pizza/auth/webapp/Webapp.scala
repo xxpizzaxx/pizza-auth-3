@@ -316,6 +316,7 @@ class Webapp(fullconfig: ConfigFile,
       val verify = crest.verify(callbackresults.access_token).sync()
       state match {
         case "signup" =>
+          log.info(s"signup route in callback for ${verify.characterName}")
           val charinfo = eveapi.eve.CharacterInfo(verify.characterID.toInt)
           val pilot = charinfo.map { ci =>
             val refresh = crest.refresh(callbackresults.refresh_token.get).sync()
@@ -369,6 +370,7 @@ class Webapp(fullconfig: ConfigFile,
                 req.getSession.map(_.copy(pilot = Some(gradedpilot)))
               )
             case TFailure(f) =>
+              log.info(s"failure when grading pilot, redirecting back ${f.toString}")
               val newsession = req.flash(Alerts.warning, "Unable to unpack CREST response, please try again later")
               TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(newsession)
           }
