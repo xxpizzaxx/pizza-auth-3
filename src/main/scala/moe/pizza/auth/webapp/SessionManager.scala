@@ -50,6 +50,20 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
 
   override def apply(s: HttpService): HttpService = Service.lift { req =>
     log.info(s"Intercepting request ${req}")
+    val processedHeaders = req.headers.get(headers.Cookie).toList.flatMap(_.values.list).map { header =>
+      val session = JwtCirce.decodeJson(header.content, secretKey, Seq(JwtAlgorithm.HS256)).toOption.flatMap { jwt =>
+        jwt.as[MyJwt].toOption
+      }.flatMap{ myjwt =>
+        sessions.get(myjwt.id)
+      }
+      (header, session)
+    }
+    val (successful, failed) = processedHeaders.partition(_._2.isDefined)
+    log.info("Finished processing headers")
+    log.info(s"Successful sessions: ${successful}")
+    log.info(s"Failed sessions: ${failed}")
+
+    // old logic
     val cookie = req.headers.get(headers.Cookie).flatMap(_.values.stream.find(_.name == COOKIESESSION))
     val (r, id) = cookie match {
       case None =>
