@@ -52,6 +52,7 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
     val cookie = req.headers.get(headers.Cookie).flatMap(_.values.stream.find(_.name == COOKIESESSION))
     val (r, id) = cookie match {
       case None =>
+        log.info("user has no session, creating it")
         // they have no session
         newSession(s)(req)
       case Some(c) =>
@@ -61,17 +62,21 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
               case Some(myjwt) =>
                 sessions.get(myjwt.id) match {
                   case Some(rs) =>
+                    log.info("cookie matched up, passing session through")
                     (s(req.copy(attributes = req.attributes.put(SESSION, rs))), myjwt.id)
                   case None =>
                     // session has expired or been deleted
+                    log.info("session has expired, making a new one")
                     newSession(s)(req)
                 }
               case None =>
                 // can't parse the JWT
+                log.info("JWT was invalid or malformed, making a new session")
                 newSession(s)(req)
             }
           case Failure(t) =>
             // make a new session and remove the old session
+            log.info("generally failed to check if they had a session, making a new session")
             newSession(s)(req)
         }
     }
