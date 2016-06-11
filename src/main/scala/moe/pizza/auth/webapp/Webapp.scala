@@ -356,16 +356,20 @@ class Webapp(fullconfig: ConfigFile,
             pilot.sync()
           } match {
             case TSuccess(p) =>
+              log.info(s"pilot has been read out of XML API: ${p}")
               // grade the pilot
               val gradedpilot = p.copy(accountStatus = graders.grade(p))
+              log.info(s"pilot has been graded: ${p}")
               // mark it as ineligible if it fell through
               val gradedpilot2 = if (gradedpilot.accountStatus == Pilot.Status.unclassified) {
+                log.info("marking pilot as Ineligible")
                 gradedpilot.copy(accountStatus = Pilot.Status.ineligible)
               } else {
+                log.info("not marking pilot as Ineligible")
                 gradedpilot
               }
+              log.info("trying to redirect back to signup confirm")
               // store it and forward them on
-
               TemporaryRedirect(Uri(path = "/signup/confirm")).attachSessionifDefined(
                 req.getSession.map(_.copy(pilot = Some(gradedpilot)))
               )
