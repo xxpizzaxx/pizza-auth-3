@@ -371,6 +371,7 @@ class Webapp(fullconfig: ConfigFile,
                 gradedpilot
               }
               log.info("trying to redirect back to signup confirm")
+              log.info(s"session: ${req.getSession}")
               // store it and forward them on
               TemporaryRedirect(Uri(path = "/signup/confirm")).attachSessionifDefined(
                 req.getSession.map(_.copy(pilot = Some(gradedpilot)))
