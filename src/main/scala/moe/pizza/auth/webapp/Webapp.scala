@@ -148,7 +148,10 @@ class Webapp(fullconfig: ConfigFile,
             val newemail = data.getFirstOrElse("email", "none")
             val pilotwithemail = p.copy(email = newemail)
             val password = data.getFirst("password").get
+            log.info(s"signing up ${pilotwithemail.uid}")
+            log.info(OM.writeValueAsString(pilotwithemail))
             val res = ud.addUser(pilotwithemail, password)
+            log.info(s"$res")
             SeeOther(Uri(path = "/"))
                 .attachSessionifDefined(
                   req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}").map{_.updatePilot}
@@ -278,6 +281,7 @@ class Webapp(fullconfig: ConfigFile,
 
 
     case req@GET -> Root / "update" / username =>
+      log.info(s"update route called for ${username}")
       req.getSession.flatMap(_.pilot) match {
         case Some(p) =>
           p.getGroups contains "ping" match {
@@ -352,6 +356,7 @@ class Webapp(fullconfig: ConfigFile,
                 gradedpilot
               }
               // store it and forward them on
+
               TemporaryRedirect(Uri(path = "/signup/confirm")).attachSessionifDefined(
                 req.getSession.map(_.copy(pilot = Some(gradedpilot)))
               )
