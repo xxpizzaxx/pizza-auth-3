@@ -7,6 +7,7 @@ import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.plugins.LocationManager
+import moe.pizza.auth.tasks.Update
 import moe.pizza.auth.webapp.Types.{Session2, Session}
 import moe.pizza.crestapi.CrestApi
 import org.http4s.{HttpService, _}
@@ -60,6 +61,8 @@ class Webapp(fullconfig: ConfigFile,
     map.provisionIfRequired()
     map
   }
+
+  val updater = new Update(crest, eveapi, graders)
 
   // used for serializing JSON responses, for now
   val OM = new ObjectMapper()
@@ -272,6 +275,26 @@ class Webapp(fullconfig: ConfigFile,
         }
       }
     }
+
+
+    case req@GET -> Root / "update" / username =>
+      req.getSession.flatMap(_.pilot) match {
+        case Some(p) =>
+          p.getGroups contains "ping" match {
+            case true =>
+              ud.getUser(username) match {
+                case Some(u) =>
+                  val updatedpilot = updater.updateUser(u)
+                  ud.updateUser(updatedpilot)
+                  Ok(OM.writeValueAsString(updatedpilot))
+                case None =>
+                  NotFound()
+              }
+            case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
 
 
     case req@GET -> Root / "callback" => {
