@@ -79,7 +79,7 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
       log.info("checking inner Response for sessions")
       resp.attributes.get(SESSION) match {
         case Some(newsession) =>
-          log.info("Session found, storing it in the map")
+          log.info(s"Session found, storing it in the map: $id => $newsession")
           sessions.put(id, newsession)
         case None =>
           log.info("No session found")
