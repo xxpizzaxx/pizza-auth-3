@@ -259,7 +259,7 @@ class Webapp(fullconfig: ConfigFile,
               log.info(s"$res")
               SeeOther(Uri(path = "/"))
                 .attachSessionifDefined(
-                  req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}")
+                  req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}").map(_.copy(pilot = Some(p)))
                 )
             }
           case TFailure(f) =>
