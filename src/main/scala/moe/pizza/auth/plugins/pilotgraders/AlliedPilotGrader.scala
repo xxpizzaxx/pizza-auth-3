@@ -77,18 +77,18 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
           } else {
             logger.info("failed to refresh, classifying with old data")
             p match {
-              case _ if a.pilots contains p.characterName => Status.ally
-              case _ if a.corporations contains p.corporation => Status.ally
-              case _ if a.alliances contains p.alliance => Status.ally
+              case _ if a.pilots.exists(_ == p.characterName) => Status.ally
+              case _ if a.corporations.exists(_ == p.corporation) => Status.ally
+              case _ if a.alliances.exists(_ == p.alliance) => Status.ally
               case _ => Status.unclassified
             }
           }
         } else {
           // we've got a valid contact list
           p match {
-            case _ if a.pilots contains p.characterName => Status.ally
-            case _ if a.corporations contains p.corporation => Status.ally
-            case _ if a.alliances contains p.alliance => Status.ally
+            case _ if a.pilots.exists(_ == p.characterName) => Status.ally
+            case _ if a.corporations.exists(_ == p.corporation) => Status.ally
+            case _ if a.alliances.exists(_ == p.alliance) => Status.ally
             case _ => Status.unclassified
           }
         }
