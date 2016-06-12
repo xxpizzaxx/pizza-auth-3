@@ -1,21 +1,15 @@
 package moe.pizza.auth.webapp
 
 import java.time.Instant
-import java.util.UUID
 
 import moe.pizza.auth.webapp.SessionManager._
 import moe.pizza.auth.webapp.Types.{Session2, Session}
 import org.http4s.{HttpService, _}
 import org.http4s.server._
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import pdi.jwt.{JwtAlgorithm, JwtCirce, JwtClaim}
-import io.circe.generic.auto._
-
-import scala.collection.concurrent.TrieMap
-import scala.util.{Failure, Success}
-import scalaz.concurrent.Task
-
+import io.circe._
+import io.circe.generic.semiauto._
 
 object SessionManager {
   val SESSION = AttributeKey[Session2]("SESSION")
@@ -28,25 +22,25 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
   val log = LoggerFactory.getLogger(getClass)
 
   case class MyJwt(exp: Long, iat: Long, session: Session2)
+  implicit val myjwtencoder: Encoder[MyJwt] = Encoder[MyJwt]
+  implicit val myjwtdecoder: Decoder[MyJwt] = Decoder[MyJwt]
 
   override def apply(s: HttpService): HttpService = Service.lift { req =>
     log.info(s"Intercepting request ${req}")
-    val processedHeaders = req.headers.get(headers.Cookie).toList.flatMap(_.values.list).map { header =>
-      val session = JwtCirce.decodeJson(header.content, secretKey, Seq(JwtAlgorithm.HS256)).toOption.flatMap { jwt =>
+    val sessions = req.headers.get(headers.Cookie).toList.flatMap(_.values.list).flatMap { header =>
+      JwtCirce.decodeJson(header.content, secretKey, Seq(JwtAlgorithm.HS256)).toOption.flatMap { jwt =>
         jwt.as[MyJwt].toOption
       }.map{ myjwt =>
         myjwt.session
       }
-      session
     }
-    val (successful, failed) = processedHeaders.partition(_.isDefined)
-    log.info("Finished processing headers")
-    log.info(s"Successful sessions: ${successful}")
-    log.info(s"Failed sessions: ${failed}")
+    log.info(s"found sessions: ${sessions}")
+    if (sessions.size>1) {
+      log.warn(s"found ${sessions.size} sessions, there should be at most 1")
+    }
 
     // if we didn't find a valid session, make them one
-    val session = successful.headOption.getOrElse(Session2(List.empty, None))
-    val removeme = successful.tail ++ failed
+    val session = sessions.headOption.getOrElse(Session2(List.empty, None))
 
     // do the inner request
     val response = s(req.copy(attributes = req.attributes.put(SESSION, session)))
@@ -69,7 +63,7 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
           None
         )
       } else {
-        log.info(s"log out flag was seto, not saving any cookies")
+        log.info(s"log out flag was set, not saving any cookies")
         respWithCookieRemovals
       }
     }
