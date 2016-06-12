@@ -69,7 +69,7 @@ class SessionManager(secretKey: String, ud: UserDatabase) extends HttpMiddleware
         )
       } else {
         log.info(s"log out flag was set, not saving any cookies")
-        oldsessions.foldLeft(resp){ (resp, cookie) => resp.removeCookie(cookie)}
+        resp.removeCookie(COOKIESESSION)
       }
     }
   }
