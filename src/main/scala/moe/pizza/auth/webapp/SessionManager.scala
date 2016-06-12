@@ -47,7 +47,9 @@ class SessionManager(secretKey: String, ud: UserDatabase) extends HttpMiddleware
     val session = sessions.headOption.getOrElse(Session2(List.empty, None, None))
 
     // do the inner request
-    val response = s(req.copy(attributes = req.attributes.put(HYDRATEDSESSION, session.hydrate(ud))))
+    val hydrated = session.hydrate(ud)
+    log.info(s"running inner router with hydrated session ${hydrated}")
+    val response = s(req.copy(attributes = req.attributes.put(HYDRATEDSESSION, hydrated)))
 
     response.map { resp =>
       // do all of this once the request has been created
