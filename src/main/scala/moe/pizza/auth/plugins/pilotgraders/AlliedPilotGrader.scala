@@ -67,7 +67,7 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
   override def grade(p: Pilot): Status.Value = {
     allies match {
       case Some(a) =>
-        if (a.cachedUntil.isBeforeNow) {
+        if (a.cachedUntil.plusHours(1).isBeforeNow) {
           logger.info(s"refreshing contact list, it expired, it was cached until ${a.cachedUntil}")
           val newallies = pullAllies()
           if (newallies.isDefined) {
