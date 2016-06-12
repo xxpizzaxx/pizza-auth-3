@@ -8,7 +8,7 @@ import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.plugins.LocationManager
 import moe.pizza.auth.tasks.Update
-import moe.pizza.auth.webapp.Types.{Session2, Session}
+import moe.pizza.auth.webapp.Types.{HydratedSession, Session2, Session}
 import moe.pizza.crestapi.CrestApi
 import org.http4s.{HttpService, _}
 import org.http4s.dsl.{Root, _}
@@ -76,10 +76,10 @@ class Webapp(fullconfig: ConfigFile,
 
   import Utils._
 
-  implicit class RichSession2(s: Session2) {
-    def toNormalSession = new Session(s.alerts)
-     def updatePilot: Session2 = {
-       s.copy(pilot = ud.getUser(s.pilot.get.uid))
+  implicit class RichHydratedSession(hs: HydratedSession) {
+    def toNormalSession = new Session(hs.alerts)
+     def updatePilot: HydratedSession = {
+       hs.copy(pilot = ud.getUser(hs.pilot.get.uid))
      }
   }
 
@@ -248,7 +248,7 @@ class Webapp(fullconfig: ConfigFile,
 
     case req@GET -> Root / "groups" / "apply" / group => {
       val goback = TemporaryRedirect(Uri(path = "/groups"))
-      req.sessionResponse { (s: Session2, p: Pilot) =>
+      req.sessionResponse { (s: HydratedSession, p: Pilot) =>
         // TODO extend for public users
         group match {
           case g if groupconfig.open.contains(g) =>
@@ -273,7 +273,7 @@ class Webapp(fullconfig: ConfigFile,
 
     case req@GET -> Root / "groups" / "remove" / group => {
       val goback = TemporaryRedirect(Uri(path = "/groups"))
-      req.sessionResponse { (s: Session2, p: Pilot) =>
+      req.sessionResponse { (s: HydratedSession, p: Pilot) =>
         // TODO extend for public users
         group match {
           case g if p.authGroups.contains(g) =>
@@ -403,7 +403,7 @@ class Webapp(fullconfig: ConfigFile,
 
   val secretKey = "SECRET IS GOING HERE"
   //UUID.randomUUID().toString
-  val sessions = new SessionManager(secretKey)
+  val sessions = new SessionManager(secretKey, ud)
 
   def router = staticrouter orElse sessions(dynamicWebRouter)
 

@@ -1,7 +1,8 @@
 package moe.pizza.auth.webapp
 
+import moe.pizza.auth.interfaces.UserDatabase
 import moe.pizza.auth.models.Pilot
-import moe.pizza.auth.webapp.Types.{Session2, Session}
+import moe.pizza.auth.webapp.Types.{HydratedSession, Session2, Session}
 import moe.pizza.auth.webapp.Utils.Alerts.Alerts
 import org.http4s.{Uri, Response, Request}
 import org.http4s.dsl.{Root, _}
@@ -18,14 +19,27 @@ object Utils {
     val danger = Value("danger")
   }
 
+  implicit class PimpedSession2(s: Session2) {
+    def hydrate(u: UserDatabase): HydratedSession = {
+      new HydratedSession(s.alerts, s.uid.flatMap(u.getUser), s.verify)
+    }
+  }
+
+  implicit class PimpedHydratedSession(hs: HydratedSession) {
+    def dehydrate(): Session2 = {
+      new Session2(hs.alerts, hs.pilot.map(_.uid), hs.verify)
+    }
+  }
+
+
   implicit class PimpedRequest(r: Request) {
-    def flash(level: Alerts, message: String): Option[Session2] = {
+    def flash(level: Alerts, message: String): Option[HydratedSession] = {
       getSession.map( s =>
         s.copy(alerts = s.alerts :+ Types.Alert(level.toString, message))
       )
     }
-    def getSession = r.attributes.get(SessionManager.SESSION)
-    def setSession(s: Types.Session2): Unit = r.attributes.put(SessionManager.SESSION, s)
+    def getSession = r.attributes.get(SessionManager.HYDRATEDSESSION)
+    def setSession(s: Types.HydratedSession): Unit = r.attributes.put(SessionManager.HYDRATEDSESSION, s)
     def clearAlerts(): Unit = {
       val session = getSession
       session match {
@@ -33,7 +47,7 @@ object Utils {
         case None => ()
       }
     }
-    def sessionResponse(f: ((Session2, Pilot) => Task[Response]), error: String = "You must be signed in to do that" ): Task[Response] = {
+    def sessionResponse(f: ((HydratedSession, Pilot) => Task[Response]), error: String = "You must be signed in to do that" ): Task[Response] = {
       (getSession, getSession.flatMap(_.pilot)) match {
         case (Some(s), Some(p)) =>
           f(s, p)
@@ -44,12 +58,12 @@ object Utils {
   }
 
   implicit class PimpedResponse(r: Response) {
-    def withSession(s: Session2): Response = r.withAttribute(SessionManager.SESSION, s)
+    def withSession(s: HydratedSession): Response = r.withAttribute(SessionManager.HYDRATEDSESSION, s)
     def withNoSession(): Response = r.withAttribute(SessionManager.LOGOUT, "")
   }
 
   implicit class PimpedTaskResponse(r: Task[Response]) {
-    def attachSessionifDefined(s: Option[Session2]): Task[Response] =
+    def attachSessionifDefined(s: Option[HydratedSession]): Task[Response] =
       r.map(res => s.foldLeft(res){(resp, sess) => resp.withSession(sess)})
     def clearSession(): Task[Response] =
       r.map(res => res.withNoSession())

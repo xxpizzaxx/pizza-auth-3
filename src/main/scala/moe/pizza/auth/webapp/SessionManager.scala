@@ -2,28 +2,30 @@ package moe.pizza.auth.webapp
 
 import java.time.Instant
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import moe.pizza.auth.interfaces.UserDatabase
 import moe.pizza.auth.webapp.SessionManager._
-import moe.pizza.auth.webapp.Types.{Session2, Session}
+import moe.pizza.auth.webapp.Types.{HydratedSession, Session2, Session}
 import org.http4s.{HttpService, _}
 import org.http4s.server._
 import org.slf4j.LoggerFactory
 import pdi.jwt.{JwtAlgorithm, JwtCirce, JwtClaim}
-import io.circe._
-import io.circe.generic.semiauto._
+import io.circe.generic.auto._
+import Utils._
 
 object SessionManager {
-  val SESSION = AttributeKey[Session2]("SESSION")
-  val SESSIONID = AttributeKey[Session2]("SESSIONID")
+  val HYDRATEDSESSION = AttributeKey[HydratedSession]("HYDRATEDSESSION")
   val LOGOUT = AttributeKey[String]("LOGOUT")
   val COOKIESESSION = "authsession"
 }
 
-class SessionManager(secretKey: String) extends HttpMiddleware {
+class SessionManager(secretKey: String, ud: UserDatabase) extends HttpMiddleware {
   val log = LoggerFactory.getLogger(getClass)
+  val OM = new ObjectMapper()
+  OM.registerModule(DefaultScalaModule)
 
   case class MyJwt(exp: Long, iat: Long, session: Session2)
-  implicit val myjwtencoder: Encoder[MyJwt] = Encoder[MyJwt]
-  implicit val myjwtdecoder: Decoder[MyJwt] = Decoder[MyJwt]
 
   override def apply(s: HttpService): HttpService = Service.lift { req =>
     log.info(s"Intercepting request ${req}")
@@ -40,14 +42,14 @@ class SessionManager(secretKey: String) extends HttpMiddleware {
     }
 
     // if we didn't find a valid session, make them one
-    val session = sessions.headOption.getOrElse(Session2(List.empty, None))
+    val session = sessions.headOption.getOrElse(Session2(List.empty, None, None))
 
     // do the inner request
-    val response = s(req.copy(attributes = req.attributes.put(SESSION, session)))
+    val response = s(req.copy(attributes = req.attributes.put(HYDRATEDSESSION, session.hydrate(ud))))
 
     response.map { resp =>
       // do all of this once the request has been created
-      val sessionToSave = resp.attributes.get(SESSION).getOrElse(session)
+      val sessionToSave = resp.attributes.get(HYDRATEDSESSION).map(_.dehydrate()).getOrElse(session)
       val oldsessions = resp.headers.get(headers.Cookie).toList.flatMap(_.values.list).filter(_.name == COOKIESESSION)
       val respWithCookieRemovals = oldsessions.foldLeft(resp){ (resp, cookie) => resp.removeCookie(cookie)}
       if (resp.attributes.get(LOGOUT).isEmpty) {
