@@ -63,9 +63,7 @@ class SessionManager(secretKey: String, ud: UserDatabase) extends HttpMiddleware
         ) +("session", OM.writeValueAsString(sessionToSave))
         val token = JwtCirce.encode(claim, secretKey, JwtAlgorithm.HS256)
         resp.addCookie(
-          COOKIESESSION,
-          token,
-          None
+          new Cookie(COOKIESESSION, token, None, None, None, path = Some("/"))
         )
       } else {
         log.info(s"log out flag was set, not saving any cookies")
