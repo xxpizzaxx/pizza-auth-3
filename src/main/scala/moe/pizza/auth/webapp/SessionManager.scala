@@ -15,6 +15,7 @@ import io.circe.generic.auto._
 import Utils._
 import scala.util.Try
 
+
 object SessionManager {
   val HYDRATEDSESSION = AttributeKey[HydratedSession]("HYDRATEDSESSION")
   val LOGOUT = AttributeKey[String]("LOGOUT")

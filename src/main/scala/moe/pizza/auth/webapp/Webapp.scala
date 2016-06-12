@@ -8,7 +8,7 @@ import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.plugins.LocationManager
 import moe.pizza.auth.tasks.Update
-import moe.pizza.auth.webapp.Types.{HydratedSession, Session2, Session}
+import moe.pizza.auth.webapp.Types.{SignupData, HydratedSession, Session2, Session}
 import moe.pizza.crestapi.CrestApi
 import org.http4s.{HttpService, _}
 import org.http4s.dsl.{Root, _}
@@ -135,20 +135,120 @@ class Webapp(fullconfig: ConfigFile,
 
     case req@GET -> Root / "signup" / "confirm" => {
       log.info("following route for GET signup/confirm")
-      log.info(s"${req.getSession}")
-      req.getSession.flatMap(_.pilot) match {
-        case Some(p) =>
-          Ok(templates.html.base("pizza-auth-3", templates.html.signup(p), req.getSession.map(_.toNormalSession), req.getSession.flatMap(_.pilot)))
-        case None =>
-          TemporaryRedirect(Uri(path = "/"))
-      }
+      req.getSession.flatMap(_.signupData).map { signup =>
+        val charinfo = eveapi.eve.CharacterInfo(signup.verify.characterID.toInt)
+        val pilot = charinfo.map { ci =>
+          val refresh = crest.refresh(signup.refresh).sync()
+          ci match {
+            case Right(r) =>
+              // has an alliance
+              new Pilot(
+                Utils.sanitizeUserName(r.result.characterName),
+                Pilot.Status.unclassified,
+                r.result.alliance,
+                r.result.corporation,
+                r.result.characterName,
+                "none@none",
+                Pilot.OM.createObjectNode(),
+                List.empty[String],
+                List("%d:%s".format(r.result.characterID, refresh.refresh_token.get)),
+                List.empty[String]
+              )
+            case Left(l) =>
+              // does not have an alliance
+              new Pilot(
+                Utils.sanitizeUserName(l.result.characterName),
+                Pilot.Status.unclassified,
+                "",
+                l.result.corporation,
+                l.result.characterName,
+                "none@none",
+                Pilot.OM.createObjectNode(),
+                List.empty[String],
+                List("%d:%s".format(l.result.characterID, refresh.refresh_token.get)),
+                List.empty[String]
+              )
+          }
+        }
+        Try {
+          pilot.sync()
+        } match {
+          case TSuccess(p) =>
+            log.info(s"pilot has been read out of XML API: ${p}")
+            // grade the pilot
+            val gradedpilot = p.copy(accountStatus = graders.grade(p))
+            log.info(s"pilot has been graded: ${p}")
+            // mark it as ineligible if it fell through
+            val gradedpilot2 = if (gradedpilot.accountStatus == Pilot.Status.unclassified) {
+              log.info("marking pilot as Ineligible")
+              gradedpilot.copy(accountStatus = Pilot.Status.ineligible)
+            } else {
+              log.info("not marking pilot as Ineligible")
+              gradedpilot
+            }
+            log.info("trying to redirect back to signup confirm")
+            Ok(templates.html.base("pizza-auth-3", templates.html.signup(p), req.getSession.map(_.toNormalSession), None))
+          case TFailure(f) =>
+            log.info(s"failure when grading pilot, redirecting back ${f.toString}")
+            val newsession = req.flash(Alerts.warning, "Unable to unpack CREST response, please try again later")
+            TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(newsession)
+        }
+      }.getOrElse(TemporaryRedirect(Uri(path = "/")))
     }
 
     case req@POST -> Root / "signup" / "confirm" => {
       log.info("signup confirm called")
-      val res = Try {
-        req.getSession.flatMap(_.pilot) match {
-          case Some(p) =>
+      req.getSession.flatMap(_.signupData).map { signup =>
+        val charinfo = eveapi.eve.CharacterInfo(signup.verify.characterID.toInt)
+        val pilot = charinfo.map { ci =>
+          val refresh = crest.refresh(signup.refresh).sync()
+          ci match {
+            case Right(r) =>
+              // has an alliance
+              new Pilot(
+                Utils.sanitizeUserName(r.result.characterName),
+                Pilot.Status.unclassified,
+                r.result.alliance,
+                r.result.corporation,
+                r.result.characterName,
+                "none@none",
+                Pilot.OM.createObjectNode(),
+                List.empty[String],
+                List("%d:%s".format(r.result.characterID, refresh.refresh_token.get)),
+                List.empty[String]
+              )
+            case Left(l) =>
+              // does not have an alliance
+              new Pilot(
+                Utils.sanitizeUserName(l.result.characterName),
+                Pilot.Status.unclassified,
+                "",
+                l.result.corporation,
+                l.result.characterName,
+                "none@none",
+                Pilot.OM.createObjectNode(),
+                List.empty[String],
+                List("%d:%s".format(l.result.characterID, refresh.refresh_token.get)),
+                List.empty[String]
+              )
+          }
+        }
+        Try {
+          pilot.sync()
+        } match {
+          case TSuccess(p) =>
+            log.info(s"pilot has been read out of XML API: ${p}")
+            // grade the pilot
+            val gradedpilot = p.copy(accountStatus = graders.grade(p))
+            log.info(s"pilot has been graded: ${p}")
+            // mark it as ineligible if it fell through
+            val gradedpilot2 = if (gradedpilot.accountStatus == Pilot.Status.unclassified) {
+              log.info("marking pilot as Ineligible")
+              gradedpilot.copy(accountStatus = Pilot.Status.ineligible)
+            } else {
+              log.info("not marking pilot as Ineligible")
+              gradedpilot
+            }
             req.decode[UrlForm] { data =>
               val newemail = data.getFirstOrElse("email", "none")
               val pilotwithemail = p.copy(email = newemail)
@@ -159,17 +259,15 @@ class Webapp(fullconfig: ConfigFile,
               log.info(s"$res")
               SeeOther(Uri(path = "/"))
                 .attachSessionifDefined(
-                  req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}").map {
-                    _.updatePilot
-                  }
+                  req.flash(Alerts.success, s"Successfully created and signed in as ${p.uid}")
                 )
             }
-          case None =>
-            SeeOther(Uri(path = "/"))
+          case TFailure(f) =>
+            log.info(s"failure when grading pilot, redirecting back ${f.toString}")
+            val newsession = req.flash(Alerts.warning, "Unable to unpack CREST response, please try again later")
+            SeeOther(Uri(path = "/")).attachSessionifDefined(newsession)
         }
-      }
-      println(res)
-      res.get
+      }.getOrElse(SeeOther(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.danger, "Unable to create your user, please contact the administrator.")))
     }
 
     case req@GET -> Root / "groups" => {
@@ -319,68 +417,11 @@ class Webapp(fullconfig: ConfigFile,
       state match {
         case "signup" =>
           log.info(s"signup route in callback for ${verify.characterName}")
-          val charinfo = eveapi.eve.CharacterInfo(verify.characterID.toInt)
-          val pilot = charinfo.map { ci =>
-            val refresh = crest.refresh(callbackresults.refresh_token.get).sync()
-            ci match {
-              case Right(r) =>
-                // has an alliance
-                new Pilot(
-                  Utils.sanitizeUserName(r.result.characterName),
-                  Pilot.Status.unclassified,
-                  r.result.alliance,
-                  r.result.corporation,
-                  r.result.characterName,
-                  "none@none",
-                  Pilot.OM.createObjectNode(),
-                  List.empty[String],
-                  List("%d:%s".format(r.result.characterID, refresh.refresh_token.get)),
-                  List.empty[String]
-                )
-              case Left(l) =>
-                // does not have an alliance
-                new Pilot(
-                  Utils.sanitizeUserName(l.result.characterName),
-                  Pilot.Status.unclassified,
-                  "",
-                  l.result.corporation,
-                  l.result.characterName,
-                  "none@none",
-                  Pilot.OM.createObjectNode(),
-                  List.empty[String],
-                  List("%d:%s".format(l.result.characterID, refresh.refresh_token.get)),
-                  List.empty[String]
-                )
+          val newSession = req.getSession.map(x => x.copy(signupData = Some(new SignupData(verify, callbackresults.refresh_token.get))))
+          TemporaryRedirect(Uri(path = "/signup/confirm")).attachSessionifDefined(
+            newSession
+          )
 
-            }
-          }
-          Try {
-            pilot.sync()
-          } match {
-            case TSuccess(p) =>
-              log.info(s"pilot has been read out of XML API: ${p}")
-              // grade the pilot
-              val gradedpilot = p.copy(accountStatus = graders.grade(p))
-              log.info(s"pilot has been graded: ${p}")
-              // mark it as ineligible if it fell through
-              val gradedpilot2 = if (gradedpilot.accountStatus == Pilot.Status.unclassified) {
-                log.info("marking pilot as Ineligible")
-                gradedpilot.copy(accountStatus = Pilot.Status.ineligible)
-              } else {
-                log.info("not marking pilot as Ineligible")
-                gradedpilot
-              }
-              log.info("trying to redirect back to signup confirm")
-              log.info(s"session: ${req.getSession}")
-              // store it and forward them on
-              TemporaryRedirect(Uri(path = "/signup/confirm")).attachSessionifDefined(
-                req.getSession.map(_.copy(pilot = Some(gradedpilot)))
-              )
-            case TFailure(f) =>
-              log.info(s"failure when grading pilot, redirecting back ${f.toString}")
-              val newsession = req.flash(Alerts.warning, "Unable to unpack CREST response, please try again later")
-              TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(newsession)
-          }
         case "add" =>
           TemporaryRedirect(Uri(path = "/"))
         case "login" =>

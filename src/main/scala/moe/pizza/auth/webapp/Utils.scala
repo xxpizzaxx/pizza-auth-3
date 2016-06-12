@@ -21,13 +21,13 @@ object Utils {
 
   implicit class PimpedSession2(s: Session2) {
     def hydrate(u: UserDatabase): HydratedSession = {
-      new HydratedSession(s.alerts, s.uid.flatMap(u.getUser), s.verify)
+      new HydratedSession(s.alerts, s.uid.flatMap(u.getUser), s.signupData)
     }
   }
 
   implicit class PimpedHydratedSession(hs: HydratedSession) {
     def dehydrate(): Session2 = {
-      new Session2(hs.alerts, hs.pilot.map(_.uid), hs.verify)
+      new Session2(hs.alerts, hs.pilot.map(_.uid), hs.signupData)
     }
   }
 
