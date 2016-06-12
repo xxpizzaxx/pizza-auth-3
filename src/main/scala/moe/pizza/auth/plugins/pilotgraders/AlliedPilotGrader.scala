@@ -66,6 +66,7 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
 
   override def grade(p: Pilot): Status.Value = {
     logger.info(s"running AlliedPilotGrader against ${p.characterName}/${p.corporation}/${p.alliance}")
+    logger.info(s"it's cached list is ${allies}")
     allies match {
       case Some(a) =>
         if (a.cachedUntil.plusHours(1).isBeforeNow) {
