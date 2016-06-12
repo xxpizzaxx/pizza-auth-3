@@ -55,7 +55,6 @@ class SessionManager(secretKey: String, ud: UserDatabase) extends HttpMiddleware
       // do all of this once the request has been created
       val sessionToSave = resp.attributes.get(HYDRATEDSESSION).map(_.dehydrate()).getOrElse(session)
       val oldsessions = resp.headers.get(headers.Cookie).toList.flatMap(_.values.list).filter(_.name == COOKIESESSION)
-      val respWithCookieRemovals = oldsessions.foldLeft(resp){ (resp, cookie) => resp.removeCookie(cookie)}
       if (resp.attributes.get(LOGOUT).isEmpty) {
         log.info(s"saving the session as a cookie")
         val claim = JwtClaim(
@@ -63,14 +62,14 @@ class SessionManager(secretKey: String, ud: UserDatabase) extends HttpMiddleware
           issuedAt = Some(Instant.now.getEpochSecond)
         ) +("session", OM.writeValueAsString(sessionToSave))
         val token = JwtCirce.encode(claim, secretKey, JwtAlgorithm.HS256)
-        respWithCookieRemovals.addCookie(
+        resp.addCookie(
           COOKIESESSION,
           token,
           None
         )
       } else {
         log.info(s"log out flag was set, not saving any cookies")
-        respWithCookieRemovals
+        oldsessions.foldLeft(resp){ (resp, cookie) => resp.removeCookie(cookie)}
       }
     }
   }
