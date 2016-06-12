@@ -15,6 +15,7 @@ class GraderChain(graders: Seq[PilotGrader]) extends PilotGrader {
   override def grade(p: Pilot): Status.Value = {
     log.info("grading pilot with grader chain")
     graders.foldLeft(Status.unclassified) { (status, nextGrader) =>
+      log.info(s"inner grader loop ${status}, ${nextGrader}")
       status match {
         case Status.unclassified => nextGrader.grade(p)
         case s => s
