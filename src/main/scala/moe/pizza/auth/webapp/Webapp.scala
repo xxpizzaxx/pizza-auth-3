@@ -189,7 +189,7 @@ class Webapp(fullconfig: ConfigFile,
               gradedpilot
             }
             log.info("trying to redirect back to signup confirm")
-            Ok(templates.html.base("pizza-auth-3", templates.html.signup(p), req.getSession.map(_.toNormalSession), None))
+            Ok(templates.html.base("pizza-auth-3", templates.html.signup(gradedpilot2), req.getSession.map(_.toNormalSession), None))
           case TFailure(f) =>
             log.info(s"failure when grading pilot, redirecting back ${f.toString}")
             val newsession = req.flash(Alerts.warning, "Unable to unpack CREST response, please try again later")
@@ -255,7 +255,7 @@ class Webapp(fullconfig: ConfigFile,
             }
             req.decode[UrlForm] { data =>
               val newemail = data.getFirstOrElse("email", "none")
-              val pilotwithemail = p.copy(email = newemail)
+              val pilotwithemail = gradedpilot2.copy(email = newemail)
               val password = data.getFirst("password").get
               log.info(s"signing up ${pilotwithemail.uid}")
               log.info(OM.writeValueAsString(pilotwithemail))
