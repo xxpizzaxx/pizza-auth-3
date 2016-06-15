@@ -37,7 +37,7 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
 
   val logger = LoggerFactory.getLogger(getClass)
   val eveapi = eve.getOrElse(new EVEAPI(key = Some(apikey)))
-  var allies = pullAllies()
+  val allies = pullAllies()
 
   allies match {
     case Some(a) =>
@@ -69,6 +69,7 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
     logger.info(s"it's cached list is ${allies}")
     allies match {
       case Some(a) =>
+        /*
         if (a.cachedUntil.plusHours(1).isBeforeNow) {
           logger.info(s"refreshing contact list, it expired, it was cached until ${a.cachedUntil}")
           val newallies = pullAllies()
@@ -85,6 +86,7 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
             }
           }
         } else {
+        */
           // we've got a valid contact list
           p match {
             case _ if a.pilots.exists(_ == p.characterName) => Status.ally
@@ -92,7 +94,9 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
             case _ if a.alliances.exists(_ == p.alliance) => Status.ally
             case _ => Status.unclassified
           }
+        /*
         }
+        */
       case None =>
         logger.warn("no contact list loaded")
         Pilot.Status.unclassified
