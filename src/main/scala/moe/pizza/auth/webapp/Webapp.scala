@@ -178,8 +178,8 @@ class Webapp(fullconfig: ConfigFile,
             // grade the pilot
             val result = graders.grade(p)
             log.info(s"pilot was graded as ${result}")
-            val gradedpilot = p.copy(accountStatus = result)
-            log.info(s"pilot has been graded: ${p}")
+            val gradedpilot = p.withNewAccountStatus(result)
+            log.info(s"pilot has been graded: ${gradedpilot}")
             // mark it as ineligible if it fell through
             val gradedpilot2 = if (gradedpilot.accountStatus == Pilot.Status.unclassified) {
               log.info("marking pilot as Ineligible")
@@ -243,8 +243,8 @@ class Webapp(fullconfig: ConfigFile,
             // grade the pilot
             val result = graders.grade(p)
             log.info(s"pilot was graded as ${result}")
-            val gradedpilot = p.copy(accountStatus = result)
-            log.info(s"pilot has been graded: ${p}")
+            val gradedpilot = p.withNewAccountStatus(result)
+            log.info(s"pilot has been graded: ${gradedpilot}")
             // mark it as ineligible if it fell through
             val gradedpilot2 = if (gradedpilot.accountStatus == Pilot.Status.unclassified) {
               log.info("marking pilot as Ineligible")

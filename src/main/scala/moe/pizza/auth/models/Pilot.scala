@@ -121,4 +121,8 @@ case class Pilot(
     Pilot.OM.readTree(this.toJson)
   }
 
+  def withNewAccountStatus(s: Pilot.Status.Status) = {
+    new Pilot(uid, s, alliance, corporation, characterName, email, metadata, authGroups, crestTokens, apiKeys)
+  }
+
 }

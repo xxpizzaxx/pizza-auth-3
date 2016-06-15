@@ -14,16 +14,6 @@ class GraderChain(graders: Seq[PilotGrader]) extends PilotGrader {
 
   override def grade(p: Pilot): Status.Value = {
     log.info("grading pilot with grader chain")
-    for (grader <- graders) {
-      val r = grader.grade(p)
-      if (r!=Status.unclassified) {
-        log.info(s"returning a grader result of ${r} for ${p.uid}")
-        return r
-      }
-    }
-    log.info(s"returning a grader result of ${Status.unclassified} for ${p.uid}")
-    Status.unclassified
-    /*
     val r = graders.foldLeft(Status.unclassified) { (status, nextGrader) =>
       log.info(s"inner grader loop ${status}, ${nextGrader}")
       status match {
@@ -31,8 +21,7 @@ class GraderChain(graders: Seq[PilotGrader]) extends PilotGrader {
         case s => s
       }
     }
-    log.info(s"returning grader result of ${r} for ${p.uid}")
+    log.info(s"returning a grade status of ${r} for ${p.uid}")
     r
-    */
   }
 }
