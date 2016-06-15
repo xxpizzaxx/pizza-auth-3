@@ -176,7 +176,9 @@ class Webapp(fullconfig: ConfigFile,
           case TSuccess(p) =>
             log.info(s"pilot has been read out of XML API: ${p}")
             // grade the pilot
-            val gradedpilot = p.copy(accountStatus = graders.grade(p))
+            val result = graders.grade(p)
+            log.info(s"pilot was graded as ${result}")
+            val gradedpilot = p.copy(accountStatus = result)
             log.info(s"pilot has been graded: ${p}")
             // mark it as ineligible if it fell through
             val gradedpilot2 = if (gradedpilot.accountStatus == Pilot.Status.unclassified) {
@@ -239,7 +241,9 @@ class Webapp(fullconfig: ConfigFile,
           case TSuccess(p) =>
             log.info(s"pilot has been read out of XML API: ${p}")
             // grade the pilot
-            val gradedpilot = p.copy(accountStatus = graders.grade(p))
+            val result = graders.grade(p)
+            log.info(s"pilot was graded as ${result}")
+            val gradedpilot = p.copy(accountStatus = result)
             log.info(s"pilot has been graded: ${p}")
             // mark it as ineligible if it fell through
             val gradedpilot2 = if (gradedpilot.accountStatus == Pilot.Status.unclassified) {
