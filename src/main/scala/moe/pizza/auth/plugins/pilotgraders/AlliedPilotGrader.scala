@@ -67,8 +67,9 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
   override def grade(p: Pilot): Status.Value = {
     logger.info(s"running AlliedPilotGrader against ${p.characterName}/${p.corporation}/${p.alliance}")
     logger.info(s"it's cached list is ${allies}")
-    allies match {
+    val r = allies match {
       case Some(a) =>
+        logger.info(s"alliance result: ${p.alliance}, ${a.alliances}, ${p.alliance.exists(_ == p.alliance)}")
         /*
         if (a.cachedUntil.plusHours(1).isBeforeNow) {
           logger.info(s"refreshing contact list, it expired, it was cached until ${a.cachedUntil}")
@@ -101,6 +102,7 @@ class AlliedPilotGrader(threshold: Double, usecorp: Boolean, usealliance: Boolea
         logger.warn("no contact list loaded")
         Pilot.Status.unclassified
     }
-
+    logger.info(s"returning ${p.uid} graded as $r")
+    r
   }
 }
