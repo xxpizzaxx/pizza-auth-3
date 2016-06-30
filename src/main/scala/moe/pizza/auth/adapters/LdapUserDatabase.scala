@@ -13,14 +13,14 @@ import LdapClient._
 /**
   * Created by andi on 03/03/16.
   */
-class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDatabase {
+class LdapUserDatabase(client: LdapClient, schema: SchemaManager, basedn:String) extends UserDatabase {
 
   private def makePassword(p: String) = Utils.hashPassword(p)
 
   implicit class ConvertablePilot(p: Pilot) {
     def toAddRequest(s: SchemaManager, password: String) = {
       val e = new DefaultEntry(s,
-        s"uid=${p.uid},ou=pizza",
+        s"uid=${p.uid},$basedn",
         "ObjectClass: top",
         "ObjectClass: pilot",
         "ObjectClass: account",
@@ -56,7 +56,7 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
   override def deleteUser(p: Pilot): Boolean = {
     client.withConnection { c =>
       val req = new DeleteRequestImpl
-      req.setName(new Dn(s"uid=${p.uid},ou=pizza"))
+      req.setName(new Dn(s"uid=${p.uid},$basedn"))
       c.delete(req).getLdapResult.getResultCode == ResultCodeEnum.SUCCESS
     }
   }
@@ -64,7 +64,7 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
   override def authenticateUser(uid: String, password: String): Option[Pilot] = {
     Option(client.withConnection { c =>
       val bindreq = new BindRequestImpl()
-      bindreq.setDn(new Dn(s"uid=$uid,ou=pizza"))
+      bindreq.setDn(new Dn(s"uid=$uid,$basedn"))
       bindreq.setCredentials(password)
       val r = c.bind(bindreq)
       r.getLdapResult.getResultCode == ResultCodeEnum.SUCCESS
@@ -75,13 +75,13 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
 
   override def getUser(uid: String): Option[Pilot] = {
     client.withConnection { connection =>
-      connection.filter("ou=pizza", s"(&(uid=$uid)(objectclass=pilot))").toList.headOption.map(_.toMap).map(Pilot.fromMap)
+      connection.filter(basedn, s"(&(uid=$uid)(objectclass=pilot))").toList.headOption.map(_.toMap).map(Pilot.fromMap)
     }
   }
 
   override def getUsers(filter: String): List[Pilot] = {
     client.withConnection{ c =>
-      c.filter("ou=pizza", s"(&(objectclass=pilot)($filter))").toList.map(_.toMap).map(Pilot.fromMap)
+      c.filter(basedn, s"(&(objectclass=pilot)($filter))").toList.map(_.toMap).map(Pilot.fromMap)
     }
   }
 
@@ -167,7 +167,7 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
           )
         }
       }
-      modrequest.setName(new Dn(s"uid=${p.uid},ou=pizza"))
+      modrequest.setName(new Dn(s"uid=${p.uid},$basedn"))
       val res = c.modify(modrequest)
       res.getLdapResult.getResultCode == ResultCodeEnum.SUCCESS
     }
@@ -178,7 +178,7 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
       val mod = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "userPassword", makePassword(password))
       val modrequest = new ModifyRequestImpl
       modrequest.addModification(mod)
-      modrequest.setName(new Dn(s"uid=${p.uid},ou=pizza"))
+      modrequest.setName(new Dn(s"uid=${p.uid},$basedn"))
       val res = c.modify(modrequest)
       res.getLdapResult.getResultCode == ResultCodeEnum.SUCCESS
     }
@@ -186,7 +186,7 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager) extends UserDa
 
   override def getAllUsers(): Seq[Pilot] = {
     client.withConnection{ connection =>
-      connection.filter("ou=pizza", "(objectclass=pilot)").toSeq.map(_.toMap).map(Pilot.fromMap)
+      connection.filter(basedn, "(objectclass=pilot)").toSeq.map(_.toMap).map(Pilot.fromMap)
     }
   }
 }

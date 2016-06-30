@@ -36,7 +36,7 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
   var ldapService: LdapServer = null
 
   private val schemaParser = new OpenLdapSchemaParser
-  val pizzaSchema = schemaParser.parse(scala.io.Source.fromInputStream(getClass.getResourceAsStream("/schemas/pizza.schema")).getLines().mkString("\n"))
+  val pizzaSchema = schemaParser.parse(scala.io.Source.fromInputStream(getClass.getResourceAsStream("/schemas/"+basedn.replace("ou=","")+".schema")).getLines().mkString("\n"))
 
 
   init
@@ -57,7 +57,7 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
     ))
     */
 
-    createEntry("cn=admin,ou=pizza", Map(
+    createEntry(s"cn=admin,$basedn", Map(
       "objectClass" -> "account",
       "objectClass" -> "top",
       "objectClass" -> "simpleSecurityObject",
@@ -80,7 +80,7 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
   }
 
   def loadSchemas(adminsession: CoreSession) = {
-    val ll = new LdifFileLoader(adminsession, "src/main/resources/schemasds/pizza.ldif")
+    val ll = new LdifFileLoader(adminsession, "src/main/resources/schemasds/"+basedn.replace("ou=","")+".ldif")
     val r = ll.execute()
     log.info("attempted to insert schemas, result :%d".format(r))
   }
@@ -100,12 +100,12 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
 
     val partition: LdifPartition = new LdifPartition(directoryService.getSchemaManager, directoryService.getDnFactory)
     partition.setId(instanceName)
-    partition.setPartitionPath(new File(directoryService.getInstanceLayout.getPartitionsDirectory, "pizza").toURI)
+    partition.setPartitionPath(new File(directoryService.getInstanceLayout.getPartitionsDirectory, basedn.replace("ou=","")).toURI)
     partition.setSchemaManager(directoryService.getSchemaManager)
     partition.setSuffixDn(new Dn(basedn))
     partition.setCacheService(directoryService.getCacheService)
 
-    val partitionroot = createEntry("ou=pizza", "pizza", directoryService.getSchemaManager)
+    val partitionroot = createEntry(basedn, basedn.replace("ou=",""), directoryService.getSchemaManager)
 
 
     loadSchemas(directoryService.getAdminSession)
@@ -115,7 +115,7 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
     ldapService.setTransports(new TcpTransport(host, port))
     ldapService.setDirectoryService(directoryService)
     partition.initialize
-    if (!partition.hasEntry(new HasEntryOperationContext(directoryService.getAdminSession, new Dn("ou=pizza")))) {
+    if (!partition.hasEntry(new HasEntryOperationContext(directoryService.getAdminSession, new Dn(basedn)))) {
       partition.add(new AddOperationContext(directoryService.getAdminSession, partitionroot))
     }
     log.info("partition was set up for %s".format(partition.getSuffixDn.toString))

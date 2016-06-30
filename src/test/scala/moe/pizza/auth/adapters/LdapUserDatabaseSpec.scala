@@ -34,7 +34,7 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       // use the client
       val c = new LdapClient("localhost", 3390, "uid=admin,ou=system", "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema)
+      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
       val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
       lud.addUser(p, "luciapassword") must equal(true)
       c.withConnection { con =>
@@ -59,7 +59,7 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       // use the client
       val c = new LdapClient("localhost", 3391, "uid=admin,ou=system", "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema)
+      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
       val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
@@ -83,7 +83,7 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       // use the client
       val c = new LdapClient("localhost", 3392, "uid=admin,ou=system", "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema)
+      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
       val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
@@ -106,7 +106,7 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       // use the client
       val c = new LdapClient("localhost", 3393, "uid=admin,ou=system", "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema)
+      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
       val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
@@ -132,7 +132,7 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       // use the client
       val c = new LdapClient("localhost", 3394, "uid=admin,ou=system", "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema)
+      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
       val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
@@ -163,9 +163,9 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       // use the client
       val c = new LdapClient("localhost", 3395, "uid=admin,ou=system", "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema)
+      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
       val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
-      lud.addUser(p, "luciapassword") must equal(true)
+      lud.addUser(p, "sluciapassword") must equal(true)
       val r = lud.getUser("lucia_denniard")
       val p2 = p.copy(alliance = "No Alliance")
       lud.updateUser(p2) must equal(true)
