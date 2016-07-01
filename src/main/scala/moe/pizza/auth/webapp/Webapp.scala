@@ -46,6 +46,7 @@ class Webapp(fullconfig: ConfigFile,
              crestapi: Option[CrestApi] = None,
              eve: Option[EVEAPI] = None,
              mapper: Option[EveMapDb] = None,
+             updater: Option[Update] = None,
              broadcasters: List[BroadcastService] = List.empty[BroadcastService]
                ) {
 
@@ -64,7 +65,7 @@ class Webapp(fullconfig: ConfigFile,
     map
   }
 
-  val updater = new Update(crest, eveapi, graders)
+  val update = updater.getOrElse(new Update(crest, eveapi, graders))
 
   // used for serializing JSON responses, for now
   val OM = new ObjectMapper()
@@ -400,7 +401,7 @@ class Webapp(fullconfig: ConfigFile,
             case true =>
               ud.getUser(username) match {
                 case Some(u) =>
-                  val updatedpilot = updater.updateUser(u)
+                  val updatedpilot = update.updateUser(u)
                   ud.updateUser(updatedpilot)
                   Ok(OM.writeValueAsString(updatedpilot))
                 case None =>
@@ -420,7 +421,7 @@ class Webapp(fullconfig: ConfigFile,
           p.getGroups contains "admin" match {
             case true =>
               val updated = ud.getAllUsers().map{
-                updater.updateUser
+                update.updateUser
               }.filter { p =>
                 ud.updateUser(p)
               }
