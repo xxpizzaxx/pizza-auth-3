@@ -396,7 +396,7 @@ class Webapp(fullconfig: ConfigFile,
       log.info(s"update route called for ${username}")
       req.getSession.flatMap(_.pilot) match {
         case Some(p) =>
-          p.getGroups contains "ping" match {
+          p.getGroups contains "admin" match {
             case true =>
               ud.getUser(username) match {
                 case Some(u) =>
@@ -406,7 +406,26 @@ class Webapp(fullconfig: ConfigFile,
                 case None =>
                   NotFound()
               }
-            case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
+            case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the admin group to access that resource"))
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+
+
+    case req@GET -> Root / "update" / "all" =>
+      log.info(s"update route called for all users")
+      req.getSession.flatMap(_.pilot) match {
+        case Some(p) =>
+          p.getGroups contains "admin" match {
+            case true =>
+              val updated = ud.getAllUsers().map{
+                updater.updateUser
+              }.filter { p =>
+                ud.updateUser(p)
+              }
+              Ok(OM.writeValueAsString(updated))
+            case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the admin group to access that resource"))
           }
         case None =>
           TemporaryRedirect(Uri(path = "/"))
