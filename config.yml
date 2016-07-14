@@ -12,8 +12,8 @@
     crest_url: "https://crest-tq.eveonline.com/"      # tranquility
 
     # Your app settings from https://developers.eveonline.com/ or https://developers.testeveonline.com/
-    clientID: "9e68b690834a46e2adc3dcdf04613ec5"
-    secretKey: "65LTBpPHlT76UEVxicNnu2et6tWfqhy1LohaH3zd"
+    clientID: "9e"
+    secretKey: "65L"
     redirectUrl: "http://localhost:9021/callback"
 
   #############################################################################
