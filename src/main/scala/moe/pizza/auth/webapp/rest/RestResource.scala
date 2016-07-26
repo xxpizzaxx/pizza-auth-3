@@ -3,6 +3,7 @@ package moe.pizza.auth.webapp.rest
 import moe.pizza.auth.config.ConfigFile.ConfigFile
 import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{PilotGrader, UserDatabase, BroadcastService}
+import BroadcastService._
 import moe.pizza.auth.tasks.Update
 import moe.pizza.crestapi.CrestApi
 import org.http4s.{HttpService, _}
@@ -54,10 +55,8 @@ class RestResource(fullconfig: ConfigFile,
         p.as[PingRequest].toOption.map { pingreq =>
           val users = ud.getUsers(s"authgroup=${group}")
           val templatedMessage = templates.txt.broadcast(pingreq.message, pingreq.to, pingreq.from, DateTime.now())
-          val totals = broadcasters.map { b =>
-            b.sendAnnouncement(templatedMessage.toString(), pingreq.from, users)
-          }
-          val r = Await.result(Future.sequence(totals), 2 seconds).sum
+          val sendreqs = ud.sendGroupAnnouncement(broadcasters, templatedMessage.toString(), pingreq.from, users )
+          val r = Await.result(Future.sequence(sendreqs), 2 seconds).sum
           Ok(PingResponse(r).asJson)
         }.getOrElse {
           BadRequest(ApiError("bad_post_body", "Unable to process your post body, please format it correctly").asJson)
