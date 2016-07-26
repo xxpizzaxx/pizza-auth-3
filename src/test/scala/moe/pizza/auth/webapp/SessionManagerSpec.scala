@@ -17,6 +17,9 @@ class SessionManagerSpec extends FlatSpec with MustMatchers with MockitoSugar {
     case req @GET -> Root / "flash" =>
       val newsession = req.flash(Alerts.info, "this is an alert")
       Ok(req.getSession.toString).attachSessionifDefined(newsession)
+    case req @GET -> Root / "logout"  =>
+      Ok(req.getSession.toString)
+        .clearSession()
   }
 
   val ud = mock[UserDatabase]
@@ -42,6 +45,13 @@ class SessionManagerSpec extends FlatSpec with MustMatchers with MockitoSugar {
     r.status must equal(Ok)
     val bodytxt = EntityDecoder.decodeString(r2)(Charset.`UTF-8`).run
     bodytxt must equal("Some(HydratedSession(List(Alert(info,this is an alert)),None,None))")
+  }
+
+  "when wrapping a service it" should "be able to remove sessions" in {
+    val r = svc.apply(new Request(uri = Uri.uri("/logout"))).run
+    r.status must equal(Ok)
+    val removal = r.headers.get(CaseInsensitiveString("set-cookie")).get
+    assert(removal.value.startsWith("authsession=\"\";"))
   }
 
 }
