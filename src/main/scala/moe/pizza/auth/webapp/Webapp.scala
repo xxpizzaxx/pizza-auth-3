@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.config.ConfigFile.ConfigFile
 import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
+import BroadcastService._
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.plugins.LocationManager
 import moe.pizza.auth.tasks.Update
@@ -48,7 +49,7 @@ class Webapp(fullconfig: ConfigFile,
              mapper: Option[EveMapDb] = None,
              updater: Option[Update] = None,
              broadcasters: List[BroadcastService] = List.empty[BroadcastService]
-               ) {
+            ) {
 
   val log = LoggerFactory.getLogger(getClass)
   log.info("created Webapp")
@@ -79,9 +80,10 @@ class Webapp(fullconfig: ConfigFile,
 
   implicit class RichHydratedSession(hs: HydratedSession) {
     def toNormalSession = new Session(hs.alerts)
-     def updatePilot: HydratedSession = {
-       hs.copy(pilot = ud.getUser(hs.pilot.get.uid))
-     }
+
+    def updatePilot: HydratedSession = {
+      hs.copy(pilot = ud.getUser(hs.pilot.get.uid))
+    }
   }
 
   def getJabberServer(u: Pilot): String = u.accountStatus match {
@@ -306,12 +308,15 @@ class Webapp(fullconfig: ConfigFile,
           p.getGroups contains "ping" match {
             case true =>
               val locations = LocationManager.locateUsers(crest)(ud.getUsers("accountStatus=Internal")).flatten.map { kv =>
-                Try{
+                Try {
                   (kv._1, Await.result(kv._2, 10 seconds))
                 }
               }
               log.info(locations.toString)
-              val res = locations.map(_.toOption).flatten.filter{x => x._2.solarSystem.isDefined}.map{x => PlayerWithLocation(x._1.characterName, x._2.solarSystem.get.name, x._2.station.map{_.name})}
+              val res = locations.map(_.toOption).flatten.filter { x => x._2.solarSystem.isDefined }.map { x => PlayerWithLocation(x._1.characterName, x._2.solarSystem.get.name, x._2.station.map {
+                _.name
+              })
+              }
               Ok(OM.writeValueAsString(res))
             case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
           }
@@ -319,25 +324,28 @@ class Webapp(fullconfig: ConfigFile,
           TemporaryRedirect(Uri(path = "/"))
       }
     }
+
     case req@POST -> Root / "ping" / "global" => {
-       req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
         case Some(p) =>
           p.getGroups contains "ping" match {
             case true =>
               req.decode[UrlForm] { form =>
                 val flags = List("internal", "ally", "public")
-                val groups = flags.flatMap{g => form.getFirst(g).map(_ => g.capitalize)}
+                val groups = flags.flatMap { g => form.getFirst(g).map(_ => g.capitalize) }
                 log.info(s"sending a ping to groups ${groups}")
-                val users = groups.map( name => (name, ud.getUsers(s"accountStatus=${name}")))
+                val users = groups.map(name => (name, ud.getUsers(s"accountStatus=${name}")))
                 val message = form.getFirstOrElse("message", "This message is left intentionally blank.")
                 val total = users.map { kv =>
                   val (label, us) = kv
                   val templatedMessage = templates.txt.broadcast(message, label, p.uid, DateTime.now())
-                  val totals = broadcasters.map { b=>
+                  val totals = broadcasters.map { b =>
                     b.sendAnnouncement(templatedMessage.toString(), p.uid, us)
                   }
                   Await.result(Future.sequence(totals), 2 seconds)
-                }.map{_.sum}.sum
+                }.map {
+                  _.sum
+                }.sum
                 SeeOther(Uri(path = "/ping")).attachSessionifDefined(req.flash(Alerts.info, s"Message sent to ${total} users."))
               }
             case false =>
@@ -346,7 +354,28 @@ class Webapp(fullconfig: ConfigFile,
         case None =>
           SeeOther(Uri(path = "/"))
       }
+    }
 
+    case req@POST -> Root / "ping" / "group" => {
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          p.getGroups contains "ping" match {
+            case true =>
+              req.decode[UrlForm] { form =>
+                val group = form.getFirstOrElse("group", "none")
+                log.info(s"sending a ping to group ${group}")
+                val users = ud.getUsers(s"authgroup=${group}")
+                val message = form.getFirstOrElse("message", "This message is left intentionally blank.")
+                val totals = ud.sendGroupAnnouncement(broadcasters, message, p.uid, users)
+                val total = Await.result(Future.sequence(totals), 2 seconds).sum
+                SeeOther(Uri(path = "/ping")).attachSessionifDefined(req.flash(Alerts.info, s"Message sent to ${total} users in group ${group}."))
+              }
+            case false =>
+              SeeOther(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the ping group to access that resource"))
+          }
+        case None =>
+          SeeOther(Uri(path = "/"))
+      }
     }
 
     case req@GET -> Root / "groups" / "apply" / group => {
@@ -362,7 +391,7 @@ class Webapp(fullconfig: ConfigFile,
                 goback.attachSessionifDefined(req.flash(Alerts.warning, s"Unable to join $group"))
             }
           case g if groupconfig.closed.contains(g) =>
-            ud.updateUser(p.copy(authGroups = p.authGroups :+ s"$group-pending" )) match {
+            ud.updateUser(p.copy(authGroups = p.authGroups :+ s"$group-pending")) match {
               case true =>
                 goback.attachSessionifDefined(req.flash(Alerts.success, s"Applied to $group").map(_.updatePilot))
               case false =>
@@ -380,7 +409,7 @@ class Webapp(fullconfig: ConfigFile,
         // TODO extend for public users
         group match {
           case g if p.authGroups.contains(g) =>
-            ud.updateUser(p.copy(authGroups = p.authGroups.filter(_ != group) )) match {
+            ud.updateUser(p.copy(authGroups = p.authGroups.filter(_ != group))) match {
               case true =>
                 goback.attachSessionifDefined(req.flash(Alerts.success, s"Left $group").map(_.updatePilot))
               case false =>
@@ -420,7 +449,7 @@ class Webapp(fullconfig: ConfigFile,
         case Some(p) =>
           p.getGroups contains "admin" match {
             case true =>
-              val updated = ud.getAllUsers().map{
+              val updated = ud.getAllUsers().map {
                 update.updateUser
               }.filter { p =>
                 ud.updateUser(p)

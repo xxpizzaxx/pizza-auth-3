@@ -205,6 +205,39 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       tempfolder.delete()
     }
   }
+  "inserting a user into LDAP then searching for it with broadcast tools" should "return it when it matches the filters" in {
+    val tempfolder = createTempFolder("loadusertest2")
+    try {
+      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3391, instanceName = "pizza-auth-ldap-user-db-spec-6")
+      server.setPassword("testpassword")
+      server.start()
+      // TODO find a way to make a schemamanager without the server
+      val schema = server.directoryService.getSchemaManager
+      // use the client
+      val c = new LdapClient("localhost", 3391, "uid=admin,ou=system", "testpassword")
+      // wrap it in an LUD
+      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
+      val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
+      lud.addUser(p, "luciapassword") must equal(true)
+      lud.getUser("lucia_denniard") must equal(Some(p))
 
+      // add to group
+      lud.updateUser(p.copy(authGroups = List("titans")))
+      val p2 = lud.getUser("lucia_denniard").get
+      p2 must equal(p.copy(authGroups = List("titans")))
+
+      import moe.pizza.auth.interfaces.BroadcastService.BroadcastableUserDatabase
+      // search by group
+      lud.getGroupUsers("titans") must equal(List(p2))
+      // search by corp
+      lud.getGroupUsers("Love Squad") must equal(List(p2))
+      // search by alliance
+      lud.getGroupUsers("Confederation of xXPIZZAXx") must equal(List(p2))
+
+      server.stop()
+    } finally {
+      tempfolder.delete()
+    }
+  }
 
 }
