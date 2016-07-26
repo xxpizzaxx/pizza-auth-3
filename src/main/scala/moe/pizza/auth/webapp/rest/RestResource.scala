@@ -60,7 +60,7 @@ class RestResource(fullconfig: ConfigFile,
           val r = Await.result(Future.sequence(totals), 2 seconds).sum
           Ok(PingResponse(r).asJson)
         }.getOrElse {
-          InternalServerError(ApiError("bad_post_body", "Unable to process your post body, please format it correctly").asJson)
+          BadRequest(ApiError("bad_post_body", "Unable to process your post body, please format it correctly").asJson)
         }
       }
     }
