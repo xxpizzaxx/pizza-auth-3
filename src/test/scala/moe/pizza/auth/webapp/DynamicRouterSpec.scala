@@ -87,6 +87,59 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     resp.getSession.get.signupData.get.refresh must equal("refresh_token")
     resp.getSession.get.signupData.get.verify must equal(verify)
   }
+  "DynamicRouter" should "accept a redirect back from CREST to log in" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever2")
+    when(crest.callback("codegoeshere")).thenReturn(Future{CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))})
+    val verifyR = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
+    when(crest.verify("access_token")).thenReturn(Future{verifyR})
+    val p = new Pilot(null, null, null, null, null, null, null, List("admin"), null, null)
+    when(ud.getUser("bob_mcbobface")).thenReturn(Some(p))
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db))
+
+    val req = Request(uri = Uri.uri("/callback").withQueryParam("code", "codegoeshere").withQueryParam("state", "login"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(p), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Status.TemporaryRedirect)
+    val session = resp.getSession
+    verify(ud).getUser("bob_mcbobface")
+    session.get.alerts.head.content must equal("Thanks for logging in bob mcbobface")
+  }
+  "DynamicRouter" should "accept a redirect back from CREST to log in, and copy if they don't exist" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever2")
+    when(crest.callback("codegoeshere")).thenReturn(Future{CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))})
+    val verify = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
+    when(crest.verify("access_token")).thenReturn(Future{verify})
+    val p = new Pilot(null, null, null, null, null, null, null, List("admin"), null, null)
+    when(ud.getUser("bob_mcbobface")).thenReturn(None)
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db))
+
+    val req = Request(uri = Uri.uri("/callback").withQueryParam("code", "codegoeshere").withQueryParam("state", "login"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(p), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Status.TemporaryRedirect)
+    val session = resp.getSession
+    session.get.alerts.head.content must equal("Unable to find a user associated with that EVE character, please sign up or use another character")
+  }
   "DynamicRouter" should "update a pilot if I'm in the right groups" in {
     val config = mock[ConfigFile]
     val authconfig = mock[AuthConfig]
