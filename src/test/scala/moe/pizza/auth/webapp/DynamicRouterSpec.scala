@@ -17,6 +17,7 @@ import org.http4s.dsl.{Root, _}
 import org.http4s.server._
 import Types._
 import Utils._
+import moe.pizza.crestapi.CrestApi.{CallbackResponse, VerifyResponse}
 import org.http4s.util.CaseInsensitiveString
 
 import scala.concurrent.Future
@@ -42,6 +43,49 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val resp = res.run
     resp.status must equal(Status.TemporaryRedirect)
     resp.headers.iterator.toList must equal(Headers(Location(Uri.uri("http://login.eveonline.com/whatever"))).iterator.toList)
+  }
+  "DynamicRouter" should "redirect to the CREST login URL when signing up" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("signup", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever2")
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db))
+
+    val res = app.dynamicWebRouter(Request(uri = Uri.uri("/signup")))
+
+    val resp = res.run
+    resp.status must equal(Status.TemporaryRedirect)
+    resp.headers.iterator.toList must equal(Headers(Location(Uri.uri("http://login.eveonline.com/whatever2"))).iterator.toList)
+  }
+  "DynamicRouter" should "accept a redirect back from CREST to move the user along in signing up" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("signup", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever2")
+    when(crest.callback("codegoeshere")).thenReturn(Future{CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))})
+    val verify = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
+    when(crest.verify("access_token")).thenReturn(Future{verify})
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db))
+
+    val p = new Pilot(null, null, null, null, null, null, null, List("admin"), null, null)
+    val req = Request(uri = Uri.uri("/callback").withQueryParam("code", "codegoeshere").withQueryParam("state", "signup"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(p), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Status.TemporaryRedirect)
+    resp.getSession.get.signupData.get.refresh must equal("refresh_token")
+    resp.getSession.get.signupData.get.verify must equal(verify)
   }
   "DynamicRouter" should "update a pilot if I'm in the right groups" in {
     val config = mock[ConfigFile]
@@ -69,6 +113,31 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     verify(update).updateUser(bob)
     resp.status must equal(Status.Ok)
   }
+  "DynamicRouter" should "render the landing page" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+    val req = Request(uri = Uri.uri("/"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], None, None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Status.Ok)
+    val bodytxt = EntityDecoder.decodeString(resp)(Charset.`UTF-8`).run
+    // should show the currently logged in user, and a logout button
+    assert(bodytxt contains "/signup")
+    assert(bodytxt contains "/login")
+  }
+
   "DynamicRouter" should "render the main page" in {
     val config = mock[ConfigFile]
     val authconfig = mock[AuthConfig]
