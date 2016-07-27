@@ -59,6 +59,7 @@ object Utils {
 
   implicit class PimpedResponse(r: Response) {
     def withSession(s: HydratedSession): Response = r.withAttribute(SessionManager.HYDRATEDSESSION, s)
+    def getSession(): Option[HydratedSession] = r.attributes.get(SessionManager.HYDRATEDSESSION)
     def withNoSession(): Response = r.withAttribute(SessionManager.LOGOUT, "")
   }
 
