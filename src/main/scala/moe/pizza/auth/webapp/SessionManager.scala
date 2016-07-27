@@ -39,9 +39,6 @@ class SessionManager(secretKey: String, ud: UserDatabase) extends HttpMiddleware
       }
     }
     log.info(s"found sessions: ${sessions}")
-    if (sessions.size>1) {
-      log.warn(s"found ${sessions.size} sessions, there should be at most 1")
-    }
 
     // if we didn't find a valid session, make them one
     val session = sessions.headOption.getOrElse(Session2(List.empty, None, None))
