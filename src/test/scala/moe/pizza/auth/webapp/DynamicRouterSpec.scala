@@ -18,7 +18,12 @@ import org.http4s.server._
 import Types._
 import Utils._
 import moe.pizza.crestapi.CrestApi.{CallbackResponse, VerifyResponse}
+import moe.pizza.eveapi.EVEAPI
 import org.http4s.util.CaseInsensitiveString
+import moe.pizza.eveapi.generated.eve
+import moe.pizza.eveapi.XMLApiResponse
+import org.joda.time.DateTime
+import org.mockito.Matchers._
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -87,6 +92,47 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     resp.getSession.get.signupData.get.refresh must equal("refresh_token")
     resp.getSession.get.signupData.get.verify must equal(verify)
   }
+  "DynamicRouter" should "create users when they sign up" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = new PilotGrader {
+      def grade(p: Pilot): Pilot.Status.Value = {Pilot.Status.internal}
+    }
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val eveapi = mock[EVEAPI]
+    val innereveapi = mock[moe.pizza.eveapi.endpoints.Eve]
+    when(eveapi.eve).thenReturn(innereveapi)
+    when(config.auth).thenReturn(authconfig)
+    val verify = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
+    when(crest.verify("access_token")).thenReturn(Future{verify})
+    when(crest.refresh("refresh_token")).thenReturn(Future{new CallbackResponse("access_token", "token", 100, Some("refresh_token"))})
+    val char = new eve.CharacterInfo2.Result(103, "bob mcbobface", "caldari", 1, "whatever", 1, "whatever2", 104, "bobcorp", "now", 4.2, new eve.CharacterInfo2.Rowset() )
+    val charReturnValue: Either[XMLApiResponse[eve.CharacterInfo2.Result], XMLApiResponse[eve.CharacterInfo.Result]] = Left(new XMLApiResponse(DateTime.now(), DateTime.now(), char))
+    when(innereveapi.CharacterInfo(103)).thenReturn(Future{charReturnValue})
+
+    when(ud.addUser(anyObject(), anyString())).thenReturn(true) // accept anything
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), eve = Some(eveapi))
+
+    val signupData = new SignupData(verify, "refresh_token")
+
+    val p = new Pilot(null, Pilot.Status.unclassified, null, null, null, null, null, List("admin"), null, null)
+    val req = Request(
+      method = Method.POST,
+      uri = Uri.uri("/signup/confirm"),
+      body = UrlForm.entityEncoder.toEntity(UrlForm("email"->"bob@bobcorp.corp","password"->"fakepassword")).run.body
+    )
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(p), Some(signupData))))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Status.SeeOther)
+    val session = resp.getSession
+    session.get.alerts.head.content must equal("Successfully created and signed in as bob_mcbobface")
+  }
+
   "DynamicRouter" should "accept a redirect back from CREST to log in" in {
     val config = mock[ConfigFile]
     val authconfig = mock[AuthConfig]
