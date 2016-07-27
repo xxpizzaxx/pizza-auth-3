@@ -177,4 +177,35 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val resp = res.run
     resp.getSession.get.alerts.head.content must equal("Message sent to 1 users.")
   }
+  "DynamicRouter's ping page" should "send group pings" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    val broadcaster = new BroadcastService {
+      override def sendAnnouncement(msg: String, from: String, to: List[Pilot]): Future[Int] = Future{to.size}
+    }
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update), broadcasters = List(broadcaster))
+
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("ping","coolpeople"), null, null)
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+    val group = "coolpeople"
+    when(ud.getUsers(s"|(authgroup=${group})(corporation=${group})(alliance=${group})")).thenReturn(List(bob))
+
+    val req = Request(method=Method.POST, uri = Uri.uri("/ping/group"),body=UrlForm.entityEncoder.toEntity(UrlForm("message"->"test message","group"->"coolpeople")).run.body)
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.getSession.get.alerts.head.content must equal("Message sent to 1 users in group coolpeople.")
+
+    verify(ud).getUsers(s"|(authgroup=${group})(corporation=${group})(alliance=${group})")
+  }
 }

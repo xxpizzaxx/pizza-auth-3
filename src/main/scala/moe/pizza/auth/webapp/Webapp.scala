@@ -364,7 +364,7 @@ class Webapp(fullconfig: ConfigFile,
               req.decode[UrlForm] { form =>
                 val group = form.getFirstOrElse("group", "none")
                 log.info(s"sending a ping to group ${group}")
-                val users = ud.getUsers(s"authgroup=${group}")
+                val users = ud.getGroupUsers(group)
                 val message = form.getFirstOrElse("message", "This message is left intentionally blank.")
                 val totals = ud.sendGroupAnnouncement(broadcasters, message, p.uid, users)
                 val total = Await.result(Future.sequence(totals), 2 seconds).sum
