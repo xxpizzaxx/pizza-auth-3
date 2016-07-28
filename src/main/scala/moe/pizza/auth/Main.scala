@@ -66,7 +66,7 @@ object Main {
       case Some(c) =>
         c.servers match {
           case Some(s) =>
-            val internalpassword = UUID.randomUUID().toString
+            val internalpassword = configfile.get.embeddedldap.password.getOrElse(UUID.randomUUID().toString)
             val ldap = new EmbeddedLdapServer(
               configfile.get.embeddedldap.instancePath,
               configfile.get.embeddedldap.basedn,

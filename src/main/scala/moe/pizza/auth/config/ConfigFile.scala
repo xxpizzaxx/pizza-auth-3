@@ -20,7 +20,8 @@ object ConfigFile {
                                  instancePath: String = "./ldap",
                                  port: Int = 389,
                                  basedn: String = "ou=pizza",
-                                 host: String = "localhost"
+                                 host: String = "localhost",
+                                 password: Option[String] = None
                                )
   case class AuthGroupConfig(closed: List[String], open: List[String], public: List[String])
   case class AuthConfig(
