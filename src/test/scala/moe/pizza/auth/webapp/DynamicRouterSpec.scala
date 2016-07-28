@@ -5,12 +5,11 @@ import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.tasks.Update
-import moe.pizza.auth.webapp.Types.Session2
 import moe.pizza.crestapi.CrestApi
-import org.http4s.{Header, Headers, Request, Response, Status, Uri}
+import org.http4s.{Headers, Request, Status, Uri}
 import org.http4s.headers.Location
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{FlatSpec, FunSpec, MustMatchers}
+import org.scalatest.{FlatSpec, MustMatchers}
 import org.mockito.Mockito._
 import org.http4s.{HttpService, _}
 import org.http4s.dsl.{Root, _}
@@ -76,9 +75,13 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val db = mock[EveMapDb]
     when(config.auth).thenReturn(authconfig)
     when(crest.redirect("signup", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever2")
-    when(crest.callback("codegoeshere")).thenReturn(Future{CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))})
+    when(crest.callback("codegoeshere")).thenReturn(Future {
+      CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))
+    })
     val verify = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
-    when(crest.verify("access_token")).thenReturn(Future{verify})
+    when(crest.verify("access_token")).thenReturn(Future {
+      verify
+    })
 
     val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db))
 
@@ -97,7 +100,9 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val authconfig = mock[AuthConfig]
     val ud = mock[UserDatabase]
     val pg = new PilotGrader {
-      def grade(p: Pilot): Pilot.Status.Value = {Pilot.Status.internal}
+      def grade(p: Pilot): Pilot.Status.Value = {
+        Pilot.Status.internal
+      }
     }
     val crest = mock[CrestApi]
     val db = mock[EveMapDb]
@@ -106,11 +111,17 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(eveapi.eve).thenReturn(innereveapi)
     when(config.auth).thenReturn(authconfig)
     val verify = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
-    when(crest.verify("access_token")).thenReturn(Future{verify})
-    when(crest.refresh("refresh_token")).thenReturn(Future{new CallbackResponse("access_token", "token", 100, Some("refresh_token"))})
-    val char = new eve.CharacterInfo.Result(103, "bob mcbobface", "caldari", 1, "whatever", 1, "whatever2", 104, "bobcorp", "now", 105, "boballiance", "now", 4.2, new eve.CharacterInfo.Rowset() )
+    when(crest.verify("access_token")).thenReturn(Future {
+      verify
+    })
+    when(crest.refresh("refresh_token")).thenReturn(Future {
+      new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
+    })
+    val char = new eve.CharacterInfo.Result(103, "bob mcbobface", "caldari", 1, "whatever", 1, "whatever2", 104, "bobcorp", "now", 105, "boballiance", "now", 4.2, new eve.CharacterInfo.Rowset())
     val charReturnValue: Either[XMLApiResponse[eve.CharacterInfo2.Result], XMLApiResponse[eve.CharacterInfo.Result]] = Right(new XMLApiResponse(DateTime.now(), DateTime.now(), char))
-    when(innereveapi.CharacterInfo(103)).thenReturn(Future{charReturnValue})
+    when(innereveapi.CharacterInfo(103)).thenReturn(Future {
+      charReturnValue
+    })
 
     val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), eve = Some(eveapi))
 
@@ -136,7 +147,9 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val authconfig = mock[AuthConfig]
     val ud = mock[UserDatabase]
     val pg = new PilotGrader {
-      def grade(p: Pilot): Pilot.Status.Value = {Pilot.Status.internal}
+      def grade(p: Pilot): Pilot.Status.Value = {
+        Pilot.Status.internal
+      }
     }
     val crest = mock[CrestApi]
     val db = mock[EveMapDb]
@@ -145,11 +158,17 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(eveapi.eve).thenReturn(innereveapi)
     when(config.auth).thenReturn(authconfig)
     val verify = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
-    when(crest.verify("access_token")).thenReturn(Future{verify})
-    when(crest.refresh("refresh_token")).thenReturn(Future{new CallbackResponse("access_token", "token", 100, Some("refresh_token"))})
-    val char = new eve.CharacterInfo2.Result(103, "bob mcbobface", "caldari", 1, "whatever", 1, "whatever2", 104, "bobcorp", "now", 4.2, new eve.CharacterInfo2.Rowset() )
+    when(crest.verify("access_token")).thenReturn(Future {
+      verify
+    })
+    when(crest.refresh("refresh_token")).thenReturn(Future {
+      new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
+    })
+    val char = new eve.CharacterInfo2.Result(103, "bob mcbobface", "caldari", 1, "whatever", 1, "whatever2", 104, "bobcorp", "now", 4.2, new eve.CharacterInfo2.Rowset())
     val charReturnValue: Either[XMLApiResponse[eve.CharacterInfo2.Result], XMLApiResponse[eve.CharacterInfo.Result]] = Left(new XMLApiResponse(DateTime.now(), DateTime.now(), char))
-    when(innereveapi.CharacterInfo(103)).thenReturn(Future{charReturnValue})
+    when(innereveapi.CharacterInfo(103)).thenReturn(Future {
+      charReturnValue
+    })
 
     val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), eve = Some(eveapi))
 
@@ -175,7 +194,9 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val authconfig = mock[AuthConfig]
     val ud = mock[UserDatabase]
     val pg = new PilotGrader {
-      def grade(p: Pilot): Pilot.Status.Value = {Pilot.Status.internal}
+      def grade(p: Pilot): Pilot.Status.Value = {
+        Pilot.Status.internal
+      }
     }
     val crest = mock[CrestApi]
     val db = mock[EveMapDb]
@@ -184,11 +205,17 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(eveapi.eve).thenReturn(innereveapi)
     when(config.auth).thenReturn(authconfig)
     val verify = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
-    when(crest.verify("access_token")).thenReturn(Future{verify})
-    when(crest.refresh("refresh_token")).thenReturn(Future{new CallbackResponse("access_token", "token", 100, Some("refresh_token"))})
-    val char = new eve.CharacterInfo2.Result(103, "bob mcbobface", "caldari", 1, "whatever", 1, "whatever2", 104, "bobcorp", "now", 4.2, new eve.CharacterInfo2.Rowset() )
+    when(crest.verify("access_token")).thenReturn(Future {
+      verify
+    })
+    when(crest.refresh("refresh_token")).thenReturn(Future {
+      new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
+    })
+    val char = new eve.CharacterInfo2.Result(103, "bob mcbobface", "caldari", 1, "whatever", 1, "whatever2", 104, "bobcorp", "now", 4.2, new eve.CharacterInfo2.Rowset())
     val charReturnValue: Either[XMLApiResponse[eve.CharacterInfo2.Result], XMLApiResponse[eve.CharacterInfo.Result]] = Left(new XMLApiResponse(DateTime.now(), DateTime.now(), char))
-    when(innereveapi.CharacterInfo(103)).thenReturn(Future{charReturnValue})
+    when(innereveapi.CharacterInfo(103)).thenReturn(Future {
+      charReturnValue
+    })
 
     when(ud.addUser(anyObject(), anyString())).thenReturn(true) // accept anything
 
@@ -200,7 +227,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val req = Request(
       method = Method.POST,
       uri = Uri.uri("/signup/confirm"),
-      body = UrlForm.entityEncoder.toEntity(UrlForm("email"->"bob@bobcorp.corp","password"->"fakepassword")).run.body
+      body = UrlForm.entityEncoder.toEntity(UrlForm("email" -> "bob@bobcorp.corp", "password" -> "fakepassword")).run.body
     )
     val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(p), Some(signupData))))
     val res = app.dynamicWebRouter(reqwithsession)
@@ -215,7 +242,9 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val authconfig = mock[AuthConfig]
     val ud = mock[UserDatabase]
     val pg = new PilotGrader {
-      def grade(p: Pilot): Pilot.Status.Value = {Pilot.Status.internal}
+      def grade(p: Pilot): Pilot.Status.Value = {
+        Pilot.Status.internal
+      }
     }
     val crest = mock[CrestApi]
     val db = mock[EveMapDb]
@@ -224,11 +253,17 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(eveapi.eve).thenReturn(innereveapi)
     when(config.auth).thenReturn(authconfig)
     val verify = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
-    when(crest.verify("access_token")).thenReturn(Future{verify})
-    when(crest.refresh("refresh_token")).thenReturn(Future{new CallbackResponse("access_token", "token", 100, Some("refresh_token"))})
-    val char = new eve.CharacterInfo.Result(103, "bob mcbobface", "caldari", 1, "whatever", 1, "whatever2", 104, "bobcorp", "now", 105, "boballiance", "now", 4.2, new eve.CharacterInfo.Rowset() )
+    when(crest.verify("access_token")).thenReturn(Future {
+      verify
+    })
+    when(crest.refresh("refresh_token")).thenReturn(Future {
+      new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
+    })
+    val char = new eve.CharacterInfo.Result(103, "bob mcbobface", "caldari", 1, "whatever", 1, "whatever2", 104, "bobcorp", "now", 105, "boballiance", "now", 4.2, new eve.CharacterInfo.Rowset())
     val charReturnValue: Either[XMLApiResponse[eve.CharacterInfo2.Result], XMLApiResponse[eve.CharacterInfo.Result]] = Right(new XMLApiResponse(DateTime.now(), DateTime.now(), char))
-    when(innereveapi.CharacterInfo(103)).thenReturn(Future{charReturnValue})
+    when(innereveapi.CharacterInfo(103)).thenReturn(Future {
+      charReturnValue
+    })
 
     when(ud.addUser(anyObject(), anyString())).thenReturn(true) // accept anything
 
@@ -240,7 +275,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val req = Request(
       method = Method.POST,
       uri = Uri.uri("/signup/confirm"),
-      body = UrlForm.entityEncoder.toEntity(UrlForm("email"->"bob@bobcorp.corp","password"->"fakepassword")).run.body
+      body = UrlForm.entityEncoder.toEntity(UrlForm("email" -> "bob@bobcorp.corp", "password" -> "fakepassword")).run.body
     )
     val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(p), Some(signupData))))
     val res = app.dynamicWebRouter(reqwithsession)
@@ -259,9 +294,13 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val db = mock[EveMapDb]
     when(config.auth).thenReturn(authconfig)
     when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever2")
-    when(crest.callback("codegoeshere")).thenReturn(Future{CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))})
+    when(crest.callback("codegoeshere")).thenReturn(Future {
+      CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))
+    })
     val verifyR = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
-    when(crest.verify("access_token")).thenReturn(Future{verifyR})
+    when(crest.verify("access_token")).thenReturn(Future {
+      verifyR
+    })
     val p = new Pilot(null, null, null, null, null, null, null, List("admin"), null, null)
     when(ud.getUser("bob_mcbobface")).thenReturn(Some(p))
 
@@ -286,9 +325,13 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val db = mock[EveMapDb]
     when(config.auth).thenReturn(authconfig)
     when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever2")
-    when(crest.callback("codegoeshere")).thenReturn(Future{CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))})
+    when(crest.callback("codegoeshere")).thenReturn(Future {
+      CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))
+    })
     val verify = VerifyResponse(103, "bob mcbobface", "some time", "scopes", "token type", "owner hash", "eve online")
-    when(crest.verify("access_token")).thenReturn(Future{verify})
+    when(crest.verify("access_token")).thenReturn(Future {
+      verify
+    })
     val p = new Pilot(null, null, null, null, null, null, null, List("admin"), null, null)
     when(ud.getUser("bob_mcbobface")).thenReturn(None)
 
@@ -443,7 +486,9 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val db = mock[EveMapDb]
     val update = mock[Update]
     val broadcaster = new BroadcastService {
-      override def sendAnnouncement(msg: String, from: String, to: List[Pilot]): Future[Int] = Future{to.size}
+      override def sendAnnouncement(msg: String, from: String, to: List[Pilot]): Future[Int] = Future {
+        to.size
+      }
     }
     when(config.auth).thenReturn(authconfig)
     when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
@@ -455,7 +500,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(ud.getUser("bob")).thenReturn(Some(bob))
     when(ud.getUsers("accountStatus=Internal")).thenReturn(List(bob))
 
-    val req = Request(method=Method.POST, uri = Uri.uri("/ping/global"),body=UrlForm.entityEncoder.toEntity(UrlForm("message"->"test message","internal"->"on")).run.body)
+    val req = Request(method = Method.POST, uri = Uri.uri("/ping/global"), body = UrlForm.entityEncoder.toEntity(UrlForm("message" -> "test message", "internal" -> "on")).run.body)
     val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
     val res = app.dynamicWebRouter(reqwithsession)
 
@@ -471,20 +516,22 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val db = mock[EveMapDb]
     val update = mock[Update]
     val broadcaster = new BroadcastService {
-      override def sendAnnouncement(msg: String, from: String, to: List[Pilot]): Future[Int] = Future{to.size}
+      override def sendAnnouncement(msg: String, from: String, to: List[Pilot]): Future[Int] = Future {
+        to.size
+      }
     }
     when(config.auth).thenReturn(authconfig)
     when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
 
     val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update), broadcasters = List(broadcaster))
 
-    val bob = new Pilot("bob", null, null, null, null, null, null, List("ping","coolpeople"), null, null)
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("ping", "coolpeople"), null, null)
 
     when(ud.getUser("bob")).thenReturn(Some(bob))
     val group = "coolpeople"
     when(ud.getUsers(s"|(authgroup=${group})(corporation=${group})(alliance=${group})")).thenReturn(List(bob))
 
-    val req = Request(method=Method.POST, uri = Uri.uri("/ping/group"),body=UrlForm.entityEncoder.toEntity(UrlForm("message"->"test message","group"->"coolpeople")).run.body)
+    val req = Request(method = Method.POST, uri = Uri.uri("/ping/group"), body = UrlForm.entityEncoder.toEntity(UrlForm("message" -> "test message", "group" -> "coolpeople")).run.body)
     val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
     val res = app.dynamicWebRouter(reqwithsession)
 
@@ -615,7 +662,6 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(ud.getAllUsers()).thenReturn(Seq(bob))
 
     val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
-
 
     when(ud.getUser("bob")).thenReturn(Some(bob))
     when(ud.getUser("nobody")).thenReturn(None)
