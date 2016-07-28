@@ -1,0 +1,30 @@
+@(applications: List[(String, String)])
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading"><h3 class="panel-title">Pending Applications</h3></div>
+            <div class="panel-body">
+                <ul class="list-group">
+                    @for((user, group) <- applications) {
+                        <li class="list-group-item">@user applied to @group
+                            <a class="btn btn-xs btn-success pull-right" href="/groups/admin/approve/@user/@group">Approve</a>
+                            <a class="btn btn-xs btn-danger pull-right" href="/groups/admin/deny/@user/@group">Deny</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        <!--
+        <div class="panel panel-primary">
+            <div class="panel-heading"><h3 class="panel-title">Group Listing</h3></div>
+            <div class="panel-body">
+                <ul class="list-group">
+					{% for group in groups %}
+                    <li class="list-group-item"><a href="/groups/list/{{ group }}" >{{ group }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        -->
+    </div>
+</div>

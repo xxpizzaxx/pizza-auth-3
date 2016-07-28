@@ -288,6 +288,81 @@ class Webapp(fullconfig: ConfigFile,
       }
     }
 
+    case req@GET -> Root / "groups" / "admin" => {
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          p.getGroups contains "admin" match {
+            case true =>
+              // get all pending applications
+              val applications = ud.getAllUsers()
+                .filter(_.authGroups.exists(_.endsWith("-pending")))
+                .flatMap{pilot =>
+                  pilot.authGroups.filter(_.endsWith("-pending")).map{group =>
+                    (pilot.uid, group.stripSuffix("-pending"))
+                  }
+                }.toList
+              // render it
+              Ok(templates.html.base("pizza-auth-3", templates.html.groupadmin(applications), req.getSession.map(_.toNormalSession), req.getSession.flatMap(_.pilot)))
+                .attachSessionifDefined(req.getSession.map(_.copy(alerts = List())))
+            case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the admin group to access that resource"))
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
+    case req@GET -> Root / "groups" / "admin" / "approve" / user / group => {
+      val goback = TemporaryRedirect(Uri(path = "/groups/admin"))
+       req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          p.getGroups contains "admin" match {
+            case true =>
+              // get the user
+              ud.getUser(user) match {
+                case Some(target) if target.authGroups.contains(s"${group}-pending") =>
+                  val result = ud.updateUser(target.copy(authGroups = target.authGroups.filter(_ != s"${group}-pending").+:(group)))
+                  result match {
+                    case true => goback.attachSessionifDefined(req.flash(Alerts.success, s"Accepted $user into $group"))
+                    case false => goback.attachSessionifDefined(req.flash(Alerts.danger, s"Unable to accept $user into $group"))
+                  }
+                case Some(target) =>
+                  goback.attachSessionifDefined(req.flash(Alerts.warning, s"$user did not apply to $group, or has already been accepted/denied")  )
+                case None =>
+                  goback.attachSessionifDefined(req.flash(Alerts.warning, "Can't find that user"))
+              }
+            case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the admin group to access that resource"))
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
+    case req@GET -> Root / "groups" / "admin" / "deny" / user / group => {
+      val goback = TemporaryRedirect(Uri(path = "/groups/admin"))
+       req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          p.getGroups contains "admin" match {
+            case true =>
+              // get the user
+              ud.getUser(user) match {
+                case Some(target) if target.authGroups.contains(s"${group}-pending") =>
+                  val result = ud.updateUser(target.copy(authGroups = target.authGroups.filter(_ != s"${group}-pending")))
+                  result match {
+                    case true => goback.attachSessionifDefined(req.flash(Alerts.success, s"Denied $user membership of $group"))
+                    case false => goback.attachSessionifDefined(req.flash(Alerts.danger, s"Unable to deny $user membership of $group"))
+                  }
+                case Some(target) =>
+                  goback.attachSessionifDefined(req.flash(Alerts.warning, s"$user did not apply to $group, or has already been accepted/denied")  )
+                case None =>
+                  goback.attachSessionifDefined(req.flash(Alerts.warning, "Can't find that user"))
+              }
+            case false => TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(req.flash(Alerts.warning, "You must be in the admin group to access that resource"))
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
     case req@GET -> Root / "ping" => {
       req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
         case Some(p) =>
