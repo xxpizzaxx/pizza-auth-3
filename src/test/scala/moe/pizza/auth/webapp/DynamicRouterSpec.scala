@@ -601,4 +601,52 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     resp.getSession.get.alerts.head.content must equal("Denied bob membership of dota")
     verify(ud).updateUser(bob.copy(authGroups = List("admin", "timerboard-pending")))
   }
+  "DynamicRouter's group admin page" should "cope with bad accepts and denies" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("admin", "dota-pending", "timerboard-pending"), null, null)
+    when(ud.getAllUsers()).thenReturn(Seq(bob))
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+    when(ud.getUser("nobody")).thenReturn(None)
+    when(ud.updateUser(anyObject())).thenReturn(true)
+
+    // denying nothing
+    val req = Request(uri = Uri.uri("/groups/admin/deny/bob/nothing"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+    val resp = res.run
+    resp.getSession.get.alerts.head.content must equal("bob did not apply to nothing, or has already been accepted/denied")
+
+    // approving nothing
+    val req2 = Request(uri = Uri.uri("/groups/admin/approve/bob/nothing"))
+    val reqwithsession2 = req2.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res2 = app.dynamicWebRouter(reqwithsession2)
+    val resp2 = res2.run
+    resp2.getSession.get.alerts.head.content must equal("bob did not apply to nothing, or has already been accepted/denied")
+
+    // denying non-existent user
+    val req3 = Request(uri = Uri.uri("/groups/admin/deny/nobody/nothing"))
+    val reqwithsession3 = req3.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res3 = app.dynamicWebRouter(reqwithsession3)
+    val resp3 = res3.run
+    resp3.getSession.get.alerts.head.content must equal("Can't find that user")
+
+    // approving non-existent user
+    val req4 = Request(uri = Uri.uri("/groups/admin/approve/nobody/nothing"))
+    val reqwithsession4 = req4.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res4 = app.dynamicWebRouter(reqwithsession4)
+    val resp4 = res4.run
+    resp4.getSession.get.alerts.head.content must equal("Can't find that user")
+  }
 }
