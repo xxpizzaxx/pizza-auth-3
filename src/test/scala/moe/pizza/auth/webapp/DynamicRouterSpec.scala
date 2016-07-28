@@ -649,4 +649,27 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val resp4 = res4.run
     resp4.getSession.get.alerts.head.content must equal("Can't find that user")
   }
+  "DynamicRouter's routes which require a session" should "redirect back to /" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+    app.dynamicWebRouter(Request(uri = Uri.uri("/signup/confirm"))).run.status must equal(Status.TemporaryRedirect)
+    app.dynamicWebRouter(Request(uri = Uri.uri("/groups"))).run.status must equal(Status.TemporaryRedirect)
+    app.dynamicWebRouter(Request(uri = Uri.uri("/groups/admin"))).run.status must equal(Status.TemporaryRedirect)
+    app.dynamicWebRouter(Request(uri = Uri.uri("/ping"))).run.status must equal(Status.TemporaryRedirect)
+    app.dynamicWebRouter(Request(uri = Uri.uri("/groups/admin/approve/foo/bar"))).run.status must equal(Status.TemporaryRedirect)
+    app.dynamicWebRouter(Request(uri = Uri.uri("/groups/admin/deny/foo/bar"))).run.status must equal(Status.TemporaryRedirect)
+    app.dynamicWebRouter(Request(uri = Uri.uri("/groups/apply/thing"))).run.status must equal(Status.TemporaryRedirect)
+    app.dynamicWebRouter(Request(uri = Uri.uri("/groups/apply/thing"))).run.status must equal(Status.TemporaryRedirect)
+    app.dynamicWebRouter(Request(method = Method.POST, uri = Uri.uri("/ping/global"))).run.status must equal(Status.SeeOther)
+    app.dynamicWebRouter(Request(method = Method.POST, uri = Uri.uri("/ping/group"))).run.status must equal(Status.SeeOther)
+  }
 }
