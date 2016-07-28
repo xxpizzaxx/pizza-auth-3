@@ -493,4 +493,112 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
 
     verify(ud).getUsers(s"|(authgroup=${group})(corporation=${group})(alliance=${group})")
   }
+  "DynamicRouter's group admin page" should "turn users away without the admin group" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+    val bob = new Pilot("bob", null, null, null, null, null, null, List.empty[String], null, null)
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+
+    val req = Request(uri = Uri.uri("/groups/admin"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Status.TemporaryRedirect)
+    resp.headers.get(CaseInsensitiveString("location")).get.value must equal("/")
+  }
+  "DynamicRouter's group admin page" should "render if they have the admin group" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("admin", "dota-pending", "timerboard-pending"), null, null)
+    when(ud.getAllUsers()).thenReturn(Seq(bob))
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+
+    val req = Request(uri = Uri.uri("/groups/admin"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Status.Ok)
+    val bodytxt = EntityDecoder.decodeString(resp)(Charset.`UTF-8`).run
+    assert(bodytxt contains "/logout")
+    assert(bodytxt contains "bob applied to dota")
+    assert(bodytxt contains "bob applied to timerboard")
+  }
+  "DynamicRouter's group admin page" should "accept people to groups" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("admin", "dota-pending", "timerboard-pending"), null, null)
+    when(ud.getAllUsers()).thenReturn(Seq(bob))
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+    when(ud.updateUser(anyObject())).thenReturn(true)
+
+    val req = Request(uri = Uri.uri("/groups/admin/approve/bob/dota"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.getSession.get.alerts.head.content must equal("Accepted bob into dota")
+    verify(ud).updateUser(bob.copy(authGroups = List("dota", "admin", "timerboard-pending")))
+  }
+  "DynamicRouter's group admin page" should "deny people from groups" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("admin", "dota-pending", "timerboard-pending"), null, null)
+    when(ud.getAllUsers()).thenReturn(Seq(bob))
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+    when(ud.updateUser(anyObject())).thenReturn(true)
+
+    val req = Request(uri = Uri.uri("/groups/admin/deny/bob/dota"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.getSession.get.alerts.head.content must equal("Denied bob membership of dota")
+    verify(ud).updateUser(bob.copy(authGroups = List("admin", "timerboard-pending")))
+  }
 }

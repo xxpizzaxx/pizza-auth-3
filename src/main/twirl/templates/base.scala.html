@@ -33,6 +33,9 @@
                 @if(pilot.isDefined) {
                     <li><a href="/groups">Groups</a></li>
                 }
+                @if(pilot.isDefined && pilot.get.getGroups.contains("admin")) {
+                    <li><a href="/groups/admin">Group Admin</a></li>
+                }
                 @if(pilot.isDefined && pilot.get.getGroups.contains("ping")) {
                     <li><a href="/ping">Ping</a></li>
                 }
