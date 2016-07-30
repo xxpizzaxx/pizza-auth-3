@@ -1,6 +1,6 @@
 package moe.pizza.auth.webapp
 
-import moe.pizza.auth.config.ConfigFile.{AuthConfig, ConfigFile}
+import moe.pizza.auth.config.ConfigFile.{AuthGroupConfig, AuthConfig, ConfigFile}
 import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
@@ -539,6 +539,116 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     resp.getSession.get.alerts.head.content must equal("Message sent to 1 users in group coolpeople.")
 
     verify(ud).getUsers(s"|(authgroup=${group})(corporation=${group})(alliance=${group})")
+  }
+  "DynamicRouter's group" should "show people's groups" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+    when(authconfig.groups).thenReturn(new AuthGroupConfig(List("titans"), List("dota"), List("dota")))
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("secretgroup"), null, null)
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+
+    val req = Request(uri = Uri.uri("/groups"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Ok)
+    val bodytxt = EntityDecoder.decodeString(resp)(Charset.`UTF-8`).run
+    // show the user's groups
+    assert(bodytxt contains "secretgroup")
+    // show available closed groups
+    assert(bodytxt contains "titans")
+    // show available open grops
+    assert(bodytxt contains "dota")
+  }
+  "DynamicRouter's group" should "let people join open groups" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+    when(authconfig.groups).thenReturn(new AuthGroupConfig(List("titans"), List("dota"), List("dota")))
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("secretgroup"), null, null)
+
+    when(ud.updateUser(bob.copy(authGroups = bob.authGroups :+ "dota"))).thenReturn(true)
+
+    val req = Request(uri = Uri.uri("/groups/apply/dota"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(TemporaryRedirect)
+    verify(ud).updateUser(bob.copy(authGroups = bob.authGroups :+ "dota"))
+  }
+  "DynamicRouter's group" should "let people apply to closed groups" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+    when(authconfig.groups).thenReturn(new AuthGroupConfig(List("titans"), List("dota"), List("dota")))
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("secretgroup"), null, null)
+
+    when(ud.updateUser(bob.copy(authGroups = bob.authGroups :+ "titans-pending"))).thenReturn(true)
+
+    val req = Request(uri = Uri.uri("/groups/apply/titans"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(TemporaryRedirect)
+    verify(ud).updateUser(bob.copy(authGroups = bob.authGroups :+ "titans-pending"))
+  }
+  "DynamicRouter's group" should "let people leave groups" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes)).thenReturn("http://login.eveonline.com/whatever")
+    when(authconfig.groups).thenReturn(new AuthGroupConfig(List("titans"), List("dota"), List("dota")))
+
+    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), updater = Some(update))
+
+    val bob = new Pilot("bob", null, null, null, null, null, null, List("secretgroup"), null, null)
+
+    when(ud.updateUser(bob.copy(authGroups = List.empty[String]))).thenReturn(true)
+
+    val req = Request(uri = Uri.uri("/groups/remove/secretgroup"))
+    val reqwithsession = req.copy(attributes = req.attributes.put(SessionManager.HYDRATEDSESSION, new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(TemporaryRedirect)
+    verify(ud).updateUser(bob.copy(authGroups = List.empty[String]))
   }
   "DynamicRouter's group admin page" should "turn users away without the admin group" in {
     val config = mock[ConfigFile]
