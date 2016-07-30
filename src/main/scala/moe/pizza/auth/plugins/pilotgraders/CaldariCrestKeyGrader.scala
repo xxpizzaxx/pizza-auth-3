@@ -9,8 +9,8 @@ import moe.pizza.eveapi.{EVEAPI, SyncableFuture}
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
-class CaldariCrestKeyGrader(c: CrestApi)(implicit val ec: ExecutionContext) extends PilotGrader {
-  val eveapi = new EVEAPI()
+class CaldariCrestKeyGrader(c: CrestApi, eve: Option[EVEAPI] = None)(implicit val ec: ExecutionContext) extends PilotGrader {
+  val eveapi = eve.getOrElse(new EVEAPI())
 
   override def grade(p: Pilot): Status.Value = {
     p.getCrestTokens.flatMap { t =>
