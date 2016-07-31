@@ -827,5 +827,6 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     app.dynamicWebRouter(Request(uri = Uri.uri("/groups/apply/thing"))).run.status must equal(Status.TemporaryRedirect)
     app.dynamicWebRouter(Request(method = Method.POST, uri = Uri.uri("/ping/global"))).run.status must equal(Status.SeeOther)
     app.dynamicWebRouter(Request(method = Method.POST, uri = Uri.uri("/ping/group"))).run.status must equal(Status.SeeOther)
+    app.dynamicWebRouter(Request(uri = Uri.uri("/logout"))).run.status must equal(Status.TemporaryRedirect)
   }
 }

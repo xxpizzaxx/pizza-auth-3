@@ -40,13 +40,6 @@ object Utils {
     }
     def getSession = r.attributes.get(SessionManager.HYDRATEDSESSION)
     def setSession(s: Types.HydratedSession): Unit = r.attributes.put(SessionManager.HYDRATEDSESSION, s)
-    def clearAlerts(): Unit = {
-      val session = getSession
-      session match {
-        case Some(s) => r.setSession(s.copy(alerts = List()))
-        case None => ()
-      }
-    }
     def sessionResponse(f: ((HydratedSession, Pilot) => Task[Response]), error: String = "You must be signed in to do that" ): Task[Response] = {
       (getSession, getSession.flatMap(_.pilot)) match {
         case (Some(s), Some(p)) =>
