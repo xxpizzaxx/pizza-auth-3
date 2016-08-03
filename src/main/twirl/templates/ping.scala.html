@@ -24,7 +24,8 @@
                 <form role="form" class="panel-body form-inline span8 offset2 custom-form" name="ping" action="/ping/group" method="post">
                         <div class="form-group" style="width:100%;">
                                 <label for="message">Message</label><br /><textarea class="form-control" rows=6 style="width:100%" type="text" name="message"></textarea>
-                                <label for="group">Group</label><br /><input id="group" name="group"></input>
+                                <label for="group">Group</label><br />
+                                <input type="text" class="form-control" id="group" name="group" placeholder="Group, Corporation or Alliance" autocomplete="off">
                                 <div class="controls">
                                         <button type="submit" class="btn btn-primary" value="submit" >Submit</button>
                                 </div>
