@@ -442,7 +442,7 @@ class Webapp(fullconfig: ConfigFile,
                 val users = ud.getGroupUsers(group)
                 val message = form.getFirstOrElse("message", "This message is left intentionally blank.")
                 val templatedMessage = templates.txt.broadcast(message, group, p.uid, DateTime.now())
-                val totals = ud.sendGroupAnnouncement(broadcasters, message, p.uid, users)
+                val totals = ud.sendGroupAnnouncement(broadcasters, templatedMessage, p.uid, users)
                 val total = Await.result(Future.sequence(totals), 2 seconds).sum
                 SeeOther(Uri(path = "/ping")).attachSessionifDefined(req.flash(Alerts.info, s"Message sent to ${total} users in group ${group}."))
               }
