@@ -31,6 +31,8 @@ import scala.concurrent.duration._
 import scala.concurrent.Await
 import moe.pizza.crestapi.character.location.Types.Location
 import org.slf4j.LoggerFactory
+import io.circe._, io.circe.generic.auto._, io.circe.syntax._
+import org.http4s.circe.{json, jsonEncoder}
 
 
 import scalaz.\/-
@@ -452,6 +454,13 @@ class Webapp(fullconfig: ConfigFile,
         case None =>
           SeeOther(Uri(path = "/"))
       }
+    }
+
+    case req@GET -> Root / "ping" / "complete" => {
+      val data = req.params.getOrElse("term", "")
+      val allGroups = groupconfig.closed ++ groupconfig.open
+      val allCorpsAndAlliances = ud.getAllUsers().flatMap(p => List(p.corporation, p.alliance))
+      Ok((allGroups ++ allCorpsAndAlliances).distinct.filter(_.toLowerCase.startsWith(data.toLowerCase)).sortBy(_.length).asJson)
     }
 
     case req@GET -> Root / "groups" / "apply" / group => {
