@@ -5,11 +5,13 @@ version := "1.0"
 scalaVersion := "2.11.7"
 
 resolvers += Resolver.jcenterRepo
+resolvers += "TheHolyWaffle's TS3 Library" at "https://raw.githubusercontent.com/TheHolyWaffle/TeamSpeak-3-Java-API/mvn-repo/"
 
 fork := true
 parallelExecution in Test := false
 
 val HTTP4S_VERSION = "0.12.3"
+
 
 // main dependencies
 libraryDependencies ++= Seq(
@@ -42,7 +44,11 @@ libraryDependencies ++= Seq(
   // embedded services
   "org.apache.directory.server"      % "apacheds-all"               % "2.0.0-M22",
   "org.apache.kafka"                 %% "kafka"                     % "0.8.2.2" exclude("org.slf4j", "slf4j-log4j12"),
-  "com.orientechnologies"            % "orientdb-server"            % "2.1.12"
+  "com.orientechnologies"            % "orientdb-server"            % "2.1.12",
+  // ts3 client
+  "com.github.theholywaffle"         % "teamspeak3-api"             % "1.0.13",
+  "org.scala-lang.modules"           %% "scala-java8-compat"        % "0.8.0-RC3"
+
 )
 
 // test frameworks and tools
