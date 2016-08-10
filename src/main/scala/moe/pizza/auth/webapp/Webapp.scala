@@ -528,7 +528,7 @@ class Webapp(fullconfig: ConfigFile,
       }
 
 
-    case req@GET -> Root / "update" / "all" =>
+    case req@GET -> Root / "updateall" =>
       log.info(s"update route called for all users")
       req.getSession.flatMap(_.pilot) match {
         case Some(p) =>
