@@ -534,7 +534,7 @@ class Webapp(fullconfig: ConfigFile,
         case Some(p) =>
           p.getGroups contains "admin" match {
             case true =>
-              val updated = ud.getAllUsers().map {
+              val updated = ud.getAllUsers().filter(_.uid != "pingbot").map {
                 update.updateUser
               }.filter { p =>
                 ud.updateUser(p)
