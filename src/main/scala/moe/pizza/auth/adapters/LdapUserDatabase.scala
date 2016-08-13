@@ -87,6 +87,9 @@ class LdapUserDatabase(client: LdapClient, schema: SchemaManager, basedn:String)
 
   override def updateUser(p: Pilot): Boolean = {
     val op = getUser(p.uid).get
+    if (op==p) {
+      return false
+    }
     client.withConnection { c =>
       val modrequest = new ModifyRequestImpl
       if (p.corporation != op.corporation) {
