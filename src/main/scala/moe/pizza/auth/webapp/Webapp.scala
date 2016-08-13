@@ -537,6 +537,7 @@ class Webapp(fullconfig: ConfigFile,
               val updated = ud.getAllUsers().map {
                 update.updateUser
               }.filter { p =>
+                Thread.sleep(100)
                 ud.updateUser(p)
               }
               Ok(OM.writeValueAsString(updated))
