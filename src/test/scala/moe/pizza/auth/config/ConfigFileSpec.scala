@@ -11,6 +11,7 @@ class ConfigFileSpec extends FlatSpec with MustMatchers {
     val c = Main.parseConfigFile(new File("config.yml"))
     c.isSuccess must equal(true)
     c.get.auth.alliance must equal("Confederation of xXPIZZAXx")
+    c.get.auth.restkeys must equal(List("insertakeyhere"))
   }
 
 }

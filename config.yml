@@ -58,6 +58,8 @@
         vCode: whatever
         usealliance: true                # enable these to turn on corp or alliance standings, if both are on, alliance takes precedence
         usecorp: false
+    restkeys:
+      - "insertakeyhere"
 
   #############################################################################
   ## embedded ldap settings

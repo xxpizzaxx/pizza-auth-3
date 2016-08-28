@@ -50,7 +50,7 @@ class RestResource(fullconfig: ConfigFile,
 
   def resource = HttpService {
 
-    case req@GET -> Root / "ping" / "group" / group => {
+    case req@GET -> Root / "api" / "v1" / "ping" / "group" / group => {
       req.decode[Json] { p =>
         p.as[PingRequest].toOption.map { pingreq =>
           val users = ud.getUsers(s"authgroup=${group}")

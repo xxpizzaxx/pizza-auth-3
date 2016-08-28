@@ -32,7 +32,8 @@ object ConfigFile {
                         groupShortName: String,
                         groups: AuthGroupConfig,
                         graders: List[JsonNode],
-                        pingbot: Option[PingBotConfig]
+                        pingbot: Option[PingBotConfig],
+                        restkeys: List[String]
                        ) {
     def constructGraders(c: ConfigFile)(implicit ec: ExecutionContext): PilotGrader = new GraderChain(graders.map(g => PilotGraderFactory.fromYaml(g, c)).flatten.toList)
 

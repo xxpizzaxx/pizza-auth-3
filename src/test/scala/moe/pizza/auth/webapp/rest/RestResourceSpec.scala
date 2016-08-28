@@ -31,7 +31,7 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val resource = new RestResource(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), broadcasters = List(broadcaster))
 
 
-    val res = resource.resource(Request(uri = Uri.uri("/ping/group/groupname")).withBody("{\"message\": \"I like turtles\", \"from\": \"restbot\", \"to\": \"groupname\"}").run)
+    val res = resource.resource(Request(uri = Uri.uri("/api/v1/ping/group/groupname")).withBody("{\"message\": \"I like turtles\", \"from\": \"restbot\", \"to\": \"groupname\"}").run)
 
     val resp = res.run
     resp.status.code must equal(200)
@@ -53,7 +53,7 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val resource = new RestResource(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), broadcasters = List(broadcaster))
 
 
-    val res = resource.resource(Request(uri = Uri.uri("/ping/group/groupname")).withBody("{\"me").run)
+    val res = resource.resource(Request(uri = Uri.uri("/api/v1/ping/group/groupname")).withBody("{\"me").run)
 
     val resp = res.run
     resp.status.code must equal(400)
@@ -76,7 +76,7 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val resource = new RestResource(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), broadcasters = List(broadcaster))
 
 
-    val res = resource.resource(Request(uri = Uri.uri("/ping/group/groupname")).withBody("{\"message\": \"I like turtles\"}").run)
+    val res = resource.resource(Request(uri = Uri.uri("/api/v1/ping/group/groupname")).withBody("{\"message\": \"I like turtles\"}").run)
 
     val resp = res.run
     resp.status.code must equal(400)

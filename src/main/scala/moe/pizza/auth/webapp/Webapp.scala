@@ -9,7 +9,7 @@ import BroadcastService._
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.plugins.LocationManager
 import moe.pizza.auth.tasks.Update
-import moe.pizza.auth.webapp.Types.{SignupData, HydratedSession, Session2, Session}
+import moe.pizza.auth.webapp.Types.{HydratedSession, Session, Session2, SignupData}
 import moe.pizza.crestapi.CrestApi
 import org.http4s.{HttpService, _}
 import org.http4s.dsl.{Root, _}
@@ -19,8 +19,10 @@ import org.http4s.server.syntax.ServiceOps
 import org.joda.time.DateTime
 import play.twirl.api.Html
 import moe.pizza.eveapi._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.http4s.twirl._
+
 import scala.concurrent.Future
 import scala.util.Try
 import scalaz._
@@ -31,9 +33,11 @@ import scala.concurrent.duration._
 import scala.concurrent.Await
 import moe.pizza.crestapi.character.location.Types.Location
 import org.slf4j.LoggerFactory
-import io.circe._, io.circe.generic.auto._, io.circe.syntax._
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import moe.pizza.auth.webapp.rest.{RestKeyMiddleware, RestResource}
 import org.http4s.circe.{json, jsonEncoder}
-
 
 import scalaz.\/-
 
@@ -583,7 +587,9 @@ class Webapp(fullconfig: ConfigFile,
   val secretKey = "SECRET IS GOING HERE"
   //UUID.randomUUID().toString
   val sessions = new SessionManager(secretKey, ud)
+  val restapi = new RestResource(fullconfig, graders, portnumber, ud, crestapi, eve, mapper, updater, broadcasters)
+  val restMiddleware = new RestKeyMiddleware(fullconfig.auth.restkeys)
 
-  def router = staticrouter orElse sessions(dynamicWebRouter)
+  def router = staticrouter orElse sessions(dynamicWebRouter) orElse restMiddleware(restapi.resource)
 
 }
