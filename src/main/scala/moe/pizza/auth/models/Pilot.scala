@@ -13,20 +13,25 @@ import scala.util.Try
 object Pilot {
   val OM = new ObjectMapper()
   OM.registerModule(DefaultScalaModule)
-  val sm = new SimpleModule("pizza-auth-serializer", new Version(1, 0, 0, null, "moe.pizza", "pizza-auth-3"))
+  val sm = new SimpleModule(
+    "pizza-auth-serializer",
+    new Version(1, 0, 0, null, "moe.pizza", "pizza-auth-3"))
   sm.addSerializer(new EnumSerializer)
   sm.addDeserializer(classOf[Status.Value], new EnumDeserializer)
   OM.registerModule(sm)
 
   // ser/der for the Pilot Status enum
   class EnumDeserializer extends JsonDeserializer[Status.Value] {
-    override def deserialize(p: JsonParser, ctxt: DeserializationContext): Status.Value = {
+    override def deserialize(p: JsonParser,
+                             ctxt: DeserializationContext): Status.Value = {
       Pilot.Status.lookup.getOrElse(p.getValueAsString, Status.expired)
     }
     override def handledType() = classOf[Status.Value]
   }
   class EnumSerializer extends JsonSerializer[Status.Value] {
-    override def serialize(value: Status.Value, gen: JsonGenerator, serializers: SerializerProvider): Unit = {
+    override def serialize(value: Status.Value,
+                           gen: JsonGenerator,
+                           serializers: SerializerProvider): Unit = {
       gen.writeString(value.toString)
     }
     override def handledType() = classOf[Status.Value]
@@ -40,7 +45,12 @@ object Pilot {
     val banned = Value("Banned")
     val ineligible = Value("Ineligible")
     val unclassified = Value("Unclassified")
-    val lookup = Map("Internal" -> internal, "Ally" -> ally, "Expired" -> expired, "Banned" -> banned, "Ineligible" -> ineligible, "Unclassified" -> unclassified)
+    val lookup = Map("Internal" -> internal,
+                     "Ally" -> ally,
+                     "Expired" -> expired,
+                     "Banned" -> banned,
+                     "Ineligible" -> ineligible,
+                     "Unclassified" -> unclassified)
   }
 
   /**
@@ -52,12 +62,17 @@ object Pilot {
   def fromMap(m: Map[String, List[String]]): Pilot = {
     new Pilot(
       m.get("uid").flatMap(_.headOption).getOrElse("unknown"),
-      Pilot.Status.lookup.getOrElse(m.get("accountstatus").flatMap(_.headOption).getOrElse("Expired"), Status.expired),
+      Pilot.Status.lookup.getOrElse(
+        m.get("accountstatus").flatMap(_.headOption).getOrElse("Expired"),
+        Status.expired),
       m.get("alliance").flatMap(_.headOption).getOrElse("unknown"),
       m.get("corporation").flatMap(_.headOption).getOrElse("unknown"),
       m.get("charactername").flatMap(_.headOption).getOrElse("unknown"),
       m.get("email").flatMap(_.headOption).getOrElse("unknown"),
-      m.get("metadata").flatMap(_.headOption).map(OM.readTree).getOrElse(OM.createObjectNode()),
+      m.get("metadata")
+        .flatMap(_.headOption)
+        .map(OM.readTree)
+        .getOrElse(OM.createObjectNode()),
       m.getOrElse("authgroup", List.empty[String]),
       m.getOrElse("cresttoken", List.empty[String]),
       m.getOrElse("apikey", List.empty[String])
@@ -74,32 +89,33 @@ object Pilot {
 }
 
 case class Pilot(
-                  uid: String,
-                  accountStatus: Pilot.Status.Status,
-                  alliance: String,
-                  corporation: String,
-                  characterName: String,
-                  email: String,
-                  metadata: JsonNode,
-                  authGroups: List[String],
-                  crestTokens: List[String],
-                  apiKeys: List[String]
-                ) {
+    uid: String,
+    accountStatus: Pilot.Status.Status,
+    alliance: String,
+    corporation: String,
+    characterName: String,
+    email: String,
+    metadata: JsonNode,
+    authGroups: List[String],
+    crestTokens: List[String],
+    apiKeys: List[String]
+) {
   def getCrestTokens: List[CrestToken] = {
-    crestTokens.flatMap{t =>
+    crestTokens.flatMap { t =>
       val i = t.indexOf(":")
       if (i > -1) {
-        Some(CrestToken(t.substring(0, i).toLong, t.substring(i+1, t.length)))
+        Some(
+          CrestToken(t.substring(0, i).toLong, t.substring(i + 1, t.length)))
       } else {
         None
       }
     }
   }
   def getApiKeys: List[ApiKey] = {
-    apiKeys.flatMap{k =>
+    apiKeys.flatMap { k =>
       val i = k.indexOf(":")
       if (i > -1) {
-        Some(ApiKey(k.substring(0, i).toInt, k.substring(i+1, k.length)))
+        Some(ApiKey(k.substring(0, i).toInt, k.substring(i + 1, k.length)))
       } else {
         None
       }
@@ -108,10 +124,10 @@ case class Pilot(
   }
 
   @JsonIgnore
-  def getGroups: List[String] = authGroups.filter{!_.endsWith("-pending")}
+  def getGroups: List[String] = authGroups.filter { !_.endsWith("-pending") }
   @JsonIgnore
-  def getPendingGroups: List[String] = authGroups.filter{_.endsWith("-pending")}.map(_.stripSuffix("-pending"))
-
+  def getPendingGroups: List[String] =
+    authGroups.filter { _.endsWith("-pending") }.map(_.stripSuffix("-pending"))
 
   def toJson: String = {
     Pilot.OM.writeValueAsString(this)
@@ -122,7 +138,16 @@ case class Pilot(
   }
 
   def withNewAccountStatus(s: Pilot.Status.Status) = {
-    new Pilot(uid, s, alliance, corporation, characterName, email, metadata, authGroups, crestTokens, apiKeys)
+    new Pilot(uid,
+              s,
+              alliance,
+              corporation,
+              characterName,
+              email,
+              metadata,
+              authGroups,
+              crestTokens,
+              apiKeys)
   }
 
 }

@@ -7,7 +7,8 @@ import moe.pizza.auth.models.Pilot
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class XmppBroadcastService(host: String, password: String) extends BroadcastService {
+class XmppBroadcastService(host: String, password: String)
+    extends BroadcastService {
 
   def getJabberServer(u: Pilot): String = u.accountStatus match {
     case Pilot.Status.internal => host
@@ -19,7 +20,9 @@ class XmppBroadcastService(host: String, password: String) extends BroadcastServ
   val xmppbot = new XmppBot
   xmppbot.connect("pingbot", host, password)
 
-  override def sendAnnouncement(msg: String, from: String, to: List[Pilot]): Future[Int] = {
+  override def sendAnnouncement(msg: String,
+                                from: String,
+                                to: List[Pilot]): Future[Int] = {
     Future {
       to.map { p =>
         xmppbot.sendMessage(s"${p.uid}@${getJabberServer(p)}", msg)

@@ -15,12 +15,14 @@ import scala.concurrent.Future
 import scala.util.Try
 import scalaxb.{DataRecord, XMLStandardTypes}
 
-
 /**
   * Created by Andi on 26/02/2016.
   */
-class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar with XMLStandardTypes {
-
+class AlliedPilotGraderSpec
+    extends WordSpec
+    with MustMatchers
+    with MockitoSugar
+    with XMLStandardTypes {
 
   "AlliedPilotGrader" when {
     "pulling contacts" should {
@@ -60,7 +62,8 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
                       )
                     )
                   ),
-                  Map("@name" -> DataRecord.apply(null, "corporateContactList"))
+                  Map(
+                    "@name" -> DataRecord.apply(null, "corporateContactList"))
                 )
               )
             )
@@ -69,7 +72,8 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         implicit val apikey = new ApiKey(1, "hi")
         val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
         val r = apg.pullAllies()
-        r must equal(Some(new SavedContactList(now, List(), List("Terry"), List())))
+        r must equal(
+          Some(new SavedContactList(now, List(), List("Terry"), List())))
       }
       "read an alliance contact list" in {
         val now = DateTime.now()
@@ -101,7 +105,8 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         implicit val apikey = new ApiKey(1, "hi")
         val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
         val r = apg.pullAllies()
-        r must equal(Some(new SavedContactList(now, List(), List("Terry"), List())))
+        r must equal(
+          Some(new SavedContactList(now, List(), List("Terry"), List())))
       }
     }
     "merge the lists" in {
@@ -146,7 +151,9 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
       implicit val apikey = new ApiKey(1, "hi")
       val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
       val r = apg.pullAllies()
-      r must equal(Some(new SavedContactList(now, List(), List("Terry2", "Terry"), List())))
+      r must equal(
+        Some(
+          new SavedContactList(now, List(), List("Terry2", "Terry"), List())))
     }
     "parse people, corps and alliance into the correct lists" in {
       val now = DateTime.now()
@@ -177,8 +184,10 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
                   ),
                   new Row(
                     Map(
-                      "@contactTypeID" -> DataRecord.apply(null, BigInt(16159)),
-                      "@contactName" -> DataRecord.apply(null, "Terry's Cool Alliance"),
+                      "@contactTypeID" -> DataRecord.apply(null,
+                                                           BigInt(16159)),
+                      "@contactName" -> DataRecord
+                        .apply(null, "Terry's Cool Alliance"),
                       "@standing" -> DataRecord.apply(null, BigDecimal(10))
                     )
                   )
@@ -204,7 +213,12 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
       implicit val apikey = new ApiKey(1, "hi")
       val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
       val r = apg.pullAllies()
-      r must equal(Some(new SavedContactList(now, List("Terry2", "Terry"), List("TerryCorp"), List("Terry's Cool Alliance"))))
+      r must equal(
+        Some(
+          new SavedContactList(now,
+                               List("Terry2", "Terry"),
+                               List("TerryCorp"),
+                               List("Terry's Cool Alliance"))))
     }
     "obey the flags for which lists to parse" in {
       val now = DateTime.now()
@@ -235,8 +249,10 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
                   ),
                   new Row(
                     Map(
-                      "@contactTypeID" -> DataRecord.apply(null, BigInt(16159)),
-                      "@contactName" -> DataRecord.apply(null, "Terry's Cool Alliance"),
+                      "@contactTypeID" -> DataRecord.apply(null,
+                                                           BigInt(16159)),
+                      "@contactName" -> DataRecord
+                        .apply(null, "Terry's Cool Alliance"),
                       "@standing" -> DataRecord.apply(null, BigDecimal(10))
                     )
                   )
@@ -260,9 +276,14 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         }
       )
       implicit val apikey = new ApiKey(1, "hi")
-      val apg = new AlliedPilotGrader(5.0, true, usealliance = false, Some(eveapi), null)
+      val apg = new AlliedPilotGrader(5.0,
+                                      true,
+                                      usealliance = false,
+                                      Some(eveapi),
+                                      null)
       val r = apg.pullAllies()
-      r must equal(Some(new SavedContactList(now, List(), List("TerryCorp"), List())))
+      r must equal(
+        Some(new SavedContactList(now, List(), List("TerryCorp"), List())))
     }
     "obey the threshold" in {
       val now = DateTime.now()
@@ -293,10 +314,11 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
                   ),
                   new Row(
                     Map(
-                      "@contactTypeID" -> DataRecord.apply(null, BigInt(16159)),
-                      "@contactName" -> DataRecord.apply(null, "Terry's Cool Alliance"),
+                      "@contactTypeID" -> DataRecord.apply(null,
+                                                           BigInt(16159)),
+                      "@contactName" -> DataRecord
+                        .apply(null, "Terry's Cool Alliance"),
                       "@standing" -> DataRecord.apply(null, BigDecimal(10))
-
                     )
                   )
                 ),
@@ -321,7 +343,12 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
       implicit val apikey = new ApiKey(1, "hi")
       val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
       val r = apg.pullAllies()
-      r must equal(Some(new SavedContactList(now, List("Terry2"), List(), List("Terry's Cool Alliance"))))
+      r must equal(
+        Some(
+          new SavedContactList(now,
+                               List("Terry2"),
+                               List(),
+                               List("Terry's Cool Alliance"))))
     }
   }
   "grading pilots" should {
@@ -355,8 +382,10 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
                   ),
                   new Row(
                     Map(
-                      "@contactTypeID" -> DataRecord.apply(null, BigInt(16159)),
-                      "@contactName" -> DataRecord.apply(null, "Terry's Cool Alliance"),
+                      "@contactTypeID" -> DataRecord.apply(null,
+                                                           BigInt(16159)),
+                      "@contactName" -> DataRecord
+                        .apply(null, "Terry's Cool Alliance"),
                       "@standing" -> DataRecord.apply(null, BigDecimal(10))
                     )
                   )
@@ -381,11 +410,23 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
       )
       implicit val apikey = new ApiKey(1, "hi")
       val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
-      val bob = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
+      val bob = new Pilot("bob",
+                          Pilot.Status.unclassified,
+                          "boballiance",
+                          "bobcorp",
+                          "Bob",
+                          "none@none",
+                          Pilot.OM.createObjectNode(),
+                          List.empty[String],
+                          List("1:REF"),
+                          List.empty[String])
       apg.grade(bob) must equal(Pilot.Status.unclassified)
-      apg.grade(bob.copy(characterName = "Terry")) must equal(Pilot.Status.ally)
-      apg.grade(bob.copy(corporation = "TerryCorp")) must equal(Pilot.Status.ally)
-      apg.grade(bob.copy(alliance = "Terry's Cool Alliance")) must equal(Pilot.Status.ally)
+      apg.grade(bob.copy(characterName = "Terry")) must equal(
+        Pilot.Status.ally)
+      apg.grade(bob.copy(corporation = "TerryCorp")) must equal(
+        Pilot.Status.ally)
+      apg.grade(bob.copy(alliance = "Terry's Cool Alliance")) must equal(
+        Pilot.Status.ally)
       verify(corp, times(1)).ContactList()
     }
     "pull a new contact list if the old one expired" in {
@@ -419,8 +460,10 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
                   ),
                   new Row(
                     Map(
-                      "@contactTypeID" -> DataRecord.apply(null, BigInt(16159)),
-                      "@contactName" -> DataRecord.apply(null, "Terry's Cool Alliance"),
+                      "@contactTypeID" -> DataRecord.apply(null,
+                                                           BigInt(16159)),
+                      "@contactName" -> DataRecord
+                        .apply(null, "Terry's Cool Alliance"),
                       "@standing" -> DataRecord.apply(null, BigDecimal(10))
                     )
                   )
@@ -469,8 +512,10 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
                   ),
                   new Row(
                     Map(
-                      "@contactTypeID" -> DataRecord.apply(null, BigInt(16159)),
-                      "@contactName" -> DataRecord.apply(null, "Terry's Cool Alliance"),
+                      "@contactTypeID" -> DataRecord.apply(null,
+                                                           BigInt(16159)),
+                      "@contactName" -> DataRecord
+                        .apply(null, "Terry's Cool Alliance"),
                       "@standing" -> DataRecord.apply(null, BigDecimal(10))
                     )
                   )
@@ -493,7 +538,16 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
           )
         }
       )
-      val bob = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
+      val bob = new Pilot("bob",
+                          Pilot.Status.unclassified,
+                          "boballiance",
+                          "bobcorp",
+                          "Bob",
+                          "none@none",
+                          Pilot.OM.createObjectNode(),
+                          List.empty[String],
+                          List("1:REF"),
+                          List.empty[String])
       apg.grade(bob) must equal(Pilot.Status.unclassified)
       verify(corp, times(2)).ContactList()
     }
@@ -512,7 +566,16 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
     val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
     val r = apg.pullAllies()
     r must equal(None)
-    val bob = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
+    val bob = new Pilot("bob",
+                        Pilot.Status.unclassified,
+                        "boballiance",
+                        "bobcorp",
+                        "Bob",
+                        "none@none",
+                        Pilot.OM.createObjectNode(),
+                        List.empty[String],
+                        List("1:REF"),
+                        List.empty[String])
     apg.grade(bob) must equal(Pilot.Status.unclassified)
     verify(corp, times(2)).ContactList()
   }
@@ -548,7 +611,8 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
                 new Row(
                   Map(
                     "@contactTypeID" -> DataRecord.apply(null, BigInt(16159)),
-                    "@contactName" -> DataRecord.apply(null, "Terry's Cool Alliance"),
+                    "@contactName" -> DataRecord
+                      .apply(null, "Terry's Cool Alliance"),
                     "@standing" -> DataRecord.apply(null, BigDecimal(10))
                   )
                 )
@@ -578,12 +642,22 @@ class AlliedPilotGraderSpec extends WordSpec with MustMatchers with MockitoSugar
         throw new Exception("oh no")
       }
     )
-    val bob = new Pilot("bob", Pilot.Status.unclassified, "boballiance", "bobcorp", "Bob", "none@none", Pilot.OM.createObjectNode(), List.empty[String], List("1:REF"), List.empty[String])
+    val bob = new Pilot("bob",
+                        Pilot.Status.unclassified,
+                        "boballiance",
+                        "bobcorp",
+                        "Bob",
+                        "none@none",
+                        Pilot.OM.createObjectNode(),
+                        List.empty[String],
+                        List("1:REF"),
+                        List.empty[String])
     apg.grade(bob) must equal(Pilot.Status.unclassified)
     apg.grade(bob.copy(characterName = "Terry")) must equal(Pilot.Status.ally)
-    apg.grade(bob.copy(corporation = "TerryCorp")) must equal(Pilot.Status.ally)
-    apg.grade(bob.copy(alliance = "Terry's Cool Alliance")) must equal(Pilot.Status.ally)
+    apg.grade(bob.copy(corporation = "TerryCorp")) must equal(
+      Pilot.Status.ally)
+    apg.grade(bob.copy(alliance = "Terry's Cool Alliance")) must equal(
+      Pilot.Status.ally)
     verify(corp, times(5)).ContactList()
   }
 }
-

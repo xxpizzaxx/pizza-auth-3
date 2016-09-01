@@ -18,11 +18,15 @@ import scalaz.concurrent.Task
 
 class RestKeyMiddleware(apikeys: List[String]) extends HttpMiddleware {
   override def apply(s: HttpService): HttpService = Service.lift { req =>
-    req.headers.get(headers.Authorization).map(_.credentials.value.stripPrefix("Bearer ")).filter(apikeys.contains) match {
+    req.headers
+      .get(headers.Authorization)
+      .map(_.credentials.value.stripPrefix("Bearer "))
+      .filter(apikeys.contains) match {
       case Some(k) =>
         s(req)
       case None =>
-        Unauthorized(Challenge(scheme = "Bearer", realm="Please enter a valid API key"))
+        Unauthorized(
+          Challenge(scheme = "Bearer", realm = "Please enter a valid API key"))
     }
   }
 }

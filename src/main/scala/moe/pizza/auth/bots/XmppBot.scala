@@ -1,7 +1,10 @@
 package moe.pizza.auth.bots
 
 import org.jivesoftware.smack.chat.ChatManager
-import org.jivesoftware.smack.tcp.{XMPPTCPConnection, XMPPTCPConnectionConfiguration}
+import org.jivesoftware.smack.tcp.{
+  XMPPTCPConnection,
+  XMPPTCPConnectionConfiguration
+}
 import org.jivesoftware.smack.{ConnectionConfiguration, XMPPConnection}
 
 /**
@@ -12,7 +15,8 @@ class XmppBot {
   var connection: Option[XMPPConnection] = None
 
   def connect(uid: String, host: String, password: String) = {
-    val config = XMPPTCPConnectionConfiguration.builder()
+    val config = XMPPTCPConnectionConfiguration
+      .builder()
       .setUsernameAndPassword(uid, password)
       .setServiceName(host)
       .setHost(host)

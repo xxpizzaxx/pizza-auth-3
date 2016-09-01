@@ -7,7 +7,6 @@ import net.andimiller.iql.Ast.World
 import net.andimiller.iql.Evaluator.EvaluatablePipeline
 import net.andimiller.iql.{Ast, Parser}
 
-
 class IqlFilter extends UserFilter {
 
   override def filter(users: Seq[Pilot], rule: String): Seq[Pilot] = {

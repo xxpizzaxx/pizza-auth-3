@@ -21,7 +21,10 @@ object WebappTestSupports {
   OM.registerModule(DefaultScalaModule)
 
   def readTestConfig(): ConfigFile = {
-    val config = Source.fromURL(getClass.getResource("/config.yml")).getLines().mkString("\n")
+    val config = Source
+      .fromURL(getClass.getResource("/config.yml"))
+      .getLines()
+      .mkString("\n")
     val conf = OM.readValue[ConfigFile](config, classOf[ConfigFile])
     conf
   }

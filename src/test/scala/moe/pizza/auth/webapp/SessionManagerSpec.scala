@@ -8,18 +8,16 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, MustMatchers}
 import moe.pizza.auth.webapp.Utils._
 
-
 class SessionManagerSpec extends FlatSpec with MustMatchers with MockitoSugar {
 
   val emptyservice = HttpService {
-    case req @GET -> Root =>
+    case req @ GET -> Root =>
       Ok(req.getSession.toString)
-    case req @GET -> Root / "flash" =>
+    case req @ GET -> Root / "flash" =>
       val newsession = req.flash(Alerts.info, "this is an alert")
       Ok(req.getSession.toString).attachSessionifDefined(newsession)
-    case req @GET -> Root / "logout"  =>
-      Ok(req.getSession.toString)
-        .clearSession()
+    case req @ GET -> Root / "logout" =>
+      Ok(req.getSession.toString).clearSession()
   }
 
   val ud = mock[UserDatabase]
@@ -41,10 +39,15 @@ class SessionManagerSpec extends FlatSpec with MustMatchers with MockitoSugar {
     val session = r.headers.get(CaseInsensitiveString("set-cookie")).get
     session.value.startsWith("authsession=") must equal(true)
     val cookie = session.value
-    val r2 = svc.apply(new Request(uri = Uri.uri("/"), headers = Headers(Header("Cookie", cookie)))).run
+    val r2 = svc
+      .apply(
+        new Request(uri = Uri.uri("/"),
+                    headers = Headers(Header("Cookie", cookie))))
+      .run
     r.status must equal(Ok)
     val bodytxt = EntityDecoder.decodeString(r2)(Charset.`UTF-8`).run
-    bodytxt must equal("Some(HydratedSession(List(Alert(info,this is an alert)),None,None))")
+    bodytxt must equal(
+      "Some(HydratedSession(List(Alert(info,this is an alert)),None,None))")
   }
 
   "when wrapping a service it" should "be able to remove sessions" in {

@@ -6,11 +6,13 @@ import org.apache.directory.ldap.client.api._
 
 import scala.collection.JavaConverters._
 
-
 object LdapClient {
-   implicit class PimpedEntry(e: Entry) {
+  implicit class PimpedEntry(e: Entry) {
     def toMap = {
-      e.iterator().asScala.map(kv => (kv.getId, kv.iterator().asScala.toList.map(_.toString))).toMap
+      e.iterator()
+        .asScala
+        .map(kv => (kv.getId, kv.iterator().asScala.toList.map(_.toString)))
+        .toMap
     }
   }
 
@@ -32,8 +34,6 @@ class LdapClient(host: String, port: Int, user: String, password: String) {
   val pool = new LdapConnectionPool(factory)
   pool.setTestOnBorrow(true)
 
-
-
   def withConnection[T](block: LdapConnection => T): T = {
     var result: Option[T] = None
     val con = pool.getConnection
@@ -44,6 +44,5 @@ class LdapClient(host: String, port: Int, user: String, password: String) {
     }
     result.get
   }
-
 
 }

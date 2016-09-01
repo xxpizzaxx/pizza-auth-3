@@ -41,5 +41,4 @@ class EmbeddedZookeeper(config: Properties) {
     }
   }
 
-
 }

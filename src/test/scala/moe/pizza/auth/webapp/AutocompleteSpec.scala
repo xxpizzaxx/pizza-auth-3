@@ -1,6 +1,10 @@
 package moe.pizza.auth.webapp
 
-import moe.pizza.auth.config.ConfigFile.{AuthConfig, AuthGroupConfig, ConfigFile}
+import moe.pizza.auth.config.ConfigFile.{
+  AuthConfig,
+  AuthGroupConfig,
+  ConfigFile
+}
 import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
@@ -24,7 +28,6 @@ import org.scalatest.{FlatSpec, MustMatchers}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-
 class AutocompleteSpec extends FlatSpec with MockitoSugar with MustMatchers {
 
   "DynamicRouter's AutoCompleter" should "autocomplete groups" in {
@@ -42,9 +45,15 @@ class AutocompleteSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(groupconfig.open).thenReturn(List("dota"))
     when(ud.getAllUsers()).thenReturn(Seq.empty[Pilot])
 
-    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db))
+    val app = new Webapp(config,
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         mapper = Some(db))
 
-    val res = app.dynamicWebRouter(Request(uri = Uri.uri("/ping/complete?term=dot")))
+    val res =
+      app.dynamicWebRouter(Request(uri = Uri.uri("/ping/complete?term=dot")))
 
     val resp = res.run
     resp.status must equal(Ok)
@@ -63,18 +72,28 @@ class AutocompleteSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(config.auth).thenReturn(authconfig)
     when(authconfig.groups).thenReturn(groupconfig)
 
-    val blankPilot = Pilot(null, null, null, null, null, null, null, null, null, null)
+    val blankPilot =
+      Pilot(null, null, null, null, null, null, null, null, null, null)
 
     when(groupconfig.closed).thenReturn(List("admin"))
     when(groupconfig.open).thenReturn(List("dota"))
-    when(ud.getAllUsers()).thenReturn(Seq(
-      blankPilot.copy(corporation = "Love Squad", alliance = "Black Legion."),
-      blankPilot.copy(corporation = "Blackwater USA Inc.", alliance = "Pandemic Legion")
-    ))
+    when(ud.getAllUsers()).thenReturn(
+      Seq(
+        blankPilot.copy(corporation = "Love Squad",
+                        alliance = "Black Legion."),
+        blankPilot.copy(corporation = "Blackwater USA Inc.",
+                        alliance = "Pandemic Legion")
+      ))
 
-    val app = new Webapp(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db))
+    val app = new Webapp(config,
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         mapper = Some(db))
 
-    val res = app.dynamicWebRouter(Request(uri = Uri.uri("/ping/complete?term=black")))
+    val res =
+      app.dynamicWebRouter(Request(uri = Uri.uri("/ping/complete?term=black")))
 
     val resp = res.run
     resp.status must equal(Ok)

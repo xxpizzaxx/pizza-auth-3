@@ -9,17 +9,18 @@ import moe.pizza.eveapi._
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
-
-class InternalWhitelistPilotGrader(c: CrestApi, ids: List[Long])(implicit val ec: ExecutionContext) extends PilotGrader {
+class InternalWhitelistPilotGrader(c: CrestApi, ids: List[Long])(
+    implicit val ec: ExecutionContext)
+    extends PilotGrader {
   override def grade(p: Pilot): Status.Value = {
     p.getCrestTokens.flatMap { t =>
       Try {
         c.refresh(t.token).sync()
       }.toOption
-    }.map{ f =>
+    }.map { f =>
       val verify = c.verify(f.access_token).sync()
       verify.characterID
-    }.find{ids.contains} match {
+    }.find { ids.contains } match {
       case Some(k) =>
         Status.internal
       case None =>

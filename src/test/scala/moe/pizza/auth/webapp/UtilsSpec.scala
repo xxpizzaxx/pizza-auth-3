@@ -10,10 +10,4 @@ import org.mockito.Matchers.{anyString, anyInt}
 /**
   * Created by Andi on 19/02/2016.
   */
-class UtilsSpec extends FlatSpec with MustMatchers with MockitoSugar {
-
-
-
-
-
-}
+class UtilsSpec extends FlatSpec with MustMatchers with MockitoSugar {}

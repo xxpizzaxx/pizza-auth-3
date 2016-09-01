@@ -9,15 +9,25 @@ import net.sf.ehcache.Cache
 import org.apache.directory.api.ldap.model.constants.SchemaConstants
 import org.apache.directory.api.ldap.model.csn.CsnFactory
 import org.apache.directory.api.ldap.model.entry._
-import org.apache.directory.api.ldap.model.exception.{LdapInvalidDnException, LdapException}
+import org.apache.directory.api.ldap.model.exception.{
+  LdapInvalidDnException,
+  LdapException
+}
 import org.apache.directory.api.ldap.model.name.Dn
 import org.apache.directory.api.ldap.model.schema.{SchemaManager, SchemaObject}
 import org.apache.directory.api.ldap.model.schema.parsers.OpenLdapSchemaParser
 import org.apache.directory.api.ldap.schema.extractor.impl.DefaultSchemaLdifExtractor
 import org.apache.directory.server.core.api.entry.ClonedServerEntry
-import org.apache.directory.server.core.api.interceptor.context.{HasEntryOperationContext, AddOperationContext}
+import org.apache.directory.server.core.api.interceptor.context.{
+  HasEntryOperationContext,
+  AddOperationContext
+}
 import org.apache.directory.server.core.api.partition.Partition
-import org.apache.directory.server.core.api.{CoreSession, InstanceLayout, DirectoryService}
+import org.apache.directory.server.core.api.{
+  CoreSession,
+  InstanceLayout,
+  DirectoryService
+}
 import org.apache.directory.server.core.factory.DefaultDirectoryServiceFactory
 import org.apache.directory.server.core.partition.impl.avl.AvlPartition
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition
@@ -29,20 +39,31 @@ import org.apache.directory.server.protocol.shared.transport.TcpTransport
 import org.apache.directory.server.xdbm.impl.avl.AvlIndex
 import org.slf4j.{LoggerFactory, Logger}
 
-
-class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, port: Int, instanceName: String = "pizza-auth-ldap") {
+class EmbeddedLdapServer(instancePath: String,
+                         basedn: String,
+                         host: String,
+                         port: Int,
+                         instanceName: String = "pizza-auth-ldap") {
   private final val log: Logger = LoggerFactory.getLogger(getClass)
   var directoryService: DirectoryService = null
   var ldapService: LdapServer = null
 
   private val schemaParser = new OpenLdapSchemaParser
-  val pizzaSchema = schemaParser.parse(scala.io.Source.fromInputStream(getClass.getResourceAsStream("/schemas/"+basedn.replace("ou=","")+".schema")).getLines().mkString("\n"))
-
+  val pizzaSchema = schemaParser.parse(
+    scala.io.Source
+      .fromInputStream(getClass.getResourceAsStream(
+        "/schemas/" + basedn.replace("ou=", "") + ".schema"))
+      .getLines()
+      .mkString("\n"))
 
   init
 
-  def setPassword(password: String, uid: String = "uid=admin,ou=system"): Unit = {
-    val setpassword = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, "userPassword", password)
+  def setPassword(password: String,
+                  uid: String = "uid=admin,ou=system"): Unit = {
+    val setpassword = new DefaultModification(
+      ModificationOperation.REPLACE_ATTRIBUTE,
+      "userPassword",
+      password)
     directoryService.getAdminSession.modify(new Dn(uid), setpassword)
   }
 
@@ -55,32 +76,35 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
       "objectClass" -> "organizationalUnit",
       "ou" -> "pizza"
     ))
-    */
+     */
 
-    createEntry(s"cn=admin,$basedn", Map(
-      "objectClass" -> "account",
-      "objectClass" -> "top",
-      "objectClass" -> "simpleSecurityObject",
-      "objectClass" -> "organizationalPerson",
-      "sn" -> "Admin",
-      "cn" -> "admin"
-    ))
+    createEntry(s"cn=admin,$basedn",
+                Map(
+                  "objectClass" -> "account",
+                  "objectClass" -> "top",
+                  "objectClass" -> "simpleSecurityObject",
+                  "objectClass" -> "organizationalPerson",
+                  "sn" -> "Admin",
+                  "cn" -> "admin"
+                ))
   }
 
   def createEntry(dn: String, name: String, sm: SchemaManager): Entry = {
-    val e = new DefaultEntry(
-      sm,
-      dn,
-      SchemaConstants.ENTRY_CSN_AT,
-      new CsnFactory(0).newInstance().toString,
-      SchemaConstants.ENTRY_UUID_AT, UUID.randomUUID().toString)
+    val e = new DefaultEntry(sm,
+                             dn,
+                             SchemaConstants.ENTRY_CSN_AT,
+                             new CsnFactory(0).newInstance().toString,
+                             SchemaConstants.ENTRY_UUID_AT,
+                             UUID.randomUUID().toString)
     e.put("objectClass", "top", "organizationalUnit")
     e.put("ou", name)
     new ClonedServerEntry(e)
   }
 
   def loadSchemas(adminsession: CoreSession) = {
-    val ll = new LdifFileLoader(adminsession, "src/main/resources/schemasds/"+basedn.replace("ou=","")+".ldif")
+    val ll = new LdifFileLoader(
+      adminsession,
+      "src/main/resources/schemasds/" + basedn.replace("ou=", "") + ".ldif")
     val r = ll.execute()
     log.info("attempted to insert schemas, result :%d".format(r))
   }
@@ -90,7 +114,8 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
   @throws(classOf[LdapException])
   @throws(classOf[NamingException])
   private def init() {
-    val factory: DefaultDirectoryServiceFactory = new DefaultDirectoryServiceFactory
+    val factory: DefaultDirectoryServiceFactory =
+      new DefaultDirectoryServiceFactory
     factory.init(instanceName)
     directoryService = factory.getDirectoryService
     directoryService.getChangeLog.setEnabled(false)
@@ -98,15 +123,20 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
     val il: InstanceLayout = new InstanceLayout(instancePath)
     directoryService.setInstanceLayout(il)
 
-    val partition: LdifPartition = new LdifPartition(directoryService.getSchemaManager, directoryService.getDnFactory)
+    val partition: LdifPartition = new LdifPartition(
+      directoryService.getSchemaManager,
+      directoryService.getDnFactory)
     partition.setId(instanceName)
-    partition.setPartitionPath(new File(directoryService.getInstanceLayout.getPartitionsDirectory, basedn.replace("ou=","")).toURI)
+    partition.setPartitionPath(
+      new File(directoryService.getInstanceLayout.getPartitionsDirectory,
+               basedn.replace("ou=", "")).toURI)
     partition.setSchemaManager(directoryService.getSchemaManager)
     partition.setSuffixDn(new Dn(basedn))
     partition.setCacheService(directoryService.getCacheService)
 
-    val partitionroot = createEntry(basedn, basedn.replace("ou=",""), directoryService.getSchemaManager)
-
+    val partitionroot = createEntry(basedn,
+                                    basedn.replace("ou=", ""),
+                                    directoryService.getSchemaManager)
 
     loadSchemas(directoryService.getAdminSession)
     directoryService.addPartition(partition)
@@ -115,10 +145,15 @@ class EmbeddedLdapServer(instancePath: String, basedn: String, host: String, por
     ldapService.setTransports(new TcpTransport(host, port))
     ldapService.setDirectoryService(directoryService)
     partition.initialize
-    if (!partition.hasEntry(new HasEntryOperationContext(directoryService.getAdminSession, new Dn(basedn)))) {
-      partition.add(new AddOperationContext(directoryService.getAdminSession, partitionroot))
+    if (!partition.hasEntry(
+          new HasEntryOperationContext(directoryService.getAdminSession,
+                                       new Dn(basedn)))) {
+      partition.add(
+        new AddOperationContext(directoryService.getAdminSession,
+                                partitionroot))
     }
-    log.info("partition was set up for %s".format(partition.getSuffixDn.toString))
+    log.info(
+      "partition was set up for %s".format(partition.getSuffixDn.toString))
   }
 
   def start() {

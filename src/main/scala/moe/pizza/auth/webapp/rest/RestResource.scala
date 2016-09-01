@@ -40,8 +40,8 @@ class RestResource(fullconfig: ConfigFile,
                    eve: Option[EVEAPI] = None,
                    mapper: Option[EveMapDb] = None,
                    updater: Option[Update] = None,
-                   broadcasters: List[BroadcastService] = List.empty[BroadcastService]
-                  ) {
+                   broadcasters: List[BroadcastService] =
+                     List.empty[BroadcastService]) {
 
   case class ApiError(`type`: String, message: String)
 
@@ -50,21 +50,32 @@ class RestResource(fullconfig: ConfigFile,
 
   def resource = HttpService {
 
-    case req@GET -> Root / "api" / "v1" / "ping" / "group" / group => {
+    case req @ GET -> Root / "api" / "v1" / "ping" / "group" / group => {
       req.decode[Json] { p =>
-        p.as[PingRequest].toOption.map { pingreq =>
-          val users = ud.getUsers(s"authgroup=${group}")
-          val templatedMessage = templates.txt.broadcast(pingreq.message, pingreq.to, pingreq.from, DateTime.now())
-          val sendreqs = ud.sendGroupAnnouncement(broadcasters, templatedMessage.toString(), pingreq.from, users )
-          val r = Await.result(Future.sequence(sendreqs), 2 seconds).sum
-          Ok(PingResponse(r).asJson)
-        }.getOrElse {
-          BadRequest(ApiError("bad_post_body", "Unable to process your post body, please format it correctly").asJson)
-        }
+        p.as[PingRequest]
+          .toOption
+          .map { pingreq =>
+            val users = ud.getUsers(s"authgroup=${group}")
+            val templatedMessage = templates.txt.broadcast(pingreq.message,
+                                                           pingreq.to,
+                                                           pingreq.from,
+                                                           DateTime.now())
+            val sendreqs =
+              ud.sendGroupAnnouncement(broadcasters,
+                                       templatedMessage.toString(),
+                                       pingreq.from,
+                                       users)
+            val r = Await.result(Future.sequence(sendreqs), 2 seconds).sum
+            Ok(PingResponse(r).asJson)
+          }
+          .getOrElse {
+            BadRequest(ApiError(
+              "bad_post_body",
+              "Unable to process your post body, please format it correctly").asJson)
+          }
       }
     }
 
   }
-
 
 }

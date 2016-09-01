@@ -8,11 +8,15 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
 import com.orientechnologies.orient.core.metadata.schema.OType
 import com.orientechnologies.orient.core.record.impl.ODocument
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery
-import com.tinkerpop.blueprints.impls.orient.{OrientGraph, OrientGraphFactory, OrientGraphNoTx, OrientVertex}
+import com.tinkerpop.blueprints.impls.orient.{
+  OrientGraph,
+  OrientGraphFactory,
+  OrientGraphNoTx,
+  OrientVertex
+}
 import org.apache.commons.io.FileUtils
 
 import scala.collection.JavaConverters._
-
 
 class EveMapDb(dbname: String = "map") {
 
@@ -46,15 +50,17 @@ class EveMapDb(dbname: String = "map") {
     }
   }
 
-
   def initialize() {
-    val systems = CSVReader.open(
-      new BufferedReader(
-        new InputStreamReader(
-          getClass().getResourceAsStream("/databases/systems.csv")))).allWithHeaders()
-    val jumps = CSVReader.open(
-      new BufferedReader(
-        new InputStreamReader(getClass().getResourceAsStream("/databases/jumps.csv")))).allWithHeaders()
+    val systems = CSVReader
+      .open(
+        new BufferedReader(new InputStreamReader(
+          getClass().getResourceAsStream("/databases/systems.csv"))))
+      .allWithHeaders()
+    val jumps = CSVReader
+      .open(
+        new BufferedReader(new InputStreamReader(
+          getClass().getResourceAsStream("/databases/jumps.csv"))))
+      .allWithHeaders()
 
     withGraphNoTx { graph =>
       try {
@@ -80,7 +86,6 @@ class EveMapDb(dbname: String = "map") {
       }
     }
 
-
     for (gates <- jumps.grouped(100)) {
       withGraph { graph =>
         for (gate <- gates) {
@@ -97,20 +102,34 @@ class EveMapDb(dbname: String = "map") {
   implicit class dbWrapper(db: ODatabaseDocumentTx) {
     def queryBySql[T](sql: String, params: AnyRef*): List[T] = {
       val params4java = params.toArray
-      val results: java.util.List[T] = db.query(new OSQLSynchQuery[T](sql), params4java: _*)
+      val results: java.util.List[T] =
+        db.query(new OSQLSynchQuery[T](sql), params4java: _*)
       results.asScala.toList
     }
   }
 
   def getDistanceBetweenSystemsByName(s1: String, s2: String): Option[Int] = {
-    if (s1==s2) {
+    if (s1 == s2) {
       return Some(0)
     }
     withGraph { graph =>
-      val s1v = graph.getVertices("solarSystemName", s1).iterator().asScala.toList.headOption.map{_.getId.toString}
-      val s2v = graph.getVertices("solarSystemName", s2).iterator().asScala.toList.headOption.map(_.getId.toString)
+      val s1v = graph
+        .getVertices("solarSystemName", s1)
+        .iterator()
+        .asScala
+        .toList
+        .headOption
+        .map { _.getId.toString }
+      val s2v = graph
+        .getVertices("solarSystemName", s2)
+        .iterator()
+        .asScala
+        .toList
+        .headOption
+        .map(_.getId.toString)
       if (s1v.isDefined && s2v.isDefined) {
-        val result = graph.getRawGraph.queryBySql[ODocument](s"select flatten(shortestPath(${s1v.get}, ${s2v.get}, 'BOTH', 'gate'))")
+        val result = graph.getRawGraph.queryBySql[ODocument](
+          s"select flatten(shortestPath(${s1v.get}, ${s2v.get}, 'BOTH', 'gate'))")
         Some(result.size)
       } else {
         None
@@ -119,14 +138,27 @@ class EveMapDb(dbname: String = "map") {
   }
 
   def getDistanceBetweenSystemsById(s1: Int, s2: Int): Option[Int] = {
-    if (s1==s2) {
+    if (s1 == s2) {
       return Some(0)
     }
     withGraph { graph =>
-      val s1v = graph.getVertices("solarSystemID", s1).iterator().asScala.toList.headOption.map{_.getId.toString}
-      val s2v = graph.getVertices("solarSystemID", s2).iterator().asScala.toList.headOption.map(_.getId.toString)
+      val s1v = graph
+        .getVertices("solarSystemID", s1)
+        .iterator()
+        .asScala
+        .toList
+        .headOption
+        .map { _.getId.toString }
+      val s2v = graph
+        .getVertices("solarSystemID", s2)
+        .iterator()
+        .asScala
+        .toList
+        .headOption
+        .map(_.getId.toString)
       if (s1v.isDefined && s2v.isDefined) {
-        val result = graph.getRawGraph.queryBySql[ODocument](s"select flatten(shortestPath(${s1v.get}, ${s2v.get}, 'BOTH', 'gate'))")
+        val result = graph.getRawGraph.queryBySql[ODocument](
+          s"select flatten(shortestPath(${s1v.get}, ${s2v.get}, 'BOTH', 'gate'))")
         Some(result.size)
       } else {
         None

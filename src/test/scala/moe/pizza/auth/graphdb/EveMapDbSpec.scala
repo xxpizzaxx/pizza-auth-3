@@ -11,8 +11,8 @@ class EveMapDbSpec extends WordSpec with MustMatchers with MockitoSugar {
         val e = new EveMapDb("map-tests1")
         // initialise the database
         e.provisionIfRequired()
-        e.withGraph{ g =>
-          g.getEdgeType("gate") must not equal(null)
+        e.withGraph { g =>
+          g.getEdgeType("gate") must not equal (null)
         }
         // fail gracefully on bad system names
         e.getDistanceBetweenSystemsByName("amor", "jota") must equal(None)
@@ -24,7 +24,8 @@ class EveMapDbSpec extends WordSpec with MustMatchers with MockitoSugar {
         e.getDistanceBetweenSystemsByName("Amarr", "Jita") must equal(Some(10))
 
         // correctly find the distance between system ids
-        e.getDistanceBetweenSystemsById(30000142, 30004711) must equal(Some(40))
+        e.getDistanceBetweenSystemsById(30000142, 30004711) must equal(
+          Some(40))
 
         // describe the distance between the same system and itself as 0
         e.getDistanceBetweenSystemsById(30000142, 30000142) must equal(Some(0))

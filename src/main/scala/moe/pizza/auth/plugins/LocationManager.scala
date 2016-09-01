@@ -11,12 +11,14 @@ import scala.concurrent.ExecutionContext
   */
 object LocationManager {
 
-  def locateUsers(crest: CrestApi)(pilots: List[Pilot])(implicit ec: ExecutionContext) = {
+  def locateUsers(crest: CrestApi)(pilots: List[Pilot])(
+      implicit ec: ExecutionContext) = {
 
     pilots.map { p =>
       p.getCrestTokens.map { token =>
         val refreshed = crest.refresh(token.token).sync()
-        (p, crest.character.location(token.characterID, refreshed.access_token))
+        (p,
+         crest.character.location(token.characterID, refreshed.access_token))
       }
     }
   }

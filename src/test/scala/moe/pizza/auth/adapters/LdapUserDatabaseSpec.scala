@@ -16,7 +16,8 @@ import org.scalatest.{FlatSpec, MustMatchers}
 class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
 
   def createTempFolder(suffix: String): File = {
-    val base = new File(new File(System.getProperty("java.io.tmpdir")), "pizza-auth-test")
+    val base = new File(new File(System.getProperty("java.io.tmpdir")),
+                        "pizza-auth-test")
     base.delete()
     val dir = new File(base, UUID.randomUUID().toString + suffix)
     dir.mkdirs()
@@ -26,16 +27,33 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
   "inserting a user into LDAP" should "create the entry in a way that can be extracted again" in {
     val tempfolder = createTempFolder("loadusertest")
     try {
-      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3390, instanceName = "pizza-auth-ldap-user-db-spec")
+      val server = new EmbeddedLdapServer(tempfolder.toString,
+                                          "ou=pizza",
+                                          "localhost",
+                                          3390,
+                                          instanceName =
+                                            "pizza-auth-ldap-user-db-spec")
       server.setPassword("testpassword")
       server.start()
       // TODO find a way to make a schemamanager without the server
       val schema = server.directoryService.getSchemaManager
       // use the client
-      val c = new LdapClient("localhost", 3390, "uid=admin,ou=system", "testpassword")
+      val c = new LdapClient("localhost",
+                             3390,
+                             "uid=admin,ou=system",
+                             "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
-      val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
+      val lud = new LdapUserDatabase(c, schema, "ou=pizza")
+      val p = new Pilot("lucia_denniard",
+                        Pilot.Status.internal,
+                        "Confederation of xXPIZZAXx",
+                        "Love Squad",
+                        "Lucia Denniard",
+                        "lucia@pizza.moe",
+                        Pilot.OM.createObjectNode(),
+                        List(),
+                        List(),
+                        List())
       lud.addUser(p, "luciapassword") must equal(true)
       c.withConnection { con =>
         val r = con.filter("ou=pizza", "(uid=lucia_denniard)")
@@ -51,19 +69,45 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
   "inserting a user into LDAP then reading it back out" should "create the entry in a way that can be extracted again" in {
     val tempfolder = createTempFolder("loadusertest2")
     try {
-      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3391, instanceName = "pizza-auth-ldap-user-db-spec-1")
+      val server = new EmbeddedLdapServer(tempfolder.toString,
+                                          "ou=pizza",
+                                          "localhost",
+                                          3391,
+                                          instanceName =
+                                            "pizza-auth-ldap-user-db-spec-1")
       server.setPassword("testpassword")
       server.start()
       // TODO find a way to make a schemamanager without the server
       val schema = server.directoryService.getSchemaManager
       // use the client
-      val c = new LdapClient("localhost", 3391, "uid=admin,ou=system", "testpassword")
+      val c = new LdapClient("localhost",
+                             3391,
+                             "uid=admin,ou=system",
+                             "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
-      val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
+      val lud = new LdapUserDatabase(c, schema, "ou=pizza")
+      val p = new Pilot("lucia_denniard",
+                        Pilot.Status.internal,
+                        "Confederation of xXPIZZAXx",
+                        "Love Squad",
+                        "Lucia Denniard",
+                        "lucia@pizza.moe",
+                        Pilot.OM.createObjectNode(),
+                        List(),
+                        List(),
+                        List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
-      val p2 = new Pilot("lucia_denniard2", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List("cresttoken"), List())
+      val p2 = new Pilot("lucia_denniard2",
+                         Pilot.Status.internal,
+                         "Confederation of xXPIZZAXx",
+                         "Love Squad",
+                         "Lucia Denniard",
+                         "lucia@pizza.moe",
+                         Pilot.OM.createObjectNode(),
+                         List(),
+                         List("cresttoken"),
+                         List())
       lud.addUser(p2, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard2") must equal(Some(p2))
       server.stop()
@@ -75,20 +119,39 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
   "inserting a user into LDAP then authenticating with it" should "authenticate with the right password" in {
     val tempfolder = createTempFolder("loadusertest2")
     try {
-      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3392, instanceName = "pizza-auth-ldap-user-db-spec-2")
+      val server = new EmbeddedLdapServer(tempfolder.toString,
+                                          "ou=pizza",
+                                          "localhost",
+                                          3392,
+                                          instanceName =
+                                            "pizza-auth-ldap-user-db-spec-2")
       server.setPassword("testpassword")
       server.start()
       // TODO find a way to make a schemamanager without the server
       val schema = server.directoryService.getSchemaManager
       // use the client
-      val c = new LdapClient("localhost", 3392, "uid=admin,ou=system", "testpassword")
+      val c = new LdapClient("localhost",
+                             3392,
+                             "uid=admin,ou=system",
+                             "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
-      val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
+      val lud = new LdapUserDatabase(c, schema, "ou=pizza")
+      val p = new Pilot("lucia_denniard",
+                        Pilot.Status.internal,
+                        "Confederation of xXPIZZAXx",
+                        "Love Squad",
+                        "Lucia Denniard",
+                        "lucia@pizza.moe",
+                        Pilot.OM.createObjectNode(),
+                        List(),
+                        List(),
+                        List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
-      lud.authenticateUser("lucia_denniard", "notluciapassword") must equal(None)
-      lud.authenticateUser("lucia_denniard", "luciapassword") must equal(Some(p))
+      lud.authenticateUser("lucia_denniard", "notluciapassword") must equal(
+        None)
+      lud.authenticateUser("lucia_denniard", "luciapassword") must equal(
+        Some(p))
       server.stop()
     } finally {
       tempfolder.delete()
@@ -98,23 +161,43 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
   "inserting a user into LDAP and changing it's password" should "authenticate with the right passwords" in {
     val tempfolder = createTempFolder("loadusertest2")
     try {
-      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3393, instanceName = "pizza-auth-ldap-user-db-spec-3")
+      val server = new EmbeddedLdapServer(tempfolder.toString,
+                                          "ou=pizza",
+                                          "localhost",
+                                          3393,
+                                          instanceName =
+                                            "pizza-auth-ldap-user-db-spec-3")
       server.setPassword("testpassword")
       server.start()
       // TODO find a way to make a schemamanager without the server
       val schema = server.directoryService.getSchemaManager
       // use the client
-      val c = new LdapClient("localhost", 3393, "uid=admin,ou=system", "testpassword")
+      val c = new LdapClient("localhost",
+                             3393,
+                             "uid=admin,ou=system",
+                             "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
-      val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
+      val lud = new LdapUserDatabase(c, schema, "ou=pizza")
+      val p = new Pilot("lucia_denniard",
+                        Pilot.Status.internal,
+                        "Confederation of xXPIZZAXx",
+                        "Love Squad",
+                        "Lucia Denniard",
+                        "lucia@pizza.moe",
+                        Pilot.OM.createObjectNode(),
+                        List(),
+                        List(),
+                        List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
-      lud.authenticateUser("lucia_denniard", "notluciapassword") must equal(None)
-      lud.authenticateUser("lucia_denniard", "luciapassword") must equal(Some(p))
+      lud.authenticateUser("lucia_denniard", "notluciapassword") must equal(
+        None)
+      lud.authenticateUser("lucia_denniard", "luciapassword") must equal(
+        Some(p))
       lud.setPassword(p, "luciaNEWpassword") must equal(true)
       lud.authenticateUser("lucia_denniard", "luciapassword") must equal(None)
-      lud.authenticateUser("lucia_denniard", "luciaNEWpassword") must equal(Some(p))
+      lud.authenticateUser("lucia_denniard", "luciaNEWpassword") must equal(
+        Some(p))
       server.stop()
     } finally {
       tempfolder.delete()
@@ -124,23 +207,43 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
   "deleting a user" should "delete the user" in {
     val tempfolder = createTempFolder("loadusertest2")
     try {
-      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3394, instanceName = "pizza-auth-ldap-user-db-spec-4")
+      val server = new EmbeddedLdapServer(tempfolder.toString,
+                                          "ou=pizza",
+                                          "localhost",
+                                          3394,
+                                          instanceName =
+                                            "pizza-auth-ldap-user-db-spec-4")
       server.setPassword("testpassword")
       server.start()
       // TODO find a way to make a schemamanager without the server
       val schema = server.directoryService.getSchemaManager
       // use the client
-      val c = new LdapClient("localhost", 3394, "uid=admin,ou=system", "testpassword")
+      val c = new LdapClient("localhost",
+                             3394,
+                             "uid=admin,ou=system",
+                             "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
-      val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
+      val lud = new LdapUserDatabase(c, schema, "ou=pizza")
+      val p = new Pilot("lucia_denniard",
+                        Pilot.Status.internal,
+                        "Confederation of xXPIZZAXx",
+                        "Love Squad",
+                        "Lucia Denniard",
+                        "lucia@pizza.moe",
+                        Pilot.OM.createObjectNode(),
+                        List(),
+                        List(),
+                        List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
-      lud.authenticateUser("lucia_denniard", "notluciapassword") must equal(None)
-      lud.authenticateUser("lucia_denniard", "luciapassword") must equal(Some(p))
+      lud.authenticateUser("lucia_denniard", "notluciapassword") must equal(
+        None)
+      lud.authenticateUser("lucia_denniard", "luciapassword") must equal(
+        Some(p))
       lud.setPassword(p, "luciaNEWpassword") must equal(true)
       lud.authenticateUser("lucia_denniard", "luciapassword") must equal(None)
-      lud.authenticateUser("lucia_denniard", "luciaNEWpassword") must equal(Some(p))
+      lud.authenticateUser("lucia_denniard", "luciaNEWpassword") must equal(
+        Some(p))
       lud.getUsers("uid=lucia_denniard") must equal(List(p))
       lud.getAllUsers() must equal(Seq(p))
       lud.deleteUser(p) must equal(true)
@@ -155,16 +258,33 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
   "updating users" should "update users" in {
     val tempfolder = createTempFolder("loadusertest2")
     try {
-      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3395, instanceName = "pizza-auth-ldap-user-db-spec-5")
+      val server = new EmbeddedLdapServer(tempfolder.toString,
+                                          "ou=pizza",
+                                          "localhost",
+                                          3395,
+                                          instanceName =
+                                            "pizza-auth-ldap-user-db-spec-5")
       server.setPassword("testpassword")
       server.start()
       // TODO find a way to make a schemamanager without the server
       val schema = server.directoryService.getSchemaManager
       // use the client
-      val c = new LdapClient("localhost", 3395, "uid=admin,ou=system", "testpassword")
+      val c = new LdapClient("localhost",
+                             3395,
+                             "uid=admin,ou=system",
+                             "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
-      val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
+      val lud = new LdapUserDatabase(c, schema, "ou=pizza")
+      val p = new Pilot("lucia_denniard",
+                        Pilot.Status.internal,
+                        "Confederation of xXPIZZAXx",
+                        "Love Squad",
+                        "Lucia Denniard",
+                        "lucia@pizza.moe",
+                        Pilot.OM.createObjectNode(),
+                        List(),
+                        List(),
+                        List())
       lud.addUser(p, "sluciapassword") must equal(true)
       val r = lud.getUser("lucia_denniard")
       val p2 = p.copy(alliance = "No Alliance")
@@ -197,7 +317,8 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
       val p11 = p10.copy(apiKeys = List("newerapikey"))
       lud.updateUser(p11)
       lud.getUser("lucia_denniard") must equal(Some(p11))
-      val p12 = p11.copy(metadata = Pilot.OM.readTree("{\"value\":\"imcool\"}"))
+      val p12 =
+        p11.copy(metadata = Pilot.OM.readTree("{\"value\":\"imcool\"}"))
       lud.updateUser(p12)
       lud.getUser("lucia_denniard") must equal(Some(p12))
       server.stop()
@@ -208,16 +329,33 @@ class LdapUserDatabaseSpec extends FlatSpec with MustMatchers {
   "inserting a user into LDAP then searching for it with broadcast tools" should "return it when it matches the filters" in {
     val tempfolder = createTempFolder("loadusertest2")
     try {
-      val server = new EmbeddedLdapServer(tempfolder.toString, "ou=pizza", "localhost", 3391, instanceName = "pizza-auth-ldap-user-db-spec-6")
+      val server = new EmbeddedLdapServer(tempfolder.toString,
+                                          "ou=pizza",
+                                          "localhost",
+                                          3391,
+                                          instanceName =
+                                            "pizza-auth-ldap-user-db-spec-6")
       server.setPassword("testpassword")
       server.start()
       // TODO find a way to make a schemamanager without the server
       val schema = server.directoryService.getSchemaManager
       // use the client
-      val c = new LdapClient("localhost", 3391, "uid=admin,ou=system", "testpassword")
+      val c = new LdapClient("localhost",
+                             3391,
+                             "uid=admin,ou=system",
+                             "testpassword")
       // wrap it in an LUD
-      val lud = new LdapUserDatabase(c, schema,"ou=pizza")
-      val p = new Pilot("lucia_denniard", Pilot.Status.internal, "Confederation of xXPIZZAXx", "Love Squad", "Lucia Denniard", "lucia@pizza.moe", Pilot.OM.createObjectNode(), List(), List(), List())
+      val lud = new LdapUserDatabase(c, schema, "ou=pizza")
+      val p = new Pilot("lucia_denniard",
+                        Pilot.Status.internal,
+                        "Confederation of xXPIZZAXx",
+                        "Love Squad",
+                        "Lucia Denniard",
+                        "lucia@pizza.moe",
+                        Pilot.OM.createObjectNode(),
+                        List(),
+                        List(),
+                        List())
       lud.addUser(p, "luciapassword") must equal(true)
       lud.getUser("lucia_denniard") must equal(Some(p))
 

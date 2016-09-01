@@ -26,16 +26,27 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val db = mock[EveMapDb]
     val broadcaster = mock[BroadcastService]
     when(config.auth).thenReturn(authconfig)
-    when(broadcaster.sendAnnouncement(anyString(), anyString(), anyObject())).thenReturn(Future{0})
+    when(broadcaster.sendAnnouncement(anyString(), anyString(), anyObject()))
+      .thenReturn(Future { 0 })
 
-    val resource = new RestResource(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), broadcasters = List(broadcaster))
+    val resource = new RestResource(config,
+                                    pg,
+                                    9021,
+                                    ud,
+                                    crestapi = Some(crest),
+                                    mapper = Some(db),
+                                    broadcasters = List(broadcaster))
 
-
-    val res = resource.resource(Request(uri = Uri.uri("/api/v1/ping/group/groupname")).withBody("{\"message\": \"I like turtles\", \"from\": \"restbot\", \"to\": \"groupname\"}").run)
+    val res = resource.resource(
+      Request(uri = Uri.uri("/api/v1/ping/group/groupname"))
+        .withBody(
+          "{\"message\": \"I like turtles\", \"from\": \"restbot\", \"to\": \"groupname\"}")
+        .run)
 
     val resp = res.run
     resp.status.code must equal(200)
-    val bodytxt = res.flatMap(EntityDecoder.decodeString(_)(Charset.`UTF-8`)).run
+    val bodytxt =
+      res.flatMap(EntityDecoder.decodeString(_)(Charset.`UTF-8`)).run
     bodytxt must equal("{\"total\":0}")
   }
 
@@ -48,19 +59,26 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val db = mock[EveMapDb]
     val broadcaster = mock[BroadcastService]
     when(config.auth).thenReturn(authconfig)
-    when(broadcaster.sendAnnouncement(anyString(), anyString(), anyObject())).thenReturn(Future{0})
+    when(broadcaster.sendAnnouncement(anyString(), anyString(), anyObject()))
+      .thenReturn(Future { 0 })
 
-    val resource = new RestResource(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), broadcasters = List(broadcaster))
+    val resource = new RestResource(config,
+                                    pg,
+                                    9021,
+                                    ud,
+                                    crestapi = Some(crest),
+                                    mapper = Some(db),
+                                    broadcasters = List(broadcaster))
 
-
-    val res = resource.resource(Request(uri = Uri.uri("/api/v1/ping/group/groupname")).withBody("{\"me").run)
+    val res = resource.resource(Request(
+      uri = Uri.uri("/api/v1/ping/group/groupname")).withBody("{\"me").run)
 
     val resp = res.run
     resp.status.code must equal(400)
-    val bodytxt = res.flatMap(EntityDecoder.decodeString(_)(Charset.`UTF-8`)).run
+    val bodytxt =
+      res.flatMap(EntityDecoder.decodeString(_)(Charset.`UTF-8`)).run
     bodytxt must equal("Invalid JSON")
   }
-
 
   "RestResource" should "complain about missing keys in the json" in {
     val config = mock[ConfigFile]
@@ -71,16 +89,27 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val db = mock[EveMapDb]
     val broadcaster = mock[BroadcastService]
     when(config.auth).thenReturn(authconfig)
-    when(broadcaster.sendAnnouncement(anyString(), anyString(), anyObject())).thenReturn(Future{0})
+    when(broadcaster.sendAnnouncement(anyString(), anyString(), anyObject()))
+      .thenReturn(Future { 0 })
 
-    val resource = new RestResource(config, pg, 9021, ud, crestapi = Some(crest), mapper = Some(db), broadcasters = List(broadcaster))
+    val resource = new RestResource(config,
+                                    pg,
+                                    9021,
+                                    ud,
+                                    crestapi = Some(crest),
+                                    mapper = Some(db),
+                                    broadcasters = List(broadcaster))
 
-
-    val res = resource.resource(Request(uri = Uri.uri("/api/v1/ping/group/groupname")).withBody("{\"message\": \"I like turtles\"}").run)
+    val res = resource.resource(
+      Request(uri = Uri.uri("/api/v1/ping/group/groupname"))
+        .withBody("{\"message\": \"I like turtles\"}")
+        .run)
 
     val resp = res.run
     resp.status.code must equal(400)
-    val bodytxt = res.flatMap(EntityDecoder.decodeString(_)(Charset.`UTF-8`)).run
-    bodytxt must equal("{\"type\":\"bad_post_body\",\"message\":\"Unable to process your post body, please format it correctly\"}")
+    val bodytxt =
+      res.flatMap(EntityDecoder.decodeString(_)(Charset.`UTF-8`)).run
+    bodytxt must equal(
+      "{\"type\":\"bad_post_body\",\"message\":\"Unable to process your post body, please format it correctly\"}")
   }
 }
