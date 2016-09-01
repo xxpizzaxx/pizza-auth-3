@@ -24,7 +24,7 @@ class Update(crest: CrestApi, eveapi: EVEAPI, chain: PilotGrader)(implicit val e
       val pilotWithUpdatedMembership = p.copy(corporation = corpAndAlliance._1, alliance = corpAndAlliance._2)
       val gradedPilot = pilotWithUpdatedMembership.copy(accountStatus = chain.grade(pilotWithUpdatedMembership))
       gradedPilot
-    }.getOrElse(p) //.copy(accountStatus = Pilot.Status.banned))
+    }.getOrElse(p.copy(accountStatus = Pilot.Status.banned))
   }
 
 }
