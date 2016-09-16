@@ -54,7 +54,7 @@ class SessionManagerSpec extends FlatSpec with MustMatchers with MockitoSugar {
     val r = svc.apply(new Request(uri = Uri.uri("/logout"))).run
     r.status must equal(Ok)
     val removal = r.headers.get(CaseInsensitiveString("set-cookie")).get
-    assert(removal.value.startsWith("authsession=\"\";"))
+    assert(removal.value.startsWith("authsession=;"))
   }
 
 }

@@ -27,10 +27,10 @@ import scala.concurrent.Await
 import moe.pizza.crestapi.character.location.Types.Location
 import org.slf4j.LoggerFactory
 import io.circe.generic.auto._
-import io.circe.parse._
 import io.circe.syntax._
 import org.http4s.circe._
 import io.circe.Json
+import io.circe.generic.JsonCodec
 
 class RestResource(fullconfig: ConfigFile,
                    graders: PilotGrader,

@@ -77,7 +77,7 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     resp.status.code must equal(400)
     val bodytxt =
       res.flatMap(EntityDecoder.decodeString(_)(Charset.`UTF-8`)).run
-    bodytxt must equal("Invalid JSON")
+    bodytxt must equal("The request body was malformed.")
   }
 
   "RestResource" should "complain about missing keys in the json" in {

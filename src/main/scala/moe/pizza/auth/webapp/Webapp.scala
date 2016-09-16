@@ -42,7 +42,7 @@ import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import moe.pizza.auth.webapp.rest.{RestKeyMiddleware, RestResource}
-import org.http4s.circe.{json, jsonEncoder}
+import org.http4s.circe._
 
 import scalaz.\/-
 

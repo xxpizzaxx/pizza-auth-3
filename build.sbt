@@ -9,7 +9,7 @@ resolvers += Resolver.jcenterRepo
 fork := true
 parallelExecution in Test := false
 
-val HTTP4S_VERSION = "0.12.3"
+val HTTP4S_VERSION = "0.14.6"
 
 // main dependencies
 libraryDependencies ++= Seq(
@@ -32,7 +32,7 @@ libraryDependencies ++= Seq(
   "com.orientechnologies"            % "orientdb-client"            % "2.1.12",
   "com.orientechnologies"            % "orientdb-graphdb"           % "2.1.12",
   "com.tinkerpop.blueprints"         % "blueprints"                 % "2.6.0",
-  "com.pauldijou"                    %% "jwt-circe"                 % "0.6.0",
+  "com.pauldijou"                    %% "jwt-circe"                 % "0.8.1",
   "commons-io"                       % "commons-io"                 % "2.5",
   // xmpp client
   "org.igniterealtime.smack"         % "smack-core"                 % "4.1.7",
