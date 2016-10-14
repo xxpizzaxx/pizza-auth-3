@@ -395,21 +395,21 @@ class Webapp(fullconfig: ConfigFile,
               // get the user
               ud.getUser(user) match {
                 case Some(target)
-                    if target.authGroups.contains(s"${group}-pending") =>
-                  val result = ud.updateUser(
+                  if target.authGroups.contains(s"${group}-pending") =>
+                    val result = ud.updateUser(
                     target.copy(
                       authGroups = target.authGroups
                         .filter(_ != s"${group}-pending")
                         .+:(group)))
-                  result match {
-                    case true =>
-                      goback.attachSessionifDefined(
-                        req.flash(Alerts.success,
-                                  s"Accepted $user into $group"))
-                    case false =>
-                      goback.attachSessionifDefined(
-                        req.flash(Alerts.danger,
-                                  s"Unable to accept $user into $group"))
+                    result match {
+                      case true =>
+                        goback.attachSessionifDefined(
+                          req.flash(Alerts.success,
+                                    s"Accepted $user into $group"))
+                      case false =>
+                        goback.attachSessionifDefined(
+                          req.flash(Alerts.danger,
+                                    s"Unable to accept $user into $group"))
                   }
                 case Some(target) =>
                   goback.attachSessionifDefined(
@@ -685,6 +685,41 @@ class Webapp(fullconfig: ConfigFile,
               req.flash(Alerts.warning,
                         s"You are not in a group named $group"))
         }
+      }
+    }
+
+    case req @ GET -> Root / "account" => {
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          Ok(
+            templates.html.base(
+              "pizza-auth-3",
+              templates.html.account(p),
+              req.getSession.map(_.toNormalSession),
+              req.getSession.flatMap(_.pilot))).attachSessionifDefined(
+            req.getSession.map(_.copy(alerts = List())))
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
+    case req @ POST -> Root / "account" / "update" / "email" => {
+      val goback = SeeOther(Uri(path = "/account"))
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          req.decode[UrlForm] { data =>
+            val newemail = data.getFirstOrElse("email", "none")
+            ud.updateUser(p.copy(email = newemail)) match {
+              case true =>
+                goback.attachSessionifDefined(
+                  req.flash(Alerts.success, s"Successfully updated email.").map(_.updatePilot))
+              case false =>
+                goback.attachSessionifDefined(
+                  req.flash(Alerts.warning, s"Error updateing email."))
+            }
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
       }
     }
 

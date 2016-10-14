@@ -1543,6 +1543,110 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val resp4 = res4.run
     resp4.getSession.get.alerts.head.content must equal("Can't find that user")
   }
+  "DynamicRouter" should "render the account page" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes))
+      .thenReturn("http://login.eveonline.com/whatever")
+
+    val app = new Webapp(config,
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         mapper = Some(db),
+                         updater = Some(update))
+
+    val bob =
+      new Pilot("bob", null, null, null, null, null, null, null, null, null)
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+
+    val p = new Pilot("bob",
+                      null,
+                      null,
+                      null,
+                      "Bob McName",
+                      null,
+                      null,
+                      List("admin"),
+                      null,
+                      null)
+    val req = Request(uri = Uri.uri("/account"))
+    val reqwithsession = req.copy(
+      attributes = req.attributes.put(
+        SessionManager.HYDRATEDSESSION,
+        new HydratedSession(List.empty[Alert], Some(p), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Status.Ok)
+    val bodytxt = EntityDecoder.decodeString(resp)(Charset.`UTF-8`).run
+    // should show the currently logged in user, and a logout button
+    assert(bodytxt contains "/account/update")
+    assert(bodytxt contains "Bob McName")
+  }
+  "DynamicRouter's account page" should "change people's emails" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes))
+      .thenReturn("http://login.eveonline.com/whatever")
+    val bob = new Pilot("bob",
+                        null,
+                        null,
+                        null,
+                        "bob@bobcorp.corp",
+                        null,
+                        null,
+                        List.empty[String],
+                        null,
+                        null)
+    when(ud.getAllUsers()).thenReturn(Seq(bob))
+
+    val app = new Webapp(config,
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         mapper = Some(db),
+                         updater = Some(update))
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+    when(ud.updateUser(anyObject())).thenReturn(true)
+
+    val req = Request(
+      method = Method.POST,
+      uri = Uri.uri("/account/update/email"),
+      body = UrlForm.entityEncoder
+        .toEntity(
+          UrlForm("email" -> "newbob@newbobcorp.corp"))
+        .run
+        .body
+    )
+    val reqwithsession = req.copy(
+      attributes = req.attributes.put(
+        SessionManager.HYDRATEDSESSION,
+        new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.getSession.get.alerts.head.content must equal(
+      "Successfully updated email.")
+    verify(ud).updateUser(
+      bob.copy(email = "newbob@newbobcorp.corp"))
+  }
   "DynamicRouter's routes which require a session" should "redirect back to /" in {
     val config = mock[ConfigFile]
     val authconfig = mock[AuthConfig]
@@ -1575,6 +1679,10 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
       .status must equal(Status.TemporaryRedirect)
     app
       .dynamicWebRouter(Request(uri = Uri.uri("/ping")))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/account")))
       .run
       .status must equal(Status.TemporaryRedirect)
     app
