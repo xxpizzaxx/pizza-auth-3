@@ -5,6 +5,10 @@ import moe.pizza.auth.config.ConfigFile.{
   AuthConfig,
   ConfigFile
 }
+import moe.pizza.auth.ldap.server.EmbeddedLdapServer
+import moe.pizza.auth.ldap.client.LdapClient
+import moe.pizza.auth.ldap.client.LdapClient._
+import moe.pizza.auth.adapters.LdapUserDatabase
 import moe.pizza.auth.graphdb.EveMapDb
 import moe.pizza.auth.interfaces.{BroadcastService, PilotGrader, UserDatabase}
 import moe.pizza.auth.models.Pilot
@@ -28,10 +32,23 @@ import moe.pizza.eveapi.XMLApiResponse
 import org.joda.time.DateTime
 import org.mockito.Matchers._
 
+
+import java.io.File
+import java.util.UUID
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
+
+  def createTempFolder(suffix: String): File = {
+    val base = new File(new File(System.getProperty("java.io.tmpdir")),
+                        "pizza-auth-test")
+    base.delete()
+    val dir = new File(base, UUID.randomUUID().toString + suffix)
+    dir.mkdirs()
+    dir
+  }
 
   "DynamicRouter" should "redirect to the CREST login URL when logging in" in {
     val config = mock[ConfigFile]
@@ -1543,6 +1560,195 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val resp4 = res4.run
     resp4.getSession.get.alerts.head.content must equal("Can't find that user")
   }
+  "DynamicRouter" should "render the account page" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes))
+      .thenReturn("http://login.eveonline.com/whatever")
+
+    val app = new Webapp(config,
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         mapper = Some(db),
+                         updater = Some(update))
+
+    val bob =
+      new Pilot("bob", null, null, null, null, null, null, null, null, null)
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+
+    val p = new Pilot("bob",
+                      null,
+                      null,
+                      null,
+                      "Bob McName",
+                      null,
+                      null,
+                      List("admin"),
+                      null,
+                      null)
+    val req = Request(uri = Uri.uri("/account"))
+    val reqwithsession = req.copy(
+      attributes = req.attributes.put(
+        SessionManager.HYDRATEDSESSION,
+        new HydratedSession(List.empty[Alert], Some(p), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.status must equal(Status.Ok)
+    val bodytxt = EntityDecoder.decodeString(resp)(Charset.`UTF-8`).run
+    assert(bodytxt contains "/account/update/email")
+    assert(bodytxt contains "/account/update/password")
+    assert(bodytxt contains "Bob McName")
+  }
+  "DynamicRouter's account page" should "change people's emails" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+    when(crest.redirect("login", Webapp.defaultCrestScopes))
+      .thenReturn("http://login.eveonline.com/whatever")
+    val bob = new Pilot("bob",
+                        null,
+                        null,
+                        null,
+                        "bob@bobcorp.corp",
+                        null,
+                        null,
+                        List.empty[String],
+                        null,
+                        null)
+    when(ud.getAllUsers()).thenReturn(Seq(bob))
+
+    val app = new Webapp(config,
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         mapper = Some(db),
+                         updater = Some(update))
+
+    when(ud.getUser("bob")).thenReturn(Some(bob))
+    when(ud.updateUser(anyObject())).thenReturn(true)
+
+    val req = Request(
+      method = Method.POST,
+      uri = Uri.uri("/account/update/email"),
+      body = UrlForm.entityEncoder
+        .toEntity(
+          UrlForm("email" -> "newbob@newbobcorp.corp"))
+        .run
+        .body
+    )
+    val reqwithsession = req.copy(
+      attributes = req.attributes.put(
+        SessionManager.HYDRATEDSESSION,
+        new HydratedSession(List.empty[Alert], Some(bob), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    resp.getSession.get.alerts.head.content must equal(
+      "Successfully updated email.")
+    verify(ud).updateUser(
+      bob.copy(email = "newbob@newbobcorp.corp"))
+  }
+  "DynamicRouter's account page" should "change people's passwords" in {
+    val tempfolder = createTempFolder("passwordchangetest")
+    try {
+      val config = mock[ConfigFile]
+      val authconfig = mock[AuthConfig]
+      val pg = mock[PilotGrader]
+      val crest = mock[CrestApi]
+      val db = mock[EveMapDb]
+      val update = mock[Update]
+      when(config.auth).thenReturn(authconfig)
+      when(crest.redirect("login", Webapp.defaultCrestScopes))
+        .thenReturn("http://login.eveonline.com/whatever")
+
+      val server = new EmbeddedLdapServer(tempfolder.toString,
+                                          "ou=pizza",
+                                          "localhost",
+                                          3392,
+                                          instanceName =
+                                            "pizza-auth-webap-password-change-test")
+      server.setPassword("testpassword")
+      server.start()
+      // TODO find a way to make a schemamanager without the server
+      val schema = server.directoryService.getSchemaManager
+      // use the client
+      val c = new LdapClient("localhost",
+                             3392,
+                             "uid=admin,ou=system",
+                             "testpassword")
+      // wrap it in an LUD
+      val ud = new LdapUserDatabase(c, schema, "ou=pizza")
+      val p = new Pilot("lucia_denniard",
+                        Pilot.Status.internal,
+                        "Confederation of xXPIZZAXx",
+                        "Love Squad",
+                        "Lucia Denniard",
+                        "lucia@pizza.moe",
+                        Pilot.OM.createObjectNode(),
+                        List(),
+                        List(),
+                        List())
+      ud.addUser(p, "luciapassword") must equal(true)
+      ud.getUser("lucia_denniard") must equal(Some(p))
+      ud.authenticateUser("lucia_denniard", "notluciapassword") must equal(
+        None)
+      ud.authenticateUser("lucia_denniard", "luciapassword") must equal(
+        Some(p))
+
+      val app = new Webapp(config,
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         mapper = Some(db),
+                         updater = Some(update))
+
+      //when(ud.updateUser(anyObject())).thenReturn(true)
+
+      val req = Request(
+        method = Method.POST,
+        uri = Uri.uri("/account/update/password"),
+        body = UrlForm.entityEncoder
+          .toEntity(
+            UrlForm("password" -> "luciaNEWpassword"))
+          .run
+          .body
+      )
+      val reqwithsession = req.copy(
+        attributes = req.attributes.put(
+          SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], Some(p), None)))
+      val res = app.dynamicWebRouter(reqwithsession)
+
+      val resp = res.run
+      resp.getSession.get.alerts.head.content must equal(
+        "Successfully changed password.")
+
+      ud.authenticateUser("lucia_denniard", "luciapassword") must equal(None)
+      ud.authenticateUser("lucia_denniard", "luciaNEWpassword") must equal(
+        Some(p))
+
+      server.stop()
+    } finally {
+      tempfolder.delete()
+    }
+  }
   "DynamicRouter's routes which require a session" should "redirect back to /" in {
     val config = mock[ConfigFile]
     val authconfig = mock[AuthConfig]
@@ -1575,6 +1781,10 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
       .status must equal(Status.TemporaryRedirect)
     app
       .dynamicWebRouter(Request(uri = Uri.uri("/ping")))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/account")))
       .run
       .status must equal(Status.TemporaryRedirect)
     app

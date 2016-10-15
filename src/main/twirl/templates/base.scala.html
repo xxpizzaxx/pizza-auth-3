@@ -33,6 +33,7 @@
         <nav id="navcbars" class="collapse navbar-collapse navbar-ex1-collapse" role="navigtion">
             <ul class="nav navbar-nav">
                 @if(pilot.isDefined) {
+                    <li><a href="/account">Account</a></li>
                     <li><a href="/groups">Groups</a></li>
                 }
                 @if(pilot.isDefined && pilot.get.getGroups.contains("admin")) {
@@ -45,8 +46,8 @@
 
             <ul class="nav navbar-nav navbar-right">
                 @if(pilot.isDefined) {
-                    <li class="navbar-text">
-                        @pilot.get.characterName
+                    <li>
+                        <a href="/account">@pilot.get.characterName</a>
                     </li>
                     <li>
                         <a href="/logout" class="btn btn-primary" role="button">Logout</a>
