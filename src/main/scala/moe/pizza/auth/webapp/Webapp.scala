@@ -723,6 +723,26 @@ class Webapp(fullconfig: ConfigFile,
       }
     }
 
+    case req @ POST -> Root / "account" / "update" / "password" => {
+      val goback = SeeOther(Uri(path = "/account"))
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          req.decode[UrlForm] { data =>
+            val newpassword = data.getFirstOrElse("password", "none")
+            ud.setPassword(p, newpassword) match {
+              case true =>
+                goback.attachSessionifDefined(
+                  req.flash(Alerts.success, s"Successfully changed password.").map(_.updatePilot))
+              case false =>
+                goback.attachSessionifDefined(
+                  req.flash(Alerts.warning, s"Error changing password."))
+            }
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
     case req @ GET -> Root / "update" / username =>
       log.info(s"update route called for ${username}")
       req.getSession.flatMap(_.pilot) match {
