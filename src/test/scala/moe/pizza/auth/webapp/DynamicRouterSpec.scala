@@ -32,7 +32,6 @@ import moe.pizza.eveapi.XMLApiResponse
 import org.joda.time.DateTime
 import org.mockito.Matchers._
 
-
 import java.io.File
 import java.util.UUID
 
@@ -1647,8 +1646,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
       method = Method.POST,
       uri = Uri.uri("/account/update/email"),
       body = UrlForm.entityEncoder
-        .toEntity(
-          UrlForm("email" -> "newbob@newbobcorp.corp"))
+        .toEntity(UrlForm("email" -> "newbob@newbobcorp.corp"))
         .run
         .body
     )
@@ -1661,8 +1659,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val resp = res.run
     resp.getSession.get.alerts.head.content must equal(
       "Successfully updated email.")
-    verify(ud).updateUser(
-      bob.copy(email = "newbob@newbobcorp.corp"))
+    verify(ud).updateUser(bob.copy(email = "newbob@newbobcorp.corp"))
   }
   "DynamicRouter's account page" should "change people's passwords" in {
     val tempfolder = createTempFolder("passwordchangetest")
@@ -1677,12 +1674,13 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
       when(crest.redirect("login", Webapp.defaultCrestScopes))
         .thenReturn("http://login.eveonline.com/whatever")
 
-      val server = new EmbeddedLdapServer(tempfolder.toString,
-                                          "ou=pizza",
-                                          "localhost",
-                                          3392,
-                                          instanceName =
-                                            "pizza-auth-webap-password-change-test")
+      val server =
+        new EmbeddedLdapServer(tempfolder.toString,
+                               "ou=pizza",
+                               "localhost",
+                               3392,
+                               instanceName =
+                                 "pizza-auth-webap-password-change-test")
       server.setPassword("testpassword")
       server.start()
       // TODO find a way to make a schemamanager without the server
@@ -1712,12 +1710,12 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
         Some(p))
 
       val app = new Webapp(config,
-                         pg,
-                         9021,
-                         ud,
-                         crestapi = Some(crest),
-                         mapper = Some(db),
-                         updater = Some(update))
+                           pg,
+                           9021,
+                           ud,
+                           crestapi = Some(crest),
+                           mapper = Some(db),
+                           updater = Some(update))
 
       //when(ud.updateUser(anyObject())).thenReturn(true)
 
@@ -1725,8 +1723,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
         method = Method.POST,
         uri = Uri.uri("/account/update/password"),
         body = UrlForm.entityEncoder
-          .toEntity(
-            UrlForm("password" -> "luciaNEWpassword"))
+          .toEntity(UrlForm("password" -> "luciaNEWpassword"))
           .run
           .body
       )
