@@ -12,7 +12,7 @@ import scala.util.Try
 /**
   * Created by Andi on 28/02/2016.
   */
-class CrestKeyGrader(c: CrestApi)(implicit val ec: ExecutionContext)
+class SSOKeyGrader(c: CrestApi)(implicit val ec: ExecutionContext)
     extends PilotGrader {
   override def grade(p: Pilot): Status.Value = {
     p.getCrestTokens.flatMap { t =>

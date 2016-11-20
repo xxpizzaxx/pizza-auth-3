@@ -5,7 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.adapters.PilotGraderLike.PilotGraderFactory
 import moe.pizza.auth.config.ConfigFile.AuthConfig
-import moe.pizza.auth.plugins.pilotgraders.{AlliedPilotGrader, CrestKeyGrader}
+import moe.pizza.auth.plugins.pilotgraders.{AlliedPilotGrader, SSOKeyGrader}
 import moe.pizza.auth.plugins.pilotgraders.MembershipPilotGraders.{
   CorporationPilotGrader,
   AlliancePilotGrader
@@ -55,7 +55,7 @@ class PilotGraderLikeSpec extends WordSpec with MustMatchers {
           |    redirectUrl: "http://whatever.com/whatever"
         """.stripMargin
         val c = OM.readTree(config).get("CrestKeyGrader")
-        val result = create[CrestKeyGrader](c)
+        val result = create[SSOKeyGrader](c)
       }
       "create an AlliedPilotGrader from YAML" in {
         val config = """---

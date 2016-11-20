@@ -27,7 +27,7 @@ class CrestKeyGraderSpec extends FlatSpec with MustMatchers with MockitoSugar {
                   List("group1", "group3"),
                   List("123:bobkey"),
                   List.empty)
-    val c = new CrestKeyGrader(crest)
+    val c = new SSOKeyGrader(crest)
     when(crest.refresh("bobkey")(global)).thenReturn(Future {
       new CallbackResponse("bobrefresh", null, 0, None)
     })
@@ -51,7 +51,7 @@ class CrestKeyGraderSpec extends FlatSpec with MustMatchers with MockitoSugar {
                   List("group1", "group3"),
                   List("123:bobkey"),
                   List.empty)
-    val c = new CrestKeyGrader(crest)
+    val c = new SSOKeyGrader(crest)
     when(crest.refresh("bobkey")(global)).thenReturn(Future {
       throw new Exception("nope sorry")
     })
@@ -71,7 +71,7 @@ class CrestKeyGraderSpec extends FlatSpec with MustMatchers with MockitoSugar {
                   List("group1", "group3"),
                   List("1:badkey", "123:bobkey"),
                   List.empty)
-    val c = new CrestKeyGrader(crest)
+    val c = new SSOKeyGrader(crest)
     when(crest.refresh("bobkey")(global)).thenReturn(Future {
       new CallbackResponse("bobrefresh", null, 0, None)
     })
@@ -98,7 +98,7 @@ class CrestKeyGraderSpec extends FlatSpec with MustMatchers with MockitoSugar {
                   List("group1", "group3"),
                   List("1:bobakey", "2:bobbkey"),
                   List.empty)
-    val c = new CrestKeyGrader(crest)
+    val c = new SSOKeyGrader(crest)
     when(crest.refresh("bobakey")(global)).thenReturn(Future {
       new CallbackResponse("bobarefresh", null, 0, None)
     })

@@ -21,7 +21,8 @@ libraryDependencies ++= Seq(
   "org.http4s"                       %% "http4s-twirl"              % HTTP4S_VERSION,
   "org.http4s"                       %% "http4s-json4s"             % HTTP4S_VERSION,
   // supporting libraries
-  "moe.pizza"                        %% "eveapi"                    % "0.45",
+  "moe.pizza"                        %% "eveapi"                    % "0.45", // for CREST and XML
+  "eveapi"                           %% "esi-client"                % "1.19.0", // for ESI
   "org.log4s"                        %% "log4s"                     % "1.2.0",
   "com.github.scopt"                 %% "scopt"                     % "3.3.0",
   "com.googlecode.gettext-commons"   % "gettext-maven-plugin"       % "1.2.4",
