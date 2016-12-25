@@ -85,7 +85,11 @@ object Pilot {
     }.toOption
   }
 
-  case class CrestToken(characterID: Long, token: String)
+  case class CrestToken(characterID: Long, token: String) {
+    override def toString: String = {
+      characterID.toString + ":" + token
+    }
+  }
 }
 
 case class Pilot(
