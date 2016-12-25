@@ -508,7 +508,7 @@ class Webapp(fullconfig: ConfigFile,
                 .flatten
                 .map { kv =>
                   Try {
-                    (kv._1, Await.result(kv._2, 10 seconds))
+                    (kv._1, kv._2, Await.result(kv._3, 10 seconds))
                   }
                 }
               log.info(locations.toString)
@@ -516,12 +516,12 @@ class Webapp(fullconfig: ConfigFile,
                 .map(_.toOption)
                 .flatten
                 .filter { x =>
-                  x._2.solarSystem.isDefined
+                  x._3.solarSystem.isDefined
                 }
                 .map { x =>
-                  PlayerWithLocation(x._1.characterName,
-                                     x._2.solarSystem.get.name,
-                                     x._2.station.map {
+                  PlayerWithLocation(x._2,
+                                     x._3.solarSystem.get.name,
+                                     x._3.station.map {
                                        _.name
                                      })
                 }
@@ -691,13 +691,17 @@ class Webapp(fullconfig: ConfigFile,
     case req @ GET -> Root / "account" => {
       req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
         case Some(p) =>
+          val verifies = p.getCrestTokens.map(crestToken => {
+            val refreshed = crest.refresh(crestToken.token).sync()
+            (crestToken, crest.verify(refreshed.access_token).sync())
+          })
           Ok(
-            templates.html.base("pizza-auth-3",
-                                templates.html.account(p),
-                                req.getSession.map(_.toNormalSession),
-                                req.getSession.flatMap(_.pilot)))
-            .attachSessionifDefined(
-              req.getSession.map(_.copy(alerts = List())))
+            templates.html.base(
+              "pizza-auth-3",
+              templates.html.account(p,verifies),
+              req.getSession.map(_.toNormalSession),
+              req.getSession.flatMap(_.pilot))).attachSessionifDefined(
+            req.getSession.map(_.copy(alerts = List())))
         case None =>
           TemporaryRedirect(Uri(path = "/"))
       }
@@ -740,6 +744,53 @@ class Webapp(fullconfig: ConfigFile,
               case false =>
                 goback.attachSessionifDefined(
                   req.flash(Alerts.warning, s"Error changing password."))
+            }
+          }
+        case None =>
+          TemporaryRedirect(Uri(path = "/"))
+      }
+    }
+
+    case req @ GET -> Root / "account" / "characters" / "add" => {
+      req.getSession match {
+          case Some(s) =>
+            s.pilot match {
+              case Some(pilot) =>
+                Uri.fromString(crest.redirect("add", Webapp.defaultCrestScopes)) match {
+                  case \/-(url) => TemporaryRedirect(url)
+                  case _ => InternalServerError("unable to construct url")
+                }
+              case None =>
+                InternalServerError(
+                  templates.html.base(
+                    "pizza-auth-3",
+                    Html("An error occurred with the session handler"),
+                    None,
+                    None))
+            }
+          case None =>
+            InternalServerError(
+              templates.html.base(
+                "pizza-auth-3",
+                Html("An error occurred with the session handler"),
+                None,
+                None))
+      }
+    }
+
+    case req @ POST -> Root / "account" / "characters" / "remove" => {
+      val goback = SeeOther(Uri(path = "/account"))
+      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+        case Some(p) =>
+          req.decode[UrlForm] { data =>
+            val crestToken = data.getFirstOrElse("crestToken", "none")
+            ud.updateUser(p.copy(crestTokens = p.crestTokens.filter(_ != crestToken))) match {
+              case true =>
+                goback.attachSessionifDefined(
+                  req.flash(Alerts.success, s"Successfully removed character.").map(_.updatePilot))
+              case false =>
+                goback.attachSessionifDefined(
+                  req.flash(Alerts.success, s"Error removing character."))
             }
           }
         case None =>
@@ -814,7 +865,21 @@ class Webapp(fullconfig: ConfigFile,
             )
 
         case "add" =>
-          TemporaryRedirect(Uri(path = "/"))
+          val goback = SeeOther(Uri(path = "/account"))
+          req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+            case Some(p) =>
+              val crestToken = new Pilot.CrestToken(verify.characterID,callbackresults.refresh_token.get).toString
+              ud.updateUser(p.copy(crestTokens = p.crestTokens :+ crestToken)) match {
+                case true =>
+                  goback.attachSessionifDefined(
+                    req.flash(Alerts.success, "Successfully added character %s.".format(verify.characterName)).map(_.updatePilot))
+                case false =>
+                  goback.attachSessionifDefined(
+                    req.flash(Alerts.warning, s"Error adding character."))
+              }
+            case None =>
+              TemporaryRedirect(Uri(path = "/"))
+          }
         case "login" =>
           val uid = Utils.sanitizeUserName(verify.characterName)
           val pilot = ud.getUser(uid)

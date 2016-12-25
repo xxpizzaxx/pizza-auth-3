@@ -1579,12 +1579,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                          mapper = Some(db),
                          updater = Some(update))
 
-    val bob =
-      new Pilot("bob", null, null, null, null, null, null, null, null, null)
-
-    when(ud.getUser("bob")).thenReturn(Some(bob))
-
-    val p = new Pilot("bob",
+    val p = new Pilot("bob_mcname",
                       null,
                       null,
                       null,
@@ -1592,8 +1587,28 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                       null,
                       null,
                       List("admin"),
-                      null,
+                      List("103:refresh_token"),
                       null)
+
+    when(ud.getUser("bob_mcname")).thenReturn(Some(p))
+
+
+    val verify = VerifyResponse(103,
+                                "Bob McName",
+                                "some time",
+                                "scopes",
+                                "token type",
+                                "owner hash",
+                                "eve online")
+    
+    when(crest.verify("access_token")).thenReturn(Future {
+      verify
+    })
+    when(crest.refresh("refresh_token")).thenReturn(Future {
+      new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
+    })
+        
+
     val req = Request(uri = Uri.uri("/account"))
     val reqwithsession = req.copy(
       attributes = req.attributes.put(
@@ -1607,6 +1622,9 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     assert(bodytxt contains "/account/update/email")
     assert(bodytxt contains "/account/update/password")
     assert(bodytxt contains "Bob McName")
+    assert(bodytxt contains "103_32.jpg")
+    assert(bodytxt contains "Main character")
+    assert(bodytxt contains "/account/characters/add")
   }
   "DynamicRouter's account page" should "change people's emails" in {
     val config = mock[ConfigFile]
@@ -1745,6 +1763,165 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     } finally {
       tempfolder.delete()
     }
+  }
+  "DynamicRouter" should "allow the user to add new characters with SSO" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+
+    when(config.auth).thenReturn(authconfig)
+
+    when(crest.redirect("login", Webapp.defaultCrestScopes))
+      .thenReturn("http://login.eveonline.com/whatever2")
+
+    val verify_first = VerifyResponse(103,
+                                 "Bob McName",
+                                 "some time",
+                                 "scopes",
+                                 "token type",
+                                 "owner hash",
+                                 "eve online")
+    when(crest.verify("access_token")).thenReturn(Future {
+      verify_first
+    })
+     when(crest.refresh("refresh_token")).thenReturn(Future {
+      new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
+    })
+
+    val verify_second = VerifyResponse(104,
+                                "Bob McSecondName",
+                                "some time",
+                                "scopes",
+                                "token type",
+                                "owner hash",
+                                "eve online")
+    
+    when(crest.verify("access_token2")).thenReturn(Future {
+      verify_second
+    })
+   
+    when(crest.refresh("refresh_token2")).thenReturn(Future {
+      new CallbackResponse("access_token2", "token", 100, Some("refresh_token2"))
+    })
+
+    when(crest.callback("codegoeshere")).thenReturn(Future {
+      CallbackResponse("access_token2", "bearer", 1000, Some("refresh_token2"))
+    })
+
+    val p = new Pilot("bob_mcname",
+                      null,
+                      null,
+                      null,
+                      "Bob McName",
+                      null,
+                      null,
+                      List("admin"),
+                      List("103:refresh_token"),
+                      null)
+
+    when(ud.getUser("bob_mcname")).thenReturn(Some(p))
+    when(ud.updateUser(anyObject())).thenReturn(true)
+
+    val app = new Webapp(config,
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         mapper = Some(db))
+
+    val req = Request(
+      uri = Uri
+        .uri("/callback")
+        .withQueryParam("code", "codegoeshere")
+        .withQueryParam("state", "add"))
+        
+    val reqwithsession = req.copy(
+      attributes = req.attributes.put(
+        SessionManager.HYDRATEDSESSION,
+        new HydratedSession(List.empty[Alert], Some(p), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    val session = resp.getSession
+    session.get.alerts.head.content must equal(
+      "Successfully added character Bob McSecondName.")
+    verify(ud).updateUser(
+      p.copy(crestTokens = List("103:refresh_token","104:refresh_token2")))
+  }
+  "DynamicRouter" should "allow the user to remove characters from their account" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+
+    when(config.auth).thenReturn(authconfig)
+
+    when(crest.redirect("login", Webapp.defaultCrestScopes))
+      .thenReturn("http://login.eveonline.com/whatever2")
+
+    val verifyR = VerifyResponse(103,
+                                 "Bob McName",
+                                 "some time",
+                                 "scopes",
+                                 "token type",
+                                 "owner hash",
+                                 "eve online")
+    when(crest.verify("access_token")).thenReturn(Future {
+      verifyR
+    })
+     when(crest.refresh("refresh_token")).thenReturn(Future {
+      new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
+    })
+
+
+    val p = new Pilot("bob_mcname",
+                      null,
+                      null,
+                      null,
+                      "Bob McName",
+                      null,
+                      null,
+                      List("admin"),
+                      List("103:refresh_token","104:refresh_token2"),
+                      null)
+
+    when(ud.getUser("bob_mcname")).thenReturn(Some(p))
+    when(ud.updateUser(anyObject())).thenReturn(true)
+
+    val app = new Webapp(config,
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         mapper = Some(db))
+
+    val req = Request(
+      method = Method.POST,
+      uri = Uri.uri("/account/characters/remove"),
+      body = UrlForm.entityEncoder
+        .toEntity(
+          UrlForm("crestToken" -> "104:refresh_token2"))
+        .run
+        .body
+    )
+        
+    val reqwithsession = req.copy(
+      attributes = req.attributes.put(
+        SessionManager.HYDRATEDSESSION,
+        new HydratedSession(List.empty[Alert], Some(p), None)))
+    val res = app.dynamicWebRouter(reqwithsession)
+
+    val resp = res.run
+    val session = resp.getSession
+    session.get.alerts.head.content must equal(
+      "Successfully removed character.")
+    verify(ud).updateUser(
+      p.copy(crestTokens = List("103:refresh_token")))
   }
   "DynamicRouter's routes which require a session" should "redirect back to /" in {
     val config = mock[ConfigFile]
