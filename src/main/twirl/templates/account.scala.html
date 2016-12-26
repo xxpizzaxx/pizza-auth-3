@@ -1,5 +1,6 @@
 @import moe.pizza.auth.models.Pilot
-@(pilot: Pilot)
+@import moe.pizza.crestapi.CrestApi
+@(pilot: Pilot, verifies: List[(Pilot.CrestToken,CrestApi.VerifyResponse)])
 
 <h2>Account Management</h2>
 
@@ -11,10 +12,7 @@
                 <form role="form" id="update_account" action="/account/update" method="post">
                     <table class="table table-striped">
                         <tr>
-                            <th>Account</th><td>@pilot.uid</td>
-                        </tr>
-                        <tr>
-                            <th>Main Character</th><td>@pilot.characterName</td>
+                            <th>Account name</th><td>@pilot.uid</td>
                         </tr>
                     </table>
                     <!--<button type="submit" class="btn btn-default">Update</button>-->
@@ -26,8 +24,39 @@
                             }
                         });
                 </script>
-
-
+            </div>
+        </div>
+        <div class="panel panel-primary">
+            <div class="panel-heading"><h3 class="panel-title">Your Characters</h3></div>
+            <div class="panel-body"> 
+                <table class="table table-bordered table-condensed table-striped">
+                    <thead>
+                        <tr>
+                            <th width="32"></th>
+                            <th>Name</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for(verifyResponse <- verifies) {
+                            <tr>
+                                <td><img src="@("https://imageserver.eveonline.com/Character/" + verifyResponse._2.characterID + "_32.jpg")"/></td>
+                                <td>@verifyResponse._2.characterName</td>
+                                <td>
+                                    @if(!verifyResponse._2.characterName.equals(pilot.characterName)) {
+                                        <form role="form" class="delete_character" action="/account/characters/remove" method="post">
+                                            <input type="hidden" name="crestToken" value="@verifyResponse._1.toString"/>
+                                            <button type="submit" class="btn btn-primary btn-sm">Remove</button>
+                                        </form>
+                                    } else {
+                                        <i>Main character</i>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <a href="/account/characters/add" class="btn btn-primary">Add Character</a>
             </div>
         </div>
     </div>

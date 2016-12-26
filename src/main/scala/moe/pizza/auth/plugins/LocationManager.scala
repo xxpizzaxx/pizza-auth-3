@@ -17,7 +17,8 @@ object LocationManager {
     pilots.map { p =>
       p.getCrestTokens.map { token =>
         val refreshed = crest.refresh(token.token).sync()
-        (p,
+        val verify = crest.verify(refreshed.access_token).sync()
+        (p, verify.characterName,
          crest.character.location(token.characterID, refreshed.access_token))
       }
     }
