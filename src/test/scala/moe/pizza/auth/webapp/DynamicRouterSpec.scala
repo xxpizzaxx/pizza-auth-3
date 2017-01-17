@@ -1993,4 +1993,98 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
       .run
       .status must equal(Status.TemporaryRedirect)
   }
+  "DynamicRouter's routes which require logging in" should "redirect back to /" in {
+    val config = mock[ConfigFile]
+    val authconfig = mock[AuthConfig]
+    val ud = mock[UserDatabase]
+    val pg = mock[PilotGrader]
+    val crest = mock[CrestApi]
+    val db = mock[EveMapDb]
+    val update = mock[Update]
+    when(config.auth).thenReturn(authconfig)
+
+    val app = new Webapp(config,
+      pg,
+      9021,
+      ud,
+      crestapi = Some(crest),
+      mapper = Some(db),
+      updater = Some(update))
+
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/signup/confirm"))
+        .withAttribute(SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/groups"))
+        .withAttribute(SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/groups/admin"))
+        .withAttribute(SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/ping"))
+        .withAttribute(SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/account"))
+        .withAttribute(SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(
+        Request(uri = Uri.uri("/groups/admin/approve/foo/bar"))
+          .withAttribute(SessionManager.HYDRATEDSESSION,
+            new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/groups/admin/deny/foo/bar"))
+        .withAttribute(SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/groups/apply/thing"))
+        .withAttribute(SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/groups/apply/thing"))
+        .withAttribute(SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+    app
+      .dynamicWebRouter(
+        Request(method = Method.POST, uri = Uri.uri("/ping/global"))
+          .withAttribute(SessionManager.HYDRATEDSESSION,
+            new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.SeeOther)
+    app
+      .dynamicWebRouter(
+        Request(method = Method.POST, uri = Uri.uri("/ping/group"))
+          .withAttribute(SessionManager.HYDRATEDSESSION,
+            new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.SeeOther)
+    app
+      .dynamicWebRouter(Request(uri = Uri.uri("/logout"))
+        .withAttribute(SessionManager.HYDRATEDSESSION,
+          new HydratedSession(List.empty[Alert], None, None)))
+      .run
+      .status must equal(Status.TemporaryRedirect)
+  }
 }
