@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import moe.pizza.auth.adapters.GraderChain
 import moe.pizza.auth.adapters.PilotGraderLike.PilotGraderFactory
 import moe.pizza.auth.interfaces.PilotGrader
+import moe.pizza.auth.webapp.oauth.OAuthApplication
 
 import scala.concurrent.ExecutionContext
 
@@ -26,6 +27,7 @@ object ConfigFile {
   case class AuthGroupConfig(closed: List[String],
                              open: List[String],
                              public: List[String])
+
   case class AuthConfig(
       domain: String,
       corporation: String,
@@ -35,7 +37,8 @@ object ConfigFile {
       groups: AuthGroupConfig,
       graders: List[JsonNode],
       pingbot: Option[PingBotConfig],
-      restkeys: List[String]
+      restkeys: List[String],
+      applications: List[OAuthApplication] = List()
   ) {
     def constructGraders(c: ConfigFile)(
         implicit ec: ExecutionContext): PilotGrader =
