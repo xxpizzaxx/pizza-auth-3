@@ -37,7 +37,7 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                     mapper = Some(db),
                                     broadcasters = List(broadcaster))
 
-    val res = resource.resource(
+    val res = resource.resource.run(
       Request(uri = Uri.uri("/api/v1/ping/group/groupname"))
         .withBody(
           "{\"message\": \"I like turtles\", \"from\": \"restbot\", \"to\": \"groupname\"}")
@@ -70,7 +70,7 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                     mapper = Some(db),
                                     broadcasters = List(broadcaster))
 
-    val res = resource.resource(Request(
+    val res = resource.resource.run(Request(
       uri = Uri.uri("/api/v1/ping/group/groupname")).withBody("{\"me").run)
 
     val resp = res.run
@@ -100,7 +100,7 @@ class RestResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                     mapper = Some(db),
                                     broadcasters = List(broadcaster))
 
-    val res = resource.resource(
+    val res = resource.resource.run(
       Request(uri = Uri.uri("/api/v1/ping/group/groupname"))
         .withBody("{\"message\": \"I like turtles\"}")
         .run)
