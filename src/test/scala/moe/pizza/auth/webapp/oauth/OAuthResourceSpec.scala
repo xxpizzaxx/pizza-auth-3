@@ -183,12 +183,12 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
   }
   "OAuthResource" should "redirect to callback url and return usable access token" in {
     val appName = "testapp"
-    val clientID = "123"
+    val clientId = "123"
     val clientSecret = "234"
     val callback = "http://localtest/callback"
     val state = "teststate"
 
-    val applications = List(OAuthApplication(appName,clientID,clientSecret,callback))
+    val applications = List(OAuthApplication(appName,clientId,clientSecret,callback))
     val ud = mock[UserDatabase]
 
     val resource = new OAuthResource(9021, ud, applications)
@@ -211,7 +211,7 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
       uri = Uri.uri("/oauth/authorize"),
       body = UrlForm.entityEncoder
         .toEntity(UrlForm(
-          "clientID" -> clientID,
+          "clientId" -> clientId,
           "callback" -> callback,
           "state" -> state)).run.body)
 
@@ -234,7 +234,7 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val req2 = Request(uri = Uri
       .uri("/oauth/token")
       .withQueryParam("grant_type","authorization_code")
-      .withQueryParam("client_id", clientID)
+      .withQueryParam("client_id", clientId)
       .withQueryParam("client_secret", clientSecret)
       .withQueryParam("code",code))
 

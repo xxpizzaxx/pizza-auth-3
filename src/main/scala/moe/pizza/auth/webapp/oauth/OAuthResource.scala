@@ -46,7 +46,14 @@ class OAuthResource(portnumber: Int = 9021,
                     ud: UserDatabase,
                     applications: List[OAuthApplication]) {
 
-  val applicationMap = applications.map(app => app.clientId -> app) toMap
+  // TODO: Most likely NOT the way to do it
+  val applicationMap = applications match {
+    case null =>
+      Map[String, OAuthApplication]()
+    case a =>
+      a.map(app => app.clientId -> app) toMap
+  }
+
   val authenticationCodes = new TrieMap[String, OAuthStoredAuthenticationCode]
   val tokens = new TrieMap[String, OAuthStoredToken]
 
@@ -72,7 +79,6 @@ class OAuthResource(portnumber: Int = 9021,
   def resource = HttpService {
 
     case req @ GET -> Root / "oauth" / "authorize" => {
-
       (req.params("client_id"), req.params("response_type"),
         req.params("redirect_uri"), req.params("state")) match {
         // wrong client ID
@@ -81,7 +87,7 @@ class OAuthResource(portnumber: Int = 9021,
 
         // Wrong callback
         case (clientId, _, callbackUri, _) if applicationMap.get(clientId).get.callback != callbackUri =>
-           BadRequest(OAuthError("invalid_request",
+          BadRequest(OAuthError("invalid_request",
           "The callback URI does not match the value stored for this client").asJson)
 
         // Wrong responseType
