@@ -24,9 +24,10 @@ import scala.concurrent.Future
 class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
 
   "OAuthResource - authorize" should "only support authorization code" in {
+    val clientId = "123"
     val callback = "http://localhost"
     val state = "state"
-    val applications = List()
+    val applications = List(OAuthApplication("testapp",clientId,"234",callback))
     val ud = mock[UserDatabase]
 
     val resource = new OAuthResource(9021, ud, applications)
@@ -34,7 +35,7 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val req = Request(uri = Uri
       .uri("/oauth/authorize")
       .withQueryParam("response_type","token")
-      .withQueryParam("client_id", "123")
+      .withQueryParam("client_id", clientId)
       .withQueryParam("redirect_uri", callback)
       .withQueryParam("state",state))
 
@@ -100,7 +101,9 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
   "OAuthResource - authorize" should "ask a logged in user for authorization" in {
     val appName = "testapp"
     val clientID = "123"
-    val applications = List(OAuthApplication(appName,clientID,"234","http://localtest/callback"))
+    val callback = "http://localtest/callback"
+    val state = "test"
+    val applications = List(OAuthApplication(appName,clientID,"234",callback))
     val ud = mock[UserDatabase]
 
     val resource = new OAuthResource(9021, ud, applications)
@@ -122,8 +125,8 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
         .uri("/oauth/authorize")
           .withQueryParam("response_type","code")
           .withQueryParam("client_id", clientID)
-          .withQueryParam("redirect_uri","callback")
-          .withQueryParam("state","state"))
+          .withQueryParam("redirect_uri",callback)
+          .withQueryParam("state",state))
 
     val reqwithsession = req.copy(
       attributes = req.attributes.put(
@@ -140,7 +143,9 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
   "OAuthResource - authorize" should "ask for login first if user isnt logged in" in {
     val appName = "testapp"
     val clientID = "123"
-    val applications = List(OAuthApplication(appName,clientID,"234","http://localtest/callback"))
+    val callback = "http://localtest/callback"
+    val state = "test"
+    val applications = List(OAuthApplication(appName,clientID,"234",callback))
     val ud = mock[UserDatabase]
 
     val resource = new OAuthResource(9021, ud, applications)
@@ -162,8 +167,8 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
       .uri("/oauth/authorize")
       .withQueryParam("response_type","code")
       .withQueryParam("client_id", clientID)
-      .withQueryParam("redirect_uri","callback")
-      .withQueryParam("state","state"))
+      .withQueryParam("redirect_uri",callback)
+      .withQueryParam("state",state))
 
     val reqwithsession = req.copy(
       attributes = req.attributes.put(
@@ -238,7 +243,7 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     resp2.status.code must equal(200)
     val accessToken = resp2.as[OAuthAccessToken](jsonOf[OAuthAccessToken]).run
 
-    accessToken.token_type must equal("bearer")
+    accessToken.token_type must equal("Bearer")
 
 
     val req3 = Request(
@@ -276,7 +281,7 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     resp.status.code must equal(400)
     val error = resp.as[OAuthError](jsonOf[OAuthError]).run
 
-    error.error must equal("invalid_grant")
+    error.error must equal("unsupported_grant_type")
   }
   "OAuthResource - token" should "verify clientID and secret" in {
     val appName = "testapp"
@@ -328,7 +333,7 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     resp.status.code must equal(400)
     val error = resp.as[OAuthError](jsonOf[OAuthError]).run
 
-    error.error must equal("unsupported_grant_type")
+    error.error must equal("invalid_grant")
   }
 
   "OAuthResource - verify" should "throw error for wrong accessToken" in {
