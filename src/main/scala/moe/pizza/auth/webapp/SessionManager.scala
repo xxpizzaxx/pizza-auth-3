@@ -48,7 +48,7 @@ class SessionManager(secretKey: String, ud: UserDatabase)
 
     // if we didn't find a valid session, make them one
     val session =
-      sessions.headOption.getOrElse(Session2(List.empty, None, None))
+      sessions.headOption.getOrElse(Session2(List.empty, None, None, None))
 
     // do the inner request
     val hydrated = session.hydrate(ud)

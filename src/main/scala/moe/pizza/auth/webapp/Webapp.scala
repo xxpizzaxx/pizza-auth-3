@@ -96,7 +96,7 @@ class Webapp(fullconfig: ConfigFile,
   import Utils._
 
   implicit class RichHydratedSession(hs: HydratedSession) {
-    def toNormalSession = new Session(hs.alerts)
+    def toNormalSession = new Session(hs.alerts, hs.redirect)
 
     def updatePilot: HydratedSession = {
       hs.pilot match {
@@ -889,13 +889,24 @@ class Webapp(fullconfig: ConfigFile,
               req
                 .flash(Alerts.success,
                        "Thanks for logging in %s".format(verify.characterName))
-                .map(_.copy(pilot = Some(p)))
+                .map(_.copy(pilot = Some(p), redirect=None))
             case None =>
               req.flash(
                 Alerts.warning,
                 "Unable to find a user associated with that EVE character, please sign up or use another character")
           }
-          TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(session)
+          req.getSession.flatMap(_.redirect) match {
+            case Some(uristring) =>
+              Uri.fromString(uristring).toOption match {
+                case Some(uri) =>
+                  TemporaryRedirect(uri).attachSessionifDefined(session)
+                case None =>
+                  TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(session)
+              }
+
+            case None =>
+              TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(session)
+          }
         case _ =>
           TemporaryRedirect(Uri(path = "/"))
       }
@@ -919,7 +930,7 @@ class Webapp(fullconfig: ConfigFile,
   val oauthServer = new OAuthResource(portnumber, ud, fullconfig.auth.applications)
 
   def router =
-    staticrouter orElse sessions(dynamicWebRouter) orElse sessions(oauthServer.resource) orElse restMiddleware(
-      restapi.resource)
+    staticrouter orElse sessions(dynamicWebRouter) orElse sessions(oauthServer.resource) //orElse restMiddleware(
+      //restapi.resource)
 
 }
