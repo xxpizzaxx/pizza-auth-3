@@ -2,9 +2,10 @@ package moe.pizza.auth.webapp.oauth
 
 import moe.pizza.auth.interfaces.UserDatabase
 import moe.pizza.auth.models.Pilot
-import moe.pizza.auth.webapp.SessionManager
+import moe.pizza.auth.webapp.{SessionManager, oauth}
 import moe.pizza.auth.webapp.Types.{Alert, HydratedSession}
 import org.http4s.{Headers, _}
+import org.http4s.headers.Authorization
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.circe._
 import io.circe._
@@ -12,7 +13,6 @@ import io.circe.generic.JsonCodec
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
-import org.http4s.headers.Authorization
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -131,7 +131,7 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val reqwithsession = req.copy(
       attributes = req.attributes.put(
         SessionManager.HYDRATEDSESSION,
-        new HydratedSession(List.empty[Alert], Some(bob), None)))
+        new HydratedSession(List.empty[Alert], None, Some(bob), None)))
     val res = resource.resource.run(reqwithsession)
 
     val resp = res.run
@@ -173,7 +173,7 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val reqwithsession = req.copy(
       attributes = req.attributes.put(
         SessionManager.HYDRATEDSESSION,
-        new HydratedSession(List.empty[Alert], None, None))) // not logged in
+        new HydratedSession(List.empty[Alert], None, None, None))) // not logged in
     val res = resource.resource.run(reqwithsession)
 
     val resp = res.run
@@ -188,7 +188,9 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val callback = "http://localtest/callback"
     val state = "teststate"
 
-    val applications = List(OAuthApplication(appName,clientId,clientSecret,callback))
+    val applications = List(
+      OAuthApplication(appName,clientId,clientSecret,callback),
+      OAuthApplication("test","234","345","blablabla"))
     val ud = mock[UserDatabase]
 
     val resource = new OAuthResource(9021, ud, applications)
@@ -218,7 +220,7 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val reqwithsession = req.copy(
       attributes = req.attributes.put(
         SessionManager.HYDRATEDSESSION,
-        new HydratedSession(List.empty[Alert], Some(bob), None)))
+        new HydratedSession(List.empty[Alert], None, Some(bob), None)))
 
     val res = resource.resource.run(reqwithsession)
     val resp = res.run
@@ -231,12 +233,14 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
 
     val code = params("code")
 
-    val req2 = Request(uri = Uri
-      .uri("/oauth/token")
-      .withQueryParam("grant_type","authorization_code")
-      .withQueryParam("client_id", clientId)
-      .withQueryParam("client_secret", clientSecret)
-      .withQueryParam("code",code))
+    val req2 = Request(
+      method = Method.POST,
+      uri = Uri.uri("/oauth/token"),
+      headers = Headers(new Authorization(BasicCredentials(clientId,clientSecret))),
+      body = UrlForm.entityEncoder
+        .toEntity(UrlForm(
+          "grant_type" -> "authorization_code",
+          "code" -> code)).run.body)
 
     val res2 = resource.resource.run(req2)
     val resp2 = res2.run
@@ -259,22 +263,24 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
   }
   "OAuthResource - token" should "only support authorization code" in {
     val appName = "testapp"
-    val clientID = "123"
+    val clientId = "123"
     val clientSecret = "234"
     val callback = "http://localtest/callback"
     val state = "teststate"
 
-    val applications = List(OAuthApplication(appName,clientID,clientSecret,callback))
+    val applications = List(OAuthApplication(appName,clientId,clientSecret,callback))
     val ud = mock[UserDatabase]
 
     val resource = new OAuthResource(9021, ud, applications)
 
-    val req = Request(uri = Uri
-      .uri("/oauth/token")
-      .withQueryParam("grant_type","different_grant")
-      .withQueryParam("client_id", clientID)
-      .withQueryParam("client_secret", clientSecret)
-      .withQueryParam("code","totallyWrongCode"))
+    val req = Request(
+      method = Method.POST,
+      uri = Uri.uri("/oauth/token"),
+      headers = Headers(new Authorization(BasicCredentials(clientId,clientSecret))),
+      body = UrlForm.entityEncoder
+        .toEntity(UrlForm(
+          "grant_type" -> "different_grant",
+          "code" -> "whatever_code")).run.body)
 
     val res = resource.resource.run(req)
     val resp = res.run
@@ -285,22 +291,24 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
   }
   "OAuthResource - token" should "verify clientID and secret" in {
     val appName = "testapp"
-    val clientID = "123"
+    val clientId = "123"
     val clientSecret = "234"
     val callback = "http://localtest/callback"
     val state = "teststate"
 
-    val applications = List(OAuthApplication(appName,clientID,clientSecret,callback))
+    val applications = List(OAuthApplication(appName,clientId,clientSecret,callback))
     val ud = mock[UserDatabase]
 
     val resource = new OAuthResource(9021, ud, applications)
 
-    val req = Request(uri = Uri
-      .uri("/oauth/token")
-      .withQueryParam("grant_type","authorization_code")
-      .withQueryParam("client_id", clientID)
-      .withQueryParam("client_secret", "wrong secret")
-      .withQueryParam("code","totallyWrongCode"))
+    val req = Request(
+      method = Method.POST,
+      uri = Uri.uri("/oauth/token"),
+      headers = Headers(new Authorization(BasicCredentials(clientId,"wrong secret"))),
+      body = UrlForm.entityEncoder
+        .toEntity(UrlForm(
+          "grant_type" -> "authorization_code",
+          "code" -> "totallyWrongCode")).run.body)
 
     val res = resource.resource.run(req)
     val resp = res.run
@@ -311,22 +319,24 @@ class OAuthResourceSpec extends FlatSpec with MockitoSugar with MustMatchers {
   }
   "OAuthResource - token" should "throw error for wrong authorization code" in {
     val appName = "testapp"
-    val clientID = "123"
+    val clientId = "123"
     val clientSecret = "234"
     val callback = "http://localtest/callback"
     val state = "teststate"
 
-    val applications = List(OAuthApplication(appName,clientID,clientSecret,callback))
+    val applications = List(OAuthApplication(appName,clientId,clientSecret,callback))
     val ud = mock[UserDatabase]
 
     val resource = new OAuthResource(9021, ud, applications)
 
-    val req = Request(uri = Uri
-      .uri("/oauth/token")
-      .withQueryParam("grant_type","authorization_code")
-      .withQueryParam("client_id", clientID)
-      .withQueryParam("client_secret", clientSecret)
-      .withQueryParam("code","totallyWrongCode"))
+    val req = Request(
+      method = Method.POST,
+      uri = Uri.uri("/oauth/token"),
+      headers = Headers(new Authorization(BasicCredentials(clientId,clientSecret))),
+      body = UrlForm.entityEncoder
+        .toEntity(UrlForm(
+          "grant_type" -> "authorization_code",
+          "code" -> "totallyWrongCode")).run.body)
 
     val res = resource.resource.run(req)
     val resp = res.run

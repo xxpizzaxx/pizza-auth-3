@@ -57,14 +57,13 @@ class OAuthResource(portnumber: Int = 9021,
   val authenticationCodes = new TrieMap[String, OAuthStoredAuthenticationCode]
   val tokens = new TrieMap[String, OAuthStoredToken]
 
-
   val log = LoggerFactory.getLogger(getClass)
 
   import moe.pizza.auth.webapp.Utils._
 
   // TODO: Refactor, straight up copied out of Webapp
   implicit class RichHydratedSession(hs: HydratedSession) {
-    def toNormalSession = new Session(hs.alerts)
+    def toNormalSession = new Session(hs.alerts, hs.redirect)
 
     def updatePilot: HydratedSession = {
       hs.pilot match {
@@ -114,8 +113,10 @@ class OAuthResource(portnumber: Int = 9021,
                 )).attachSessionifDefined(
                 req.getSession.map(_.copy(alerts = List())))
             case None =>
-              // TODO: redirection back to here after login
-              TemporaryRedirect(Uri.uri("/login"))
+              println(req.uri.toString())
+              TemporaryRedirect(Uri.uri("/login")).attachSessionifDefined(
+                req.getSession.map(_.copy(redirect = Some(req.uri.toString())))
+              )
           }
       }
     }
@@ -151,66 +152,67 @@ class OAuthResource(portnumber: Int = 9021,
         case None =>
           // TODO: How can that happen?
           // What do?
-          InternalServerError()
+          InternalServerError("No Session Found")
       }
     }
-    case req @ GET -> Root / "oauth" / "token" => {
-      val clientId = req.params("client_id")
-      val clientSecret = req.params("client_secret")
-      val grantType = req.params("grant_type")
-      val code = req.params("code")
+    case req @ POST -> Root / "oauth" / "token" => {
+      req.decode[UrlForm] { data =>
+        req.headers.get(headers.Authorization) match {
+          case Some(headers.Authorization(creds: BasicCredentials)) =>
+            val clientId = creds.username
+            val clientSecret = creds.password
+            val grantType = data.getFirstOrElse("grant_type", "")
+            val code = data.getFirstOrElse("code", "")
 
-      // TODO: check if all parameters are there
-      // if not:
-      if(false) {
-        BadRequest(OAuthError("invalid_request","Something is missing").asJson)
-      }
+            (clientId, clientSecret, grantType, code) match {
+              // check if clientID belongs to a registered application
+            case (clientId, _, _, _) if !(applicationMap isDefinedAt clientId) =>
+            BadRequest(OAuthError("invalid_client", "Invalid ClientID").asJson)
 
-      (clientId, clientSecret, grantType, code) match {
-        // check if clientID belongs to a registered application
-        case (clientId, _, _, _) if !(applicationMap isDefinedAt clientId) =>
-          BadRequest(OAuthError("invalid_client", "Invalid ClientID").asJson)
-
-        // check if grantType is authorization_code
-        case (_, _, grantType, _) if grantType != "authorization_code" =>
-          BadRequest(OAuthError("unsupported_grant_type",
+              // check if grantType is authorization_code
+            case (_, _, grantType, _) if grantType != "authorization_code" =>
+            BadRequest(OAuthError("unsupported_grant_type",
             "Unsupported Grant Type").asJson)
 
-        // check if code is valid
-        case (clientId, clientSecret, grantType, code)
-          if applicationMap.get(clientId).get.secret == clientSecret =>
-          authenticationCodes.get(code) match {
+              // check if code is valid
+            case (clientId, clientSecret, grantType, code)
+            if applicationMap.get(clientId).get.secret == clientSecret =>
+            authenticationCodes.get(code) match {
             case Some(code) =>
-              code match {
-                case c if code.clientId == clientId =>
-                  // generate new access token
-                  val storeToken = OAuthStoredToken(
-                    UUID.randomUUID().toString,
-                    "Bearer", clientId, c.uid)
+            code match {
+            case c if code.clientId == clientId =>
+              // generate new access token
+            val storeToken = OAuthStoredToken(
+            UUID.randomUUID().toString,
+            "Bearer", clientId, c.uid)
 
-                  val token = OAuthAccessToken(
-                    storeToken.access_token,
-                    storeToken.token_type, 30 * 24 * 3600)
+            val token = OAuthAccessToken(
+            storeToken.access_token,
+            storeToken.token_type, 30 * 24 * 3600)
 
-                  // save access token
-                  tokens += storeToken.access_token -> storeToken
+              // save access token
+            tokens += storeToken.access_token -> storeToken
 
-                  // delete authentication code
-                  authenticationCodes -= c.code
+              // delete authentication code
+            authenticationCodes -= c.code
 
-                  // return access token as json
-                  Ok(token.asJson)
-                case _ =>
-                  BadRequest(OAuthError("invalid_grant",
-                    "Invalid Token").asJson)
-              }
+              // return access token as json
+            Ok(token.asJson)
+            case _ =>
+            BadRequest(OAuthError("invalid_grant",
+            "Invalid Token").asJson)
+            }
             case None =>
-              BadRequest(OAuthError("invalid_grant",
-                "Invalid Token").asJson)
-          }
-        case (_, _, _, _) =>
-          BadRequest(OAuthError("invalid_client",
+            BadRequest(OAuthError("invalid_grant",
+            "Invalid Token").asJson)
+            }
+            case (_, _, _, _) =>
+            BadRequest(OAuthError("invalid_client",
             "Invalid Client").asJson)
+            }
+          case None =>
+            BadRequest("Please supply authorization")
+        }
       }
     }
     case req @ GET -> Root / "oauth" / "verify" => {
