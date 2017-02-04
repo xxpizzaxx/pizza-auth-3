@@ -9,11 +9,11 @@ import org.joda.time.DateTime
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{MustMatchers, WordSpec}
+import org.http4s.client.blaze.PooledHttp1Client
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.Try
+import scalaz.concurrent.Task
 import scalaxb.{DataRecord, XMLStandardTypes}
+import scalaz.concurrent.Task
 
 /**
   * Created by Andi on 26/02/2016.
@@ -24,6 +24,8 @@ class AlliedPilotGraderSpec
     with MockitoSugar
     with XMLStandardTypes {
 
+    implicit val client = PooledHttp1Client() //TODO: no mocking?
+
   "AlliedPilotGrader" when {
     "pulling contacts" should {
       "cope with failure when reading a corp contact list" in {
@@ -32,7 +34,7 @@ class AlliedPilotGraderSpec
         val corp = mock[Corp]
         when(eveapi.corp).thenReturn(corp)
         when(corp.ContactList()).thenReturn(
-          Future {
+          Task {
             throw new Exception("oh no")
           }
         )
@@ -47,7 +49,7 @@ class AlliedPilotGraderSpec
         val corp = mock[Corp]
         when(eveapi.corp).thenReturn(corp)
         when(corp.ContactList()).thenReturn(
-          Future {
+          Task {
             new XMLApiResponse(
               now,
               now,
@@ -81,7 +83,7 @@ class AlliedPilotGraderSpec
         val corp = mock[Corp]
         when(eveapi.corp).thenReturn(corp)
         when(corp.ContactList()).thenReturn(
-          Future {
+          Task {
             new XMLApiResponse(
               now,
               now,
@@ -115,7 +117,7 @@ class AlliedPilotGraderSpec
       val corp = mock[Corp]
       when(eveapi.corp).thenReturn(corp)
       when(corp.ContactList()).thenReturn(
-        Future {
+        Task {
           new XMLApiResponse(
             now,
             now,
@@ -161,7 +163,7 @@ class AlliedPilotGraderSpec
       val corp = mock[Corp]
       when(eveapi.corp).thenReturn(corp)
       when(corp.ContactList()).thenReturn(
-        Future {
+        Task {
           new XMLApiResponse(
             now,
             now,
@@ -226,7 +228,7 @@ class AlliedPilotGraderSpec
       val corp = mock[Corp]
       when(eveapi.corp).thenReturn(corp)
       when(corp.ContactList()).thenReturn(
-        Future {
+        Task {
           new XMLApiResponse(
             now,
             now,
@@ -291,7 +293,7 @@ class AlliedPilotGraderSpec
       val corp = mock[Corp]
       when(eveapi.corp).thenReturn(corp)
       when(corp.ContactList()).thenReturn(
-        Future {
+        Task {
           new XMLApiResponse(
             now,
             now,
@@ -359,7 +361,7 @@ class AlliedPilotGraderSpec
       val corp = mock[Corp]
       when(eveapi.corp).thenReturn(corp)
       when(corp.ContactList()).thenReturn(
-        Future {
+        Task {
           new XMLApiResponse(
             expiry,
             expiry,
@@ -437,7 +439,7 @@ class AlliedPilotGraderSpec
       val corp = mock[Corp]
       when(eveapi.corp).thenReturn(corp)
       when(corp.ContactList()).thenReturn(
-        Future {
+        Task {
           new XMLApiResponse(
             expired,
             expired,
@@ -489,7 +491,7 @@ class AlliedPilotGraderSpec
       implicit val apikey = new ApiKey(1, "hi")
       val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
       when(corp.ContactList()).thenReturn(
-        Future {
+        Task {
           new XMLApiResponse(
             expiry,
             expiry,
@@ -558,7 +560,7 @@ class AlliedPilotGraderSpec
     val corp = mock[Corp]
     when(eveapi.corp).thenReturn(corp)
     when(corp.ContactList()).thenReturn(
-      Future {
+      Task {
         throw new Exception("oh no")
       }
     )
@@ -587,7 +589,7 @@ class AlliedPilotGraderSpec
     val corp = mock[Corp]
     when(eveapi.corp).thenReturn(corp)
     when(corp.ContactList()).thenReturn(
-      Future {
+      Task {
         new XMLApiResponse(
           expired,
           expired,
@@ -638,7 +640,7 @@ class AlliedPilotGraderSpec
     implicit val apikey = new ApiKey(1, "hi")
     val apg = new AlliedPilotGrader(5.0, true, true, Some(eveapi), null)
     when(corp.ContactList()).thenReturn(
-      Future {
+      Task {
         throw new Exception("oh no")
       }
     )

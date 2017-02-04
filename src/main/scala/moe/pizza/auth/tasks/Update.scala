@@ -4,19 +4,19 @@ import moe.pizza.auth.interfaces.PilotGrader
 import moe.pizza.auth.models.Pilot
 import moe.pizza.crestapi.CrestApi
 import moe.pizza.eveapi._
+import org.http4s.client.Client
 
-import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 class Update(crest: CrestApi, eveapi: EVEAPI, chain: PilotGrader)(
-    implicit val ex: ExecutionContext) {
+    implicit val client: Client) {
 
   def updateUser(p: Pilot): Pilot = {
     val keys = p.getCrestTokens
     val mainkey = keys.head
     Try {
-      val charinfo = eveapi.eve.CharacterInfo(mainkey.characterID).sync()
-      val refreshed = crest.refresh(mainkey.token).sync()
+      val charinfo = eveapi.eve.CharacterInfo(mainkey.characterID).unsafePerformSync
+      val refreshed = crest.refresh(mainkey.token).unsafePerformSync
       val corpAndAlliance = charinfo match {
         case Left(r) => (r.result.corporation, "")
         case Right(r) => (r.result.corporation, r.result.alliance)

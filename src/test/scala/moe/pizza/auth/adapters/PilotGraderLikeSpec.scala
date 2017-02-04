@@ -6,19 +6,18 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.adapters.PilotGraderLike.PilotGraderFactory
 import moe.pizza.auth.config.ConfigFile.AuthConfig
 import moe.pizza.auth.plugins.pilotgraders.{AlliedPilotGrader, CrestKeyGrader}
-import moe.pizza.auth.plugins.pilotgraders.MembershipPilotGraders.{
-  CorporationPilotGrader,
-  AlliancePilotGrader
-}
+import moe.pizza.auth.plugins.pilotgraders.MembershipPilotGraders.{AlliancePilotGrader, CorporationPilotGrader}
 import moe.pizza.auth.webapp.WebappTestSupports
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{MustMatchers, WordSpec}
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.http4s.client.blaze.PooledHttp1Client
 
 /**
   * Created by Andi on 28/02/2016.
   */
-class PilotGraderLikeSpec extends WordSpec with MustMatchers {
+class PilotGraderLikeSpec extends WordSpec with MockitoSugar with MustMatchers {
+
+  implicit val client = PooledHttp1Client() //TODO: no mocking?
 
   val OM = new ObjectMapper(new YAMLFactory())
   OM.registerModule(DefaultScalaModule)
