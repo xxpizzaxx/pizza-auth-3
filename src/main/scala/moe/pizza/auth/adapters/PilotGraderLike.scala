@@ -3,21 +3,14 @@ package moe.pizza.auth.adapters
 import com.fasterxml.jackson.databind.JsonNode
 import moe.pizza.auth.config.ConfigFile.ConfigFile
 import moe.pizza.auth.interfaces.PilotGrader
-import moe.pizza.auth.plugins.pilotgraders.MembershipPilotGraders.{
-  AlliancePilotGrader,
-  CorporationPilotGrader
-}
-import moe.pizza.auth.plugins.pilotgraders.{
-  InternalWhitelistPilotGrader,
-  CrestKeyGrader,
-  AlliedPilotGrader
-}
+import moe.pizza.auth.plugins.pilotgraders.MembershipPilotGraders.{AlliancePilotGrader, CorporationPilotGrader}
+import moe.pizza.auth.plugins.pilotgraders.{AlliedPilotGrader, CrestKeyGrader, InternalWhitelistPilotGrader}
 import moe.pizza.crestapi.CrestApi
-import moe.pizza.eveapi.{XmlApiKey, ApiKey}
+import moe.pizza.eveapi.{ApiKey, XmlApiKey}
+import org.http4s.client.Client
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext
 
 /**
   * Created by Andi on 28/02/2016.
@@ -27,7 +20,7 @@ object PilotGraderLike {
   val logger = LoggerFactory.getLogger(getClass)
 
   trait PilotGraderLike[T] {
-    def apply(j: JsonNode, c: ConfigFile)(implicit ec: ExecutionContext): T
+    def apply(j: JsonNode, c: ConfigFile)(implicit client: Client): T
   }
 
   object PilotGraderLike {
@@ -35,7 +28,7 @@ object PilotGraderLike {
     implicit object AlliedPilotGrader
         extends PilotGraderLike[AlliedPilotGrader] {
       override def apply(j: JsonNode, c: ConfigFile)(
-          implicit ec: ExecutionContext): AlliedPilotGrader = {
+          implicit client: Client): AlliedPilotGrader = {
         val apikey =
           new ApiKey(j.get("keyId").asInt(), j.get("vCode").asText())
         logger.info(
@@ -53,7 +46,7 @@ object PilotGraderLike {
 
     implicit object CrestKeyGrader extends PilotGraderLike[CrestKeyGrader] {
       override def apply(j: JsonNode, c: ConfigFile)(
-          implicit ec: ExecutionContext): CrestKeyGrader = {
+          implicit client: Client): CrestKeyGrader = {
         logger.info(
           "registering CrestKeyGrader with configuration %s".format(
             j.toString))
@@ -82,7 +75,7 @@ object PilotGraderLike {
     implicit object CorporationPilotGrader
         extends PilotGraderLike[CorporationPilotGrader] {
       override def apply(j: JsonNode, c: ConfigFile)(
-          implicit ec: ExecutionContext): CorporationPilotGrader = {
+          implicit client: Client): CorporationPilotGrader = {
         logger.info(
           "registering CorporationPilotGrader with configuration %s".format(
             j.toString))
@@ -97,7 +90,7 @@ object PilotGraderLike {
     implicit object AlliancePilotGrader
         extends PilotGraderLike[AlliancePilotGrader] {
       override def apply(j: JsonNode, c: ConfigFile)(
-          implicit ec: ExecutionContext): AlliancePilotGrader = {
+          implicit client: Client): AlliancePilotGrader = {
         logger.info(
           "registering AlliancePilotGrader with configuration %s".format(
             j.toString))
@@ -110,7 +103,7 @@ object PilotGraderLike {
     implicit object InternalWhitelistPilotGrader
         extends PilotGraderLike[InternalWhitelistPilotGrader] {
       override def apply(j: JsonNode, c: ConfigFile)(
-          implicit ec: ExecutionContext): InternalWhitelistPilotGrader = {
+          implicit client: Client): InternalWhitelistPilotGrader = {
         logger.info(
           "registering InternalWhitelistPilotGrader with configuration %s"
             .format(j.toString))
@@ -145,10 +138,10 @@ object PilotGraderLike {
   object PilotGraderFactory {
     def create[T](j: JsonNode, config: ConfigFile)(
         implicit pg: PilotGraderLike[T],
-        ec: ExecutionContext): T = pg(j, config)
+        client: Client): T = pg(j, config)
 
     def fromYaml(c: JsonNode, config: ConfigFile)(
-        implicit ec: ExecutionContext): Option[PilotGrader] = {
+        implicit client: Client): Option[PilotGrader] = {
       Option(c.get("type")).map(_.asText()) match {
         case Some(t) =>
           t match {

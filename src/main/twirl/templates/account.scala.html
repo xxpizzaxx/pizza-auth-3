@@ -40,10 +40,10 @@
                     <tbody>
                         @for(verifyResponse <- verifies) {
                             <tr>
-                                <td><img src="@("https://imageserver.eveonline.com/Character/" + verifyResponse._2.characterID + "_32.jpg")"/></td>
-                                <td>@verifyResponse._2.characterName</td>
+                                <td><img src="@("https://imageserver.eveonline.com/Character/" + verifyResponse._2.CharacterID + "_32.jpg")"/></td>
+                                <td>@verifyResponse._2.CharacterName</td>
                                 <td>
-                                    @if(!verifyResponse._2.characterName.equals(pilot.characterName)) {
+                                    @if(!verifyResponse._2.CharacterName.equals(pilot.characterName)) {
                                         <form role="form" class="delete_character" action="/account/characters/remove" method="post">
                                             <input type="hidden" name="crestToken" value="@verifyResponse._1.toString"/>
                                             <button type="submit" class="btn btn-primary btn-sm">Remove</button>

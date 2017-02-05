@@ -3,20 +3,22 @@ package moe.pizza.auth.plugins.pilotgraders
 import moe.pizza.auth.models.Pilot
 import moe.pizza.crestapi.CrestApi
 import moe.pizza.crestapi.CrestApi.{CallbackResponse, VerifyResponse}
-import moe.pizza.eveapi.{XMLApiResponse, EVEAPI}
+import moe.pizza.eveapi.{EVEAPI, XMLApiResponse}
 import moe.pizza.eveapi.endpoints.Character
+import org.http4s.client.blaze.PooledHttp1Client
 import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{MustMatchers, WordSpec}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scalaz.concurrent.Task
 
 class CaldariCrestKeyGraderSpec
     extends WordSpec
     with MustMatchers
     with MockitoSugar {
+
+  implicit val client = PooledHttp1Client() //TODO: no mocking?
 
   "CaldariCrestKeyGrader" when {
     "grading" should {
@@ -25,16 +27,16 @@ class CaldariCrestKeyGraderSpec
         val eveapi = mock[EVEAPI]
         val char = mock[Character]
         when(eveapi.char).thenReturn(char)
-        when(crest.refresh("REF")).thenReturn(Future {
+        when(crest.refresh("REF")).thenReturn(Task {
           new CallbackResponse("access", "type", 1000, Some("refresh"))
         })
-        when(crest.verify("access")).thenReturn(Future {
+        when(crest.verify("access")).thenReturn(Task {
           new VerifyResponse(1, "Bob", "", "", "", "", "")
         })
         val pilotInfo =
           mock[moe.pizza.eveapi.generated.char.CharacterInfo.Result]
         when(pilotInfo.race).thenReturn("Caldari")
-        when(char.CharacterInfo(1)).thenReturn(Future {
+        when(char.CharacterInfo(1)).thenReturn(Task {
           new XMLApiResponse(DateTime.now(), DateTime.now(), pilotInfo)
         })
         val iwpg = new CaldariCrestKeyGrader(crest, eve = Some(eveapi))
@@ -59,16 +61,16 @@ class CaldariCrestKeyGraderSpec
         val eveapi = mock[EVEAPI]
         val char = mock[Character]
         when(eveapi.char).thenReturn(char)
-        when(crest.refresh("REF")).thenReturn(Future {
+        when(crest.refresh("REF")).thenReturn(Task {
           new CallbackResponse("access", "type", 1000, Some("refresh"))
         })
-        when(crest.verify("access")).thenReturn(Future {
+        when(crest.verify("access")).thenReturn(Task {
           new VerifyResponse(1, "Bob", "", "", "", "", "")
         })
         val pilotInfo =
           mock[moe.pizza.eveapi.generated.char.CharacterInfo.Result]
         when(pilotInfo.race).thenReturn("Gallente")
-        when(char.CharacterInfo(1)).thenReturn(Future {
+        when(char.CharacterInfo(1)).thenReturn(Task {
           new XMLApiResponse(DateTime.now(), DateTime.now(), pilotInfo)
         })
         val iwpg = new CaldariCrestKeyGrader(crest, eve = Some(eveapi))

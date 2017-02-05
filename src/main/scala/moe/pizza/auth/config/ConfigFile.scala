@@ -5,8 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import moe.pizza.auth.adapters.GraderChain
 import moe.pizza.auth.adapters.PilotGraderLike.PilotGraderFactory
 import moe.pizza.auth.interfaces.PilotGrader
-
-import scala.concurrent.ExecutionContext
+import org.http4s.client.Client
 
 /**
   * Created by andi on 19/02/16.
@@ -38,7 +37,7 @@ object ConfigFile {
       restkeys: List[String]
   ) {
     def constructGraders(c: ConfigFile)(
-        implicit ec: ExecutionContext): PilotGrader =
+        implicit client: Client): PilotGrader =
       new GraderChain(
         graders.map(g => PilotGraderFactory.fromYaml(g, c)).flatten.toList)
 

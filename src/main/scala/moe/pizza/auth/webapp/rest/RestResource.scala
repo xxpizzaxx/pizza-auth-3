@@ -52,9 +52,12 @@ class RestResource(fullconfig: ConfigFile,
 
     case req @ GET -> Root / "api" / "v1" / "ping" / "group" / group => {
       req.decode[Json] { p =>
-        p.as[PingRequest]
-          .toOption
-          .map { pingreq =>
+        p.as[PingRequest] match {
+          case Left(failure) =>
+            BadRequest(ApiError(
+              "bad_post_body",
+              "Unable to process your post body, please format it correctly").asJson)
+          case Right(pingreq) =>
             val users = ud.getUsers(s"authgroup=${group}")
             val templatedMessage = templates.txt.broadcast(pingreq.message,
                                                            pingreq.to,
@@ -67,11 +70,6 @@ class RestResource(fullconfig: ConfigFile,
                                        users)
             val r = Await.result(Future.sequence(sendreqs), 2 seconds).sum
             Ok(PingResponse(r).asJson)
-          }
-          .getOrElse {
-            BadRequest(ApiError(
-              "bad_post_body",
-              "Unable to process your post body, please format it correctly").asJson)
           }
       }
     }

@@ -9,7 +9,7 @@ resolvers += Resolver.jcenterRepo
 fork := true
 parallelExecution in Test := false
 
-val HTTP4S_VERSION = "0.14.6"
+val HTTP4S_VERSION = "0.15.3a"
 
 // main dependencies
 libraryDependencies ++= Seq(
@@ -17,22 +17,24 @@ libraryDependencies ++= Seq(
   "org.http4s"                       %% "http4s-core"               % HTTP4S_VERSION,
   "org.http4s"                       %% "http4s-dsl"                % HTTP4S_VERSION,
   "org.http4s"                       %% "http4s-blaze-server"       % HTTP4S_VERSION,
+  "org.http4s"                       %% "http4s-blaze-client"       % HTTP4S_VERSION,
   "org.http4s"                       %% "http4s-circe"              % HTTP4S_VERSION,
   "org.http4s"                       %% "http4s-twirl"              % HTTP4S_VERSION,
   "org.http4s"                       %% "http4s-json4s"             % HTTP4S_VERSION,
   // supporting libraries
-  "moe.pizza"                        %% "eveapi"                    % "0.45",
+  "moe.pizza"                        %% "eveapi"                    % "0.56",
   "org.log4s"                        %% "log4s"                     % "1.2.0",
   "com.github.scopt"                 %% "scopt"                     % "3.3.0",
   "com.googlecode.gettext-commons"   % "gettext-maven-plugin"       % "1.2.4",
   "com.fasterxml.jackson.dataformat" % "jackson-dataformat-yaml"    % "2.6.1",
+  "com.fasterxml.jackson.module"     %% "jackson-module-scala"      % "2.6.1",
   "net.andimiller"                   %% "integrated-query-language" % "1.1",
   "com.github.tototoshi"             %% "scala-csv"                 % "1.3.0",
   "javax.persistence"                % "persistence-api"            % "1.0.2",
   "com.orientechnologies"            % "orientdb-client"            % "2.1.12",
   "com.orientechnologies"            % "orientdb-graphdb"           % "2.1.12",
   "com.tinkerpop.blueprints"         % "blueprints"                 % "2.6.0",
-  "com.pauldijou"                    %% "jwt-circe"                 % "0.8.1",
+  "com.pauldijou"                    %% "jwt-circe"                 % "0.10.0",
   "commons-io"                       % "commons-io"                 % "2.5",
   // xmpp client
   "org.igniterealtime.smack"         % "smack-core"                 % "4.1.7",

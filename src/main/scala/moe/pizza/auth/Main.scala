@@ -7,10 +7,11 @@ import java.util.UUID
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import moe.pizza.auth.adapters.{XmppBroadcastService, LdapUserDatabase}
+import moe.pizza.auth.adapters.{LdapUserDatabase, XmppBroadcastService}
 import moe.pizza.auth.ldap.client.LdapClient
 import moe.pizza.auth.ldap.server.EmbeddedLdapServer
 import moe.pizza.auth.webapp.Webapp
+import org.http4s.client.blaze.PooledHttp1Client
 import org.http4s.server.blaze.BlazeBuilder
 import scopt.OptionParser
 
@@ -83,9 +84,9 @@ object Main {
               ldap.start()
             }
             if (s.webinterface) {
-              import scala.concurrent.ExecutionContext.Implicits.global
+              implicit val client = PooledHttp1Client()
               val graders =
-                configfile.get.auth.constructGraders(configfile.get)
+                configfile.get.auth.constructGraders(configfile.get)(client)
               val lc = new LdapClient("localhost",
                                       configfile.get.embeddedldap.port,
                                       "uid=admin,ou=system",
@@ -102,6 +103,7 @@ object Main {
                 new LdapUserDatabase(lc,
                                      ldap.directoryService.getSchemaManager,
                                      configfile.get.embeddedldap.basedn),
+                None,
                 None,
                 None,
                 None,
