@@ -8,6 +8,7 @@ import moe.pizza.auth.interfaces.PilotGrader
 import moe.pizza.auth.webapp.oauth.OAuthApplication
 
 import scala.concurrent.ExecutionContext
+import org.http4s.client.Client
 
 /**
   * Created by andi on 19/02/16.
@@ -41,7 +42,7 @@ object ConfigFile {
       applications: List[OAuthApplication] = List()
   ) {
     def constructGraders(c: ConfigFile)(
-        implicit ec: ExecutionContext): PilotGrader =
+        implicit client: Client): PilotGrader =
       new GraderChain(
         graders.map(g => PilotGraderFactory.fromYaml(g, c)).flatten.toList)
 

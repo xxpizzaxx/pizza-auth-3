@@ -1,10 +1,6 @@
 package moe.pizza.auth.webapp
 
-import moe.pizza.auth.config.ConfigFile.{
-  AuthGroupConfig,
-  AuthConfig,
-  ConfigFile
-}
+import moe.pizza.auth.config.ConfigFile.{AuthConfig, AuthGroupConfig, ConfigFile}
 import moe.pizza.auth.ldap.server.EmbeddedLdapServer
 import moe.pizza.auth.ldap.client.LdapClient
 import moe.pizza.auth.ldap.client.LdapClient._
@@ -31,14 +27,18 @@ import moe.pizza.eveapi.generated.eve
 import moe.pizza.eveapi.XMLApiResponse
 import org.joda.time.DateTime
 import org.mockito.Matchers._
-
 import java.io.File
 import java.util.UUID
 
-import scala.concurrent.Future
+import org.http4s.client.blaze.PooledHttp1Client
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scalaz.concurrent.Task
 
 class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
+
+  implicit val client = PooledHttp1Client()
 
   def createTempFolder(suffix: String): File = {
     val base = new File(new File(System.getProperty("java.io.tmpdir")),
@@ -109,7 +109,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(config.auth).thenReturn(authconfig)
     when(crest.redirect("signup", Webapp.defaultCrestScopes))
       .thenReturn("http://login.eveonline.com/whatever2")
-    when(crest.callback("codegoeshere")).thenReturn(Future {
+    when(crest.callback("codegoeshere")).thenReturn(Task {
       CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))
     })
     val verify = VerifyResponse(103,
@@ -119,7 +119,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                 "token type",
                                 "owner hash",
                                 "eve online")
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verify
     })
 
@@ -128,6 +128,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                          9021,
                          ud,
                          crestapi = Some(crest),
+                         apiClient = Some(client),
                          mapper = Some(db))
 
     val p = new Pilot(null,
@@ -178,10 +179,10 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                 "token type",
                                 "owner hash",
                                 "eve online")
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verify
     })
-    when(crest.refresh("refresh_token")).thenReturn(Future {
+    when(crest.refresh("refresh_token")).thenReturn(Task {
       new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
     })
     val char = new eve.CharacterInfo.Result(103,
@@ -202,7 +203,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val charReturnValue: Either[XMLApiResponse[eve.CharacterInfo2.Result],
                                 XMLApiResponse[eve.CharacterInfo.Result]] =
       Right(new XMLApiResponse(DateTime.now(), DateTime.now(), char))
-    when(innereveapi.CharacterInfo(103)).thenReturn(Future {
+    when(innereveapi.CharacterInfo(103)).thenReturn(Task {
       charReturnValue
     })
 
@@ -211,6 +212,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                          9021,
                          ud,
                          crestapi = Some(crest),
+                         apiClient = Some(client),
                          mapper = Some(db),
                          eve = Some(eveapi))
 
@@ -265,10 +267,10 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                 "token type",
                                 "owner hash",
                                 "eve online")
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verify
     })
-    when(crest.refresh("refresh_token")).thenReturn(Future {
+    when(crest.refresh("refresh_token")).thenReturn(Task {
       new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
     })
     val char = new eve.CharacterInfo2.Result(103,
@@ -286,7 +288,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val charReturnValue: Either[XMLApiResponse[eve.CharacterInfo2.Result],
                                 XMLApiResponse[eve.CharacterInfo.Result]] =
       Left(new XMLApiResponse(DateTime.now(), DateTime.now(), char))
-    when(innereveapi.CharacterInfo(103)).thenReturn(Future {
+    when(innereveapi.CharacterInfo(103)).thenReturn(Task {
       charReturnValue
     })
 
@@ -295,6 +297,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                          9021,
                          ud,
                          crestapi = Some(crest),
+                         apiClient = Some(client),
                          mapper = Some(db),
                          eve = Some(eveapi))
 
@@ -349,10 +352,10 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                 "token type",
                                 "owner hash",
                                 "eve online")
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verify
     })
-    when(crest.refresh("refresh_token")).thenReturn(Future {
+    when(crest.refresh("refresh_token")).thenReturn(Task {
       new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
     })
     val char = new eve.CharacterInfo2.Result(103,
@@ -370,7 +373,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val charReturnValue: Either[XMLApiResponse[eve.CharacterInfo2.Result],
                                 XMLApiResponse[eve.CharacterInfo.Result]] =
       Left(new XMLApiResponse(DateTime.now(), DateTime.now(), char))
-    when(innereveapi.CharacterInfo(103)).thenReturn(Future {
+    when(innereveapi.CharacterInfo(103)).thenReturn(Task {
       charReturnValue
     })
 
@@ -382,6 +385,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                          9021,
                          ud,
                          crestapi = Some(crest),
+                         apiClient = Some(client),
                          mapper = Some(db),
                          eve = Some(eveapi))
 
@@ -440,10 +444,10 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                 "token type",
                                 "owner hash",
                                 "eve online")
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verify
     })
-    when(crest.refresh("refresh_token")).thenReturn(Future {
+    when(crest.refresh("refresh_token")).thenReturn(Task {
       new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
     })
     val char = new eve.CharacterInfo.Result(103,
@@ -464,7 +468,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     val charReturnValue: Either[XMLApiResponse[eve.CharacterInfo2.Result],
                                 XMLApiResponse[eve.CharacterInfo.Result]] =
       Right(new XMLApiResponse(DateTime.now(), DateTime.now(), char))
-    when(innereveapi.CharacterInfo(103)).thenReturn(Future {
+    when(innereveapi.CharacterInfo(103)).thenReturn(Task {
       charReturnValue
     })
 
@@ -476,6 +480,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                          9021,
                          ud,
                          crestapi = Some(crest),
+                         apiClient = Some(client),
                          mapper = Some(db),
                          eve = Some(eveapi))
 
@@ -522,7 +527,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(config.auth).thenReturn(authconfig)
     when(crest.redirect("login", Webapp.defaultCrestScopes))
       .thenReturn("http://login.eveonline.com/whatever2")
-    when(crest.callback("codegoeshere")).thenReturn(Future {
+    when(crest.callback("codegoeshere")).thenReturn(Task {
       CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))
     })
     val verifyR = VerifyResponse(103,
@@ -532,7 +537,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
       "token type",
       "owner hash",
       "eve online")
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verifyR
     })
     val p = new Pilot(null,
@@ -548,11 +553,12 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(ud.getUser("bob_mcbobface")).thenReturn(Some(p))
 
     val app = new Webapp(config,
-      pg,
-      9021,
-      ud,
-      crestapi = Some(crest),
-      mapper = Some(db))
+                         pg,
+                         9021,
+                         ud,
+                         crestapi = Some(crest),
+                         apiClient = Some(client),
+                         mapper = Some(db))
 
     val req = Request(
       uri = Uri
@@ -582,7 +588,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(config.auth).thenReturn(authconfig)
     when(crest.redirect("login", Webapp.defaultCrestScopes))
       .thenReturn("http://login.eveonline.com/whatever2")
-    when(crest.callback("codegoeshere")).thenReturn(Future {
+    when(crest.callback("codegoeshere")).thenReturn(Task {
       CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))
     })
     val verify = VerifyResponse(103,
@@ -592,7 +598,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                 "token type",
                                 "owner hash",
                                 "eve online")
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verify
     })
     val p = new Pilot(null,
@@ -612,6 +618,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                          9021,
                          ud,
                          crestapi = Some(crest),
+                         apiClient = Some(client),
                          mapper = Some(db))
 
     val req = Request(
@@ -773,7 +780,6 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     assert(bodytxt contains "/signup")
     assert(bodytxt contains "/login")
   }
-
   "DynamicRouter" should "render the main page" in {
     val config = mock[ConfigFile]
     val authconfig = mock[AuthConfig]
@@ -1638,6 +1644,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                          9021,
                          ud,
                          crestapi = Some(crest),
+                         apiClient = Some(client),
                          mapper = Some(db),
                          updater = Some(update))
 
@@ -1663,10 +1670,10 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                 "owner hash",
                                 "eve online")
     
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verify
     })
-    when(crest.refresh("refresh_token")).thenReturn(Future {
+    when(crest.refresh("refresh_token")).thenReturn(Task {
       new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
     })
         
@@ -1684,8 +1691,6 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     assert(bodytxt contains "/account/update/email")
     assert(bodytxt contains "/account/update/password")
     assert(bodytxt contains "Bob McName")
-    assert(bodytxt contains "103_32.jpg")
-    assert(bodytxt contains "Main character")
     assert(bodytxt contains "/account/characters/add")
   }
   "DynamicRouter's account page" should "change people's emails" in {
@@ -1846,10 +1851,10 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                  "token type",
                                  "owner hash",
                                  "eve online")
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verify_first
     })
-     when(crest.refresh("refresh_token")).thenReturn(Future {
+     when(crest.refresh("refresh_token")).thenReturn(Task {
       new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
     })
 
@@ -1861,15 +1866,15 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                 "owner hash",
                                 "eve online")
     
-    when(crest.verify("access_token2")).thenReturn(Future {
+    when(crest.verify("access_token2")).thenReturn(Task {
       verify_second
     })
    
-    when(crest.refresh("refresh_token2")).thenReturn(Future {
+    when(crest.refresh("refresh_token2")).thenReturn(Task {
       new CallbackResponse("access_token2", "token", 100, Some("refresh_token2"))
     })
 
-    when(crest.callback("codegoeshere")).thenReturn(Future {
+    when(crest.callback("codegoeshere")).thenReturn(Task {
       CallbackResponse("access_token2", "bearer", 1000, Some("refresh_token2"))
     })
 
@@ -1892,6 +1897,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                          9021,
                          ud,
                          crestapi = Some(crest),
+                         apiClient = Some(client),
                          mapper = Some(db))
 
     val req = Request(
@@ -1933,10 +1939,10 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
                                  "token type",
                                  "owner hash",
                                  "eve online")
-    when(crest.verify("access_token")).thenReturn(Future {
+    when(crest.verify("access_token")).thenReturn(Task {
       verifyR
     })
-     when(crest.refresh("refresh_token")).thenReturn(Future {
+     when(crest.refresh("refresh_token")).thenReturn(Task {
       new CallbackResponse("access_token", "token", 100, Some("refresh_token"))
     })
 

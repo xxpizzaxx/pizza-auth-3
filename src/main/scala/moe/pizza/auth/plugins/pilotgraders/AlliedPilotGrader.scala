@@ -6,12 +6,13 @@ import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.models.Pilot.Status
 import moe.pizza.auth.plugins.pilotgraders.AlliedPilotGrader.SavedContactList
 import moe.pizza.eveapi.generated.corp
-import moe.pizza.eveapi.{XmlApiKey, ApiKey, EVEAPI}
+import moe.pizza.eveapi.{ApiKey, EVEAPI, XmlApiKey}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.ExecutionContext
-import scala.util.{Try, Failure, Success}
+import org.http4s.client.Client
+
+import scala.util.{Failure, Success, Try}
 
 object AlliedPilotGrader {
   case class SavedContactList(cachedUntil: DateTime,
@@ -44,11 +45,11 @@ class AlliedPilotGrader(threshold: Double,
                         usecorp: Boolean,
                         usealliance: Boolean,
                         val eve: Option[EVEAPI] = None,
-                        apikey: XmlApiKey)(implicit val ec: ExecutionContext)
+                        apikey: XmlApiKey)(implicit val client: Client)
     extends PilotGrader {
 
   val logger = LoggerFactory.getLogger(getClass)
-  val eveapi = eve.getOrElse(new EVEAPI(key = Some(apikey)))
+  val eveapi = eve.getOrElse(new EVEAPI(client))
   var allies = pullAllies()
 
   allies match {
@@ -63,7 +64,7 @@ class AlliedPilotGrader(threshold: Double,
   }
 
   def pullAllies(): Option[SavedContactList] = {
-    val res = Try { eveapi.corp.ContactList().sync() }
+    val res = Try { eveapi.corp.ContactList().unsafePerformSync }
     res match {
       case Success(r) =>
         val corp = r.result

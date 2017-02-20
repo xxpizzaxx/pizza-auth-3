@@ -6,13 +6,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import moe.pizza.auth.interfaces.UserDatabase
 import moe.pizza.auth.webapp.SessionManager._
-import moe.pizza.auth.webapp.Types.{HydratedSession, Session2, Session}
+import moe.pizza.auth.webapp.Types.{HydratedSession, Session, Session2}
 import org.http4s.{HttpService, _}
 import org.http4s.server._
 import org.slf4j.LoggerFactory
 import pdi.jwt.{JwtAlgorithm, JwtCirce, JwtClaim}
 import io.circe.generic.auto._
 import Utils._
+import io.circe.Decoder.Result
+
 import scala.util.Try
 
 object SessionManager {
@@ -29,16 +31,26 @@ class SessionManager(secretKey: String, ud: UserDatabase)
 
   case class MyJwt(exp: Long, iat: Long, session: String)
 
+  implicit def toOption[A](e: Result[A]): Option[A] = {
+    e match {
+      case Left(_) => None
+      case Right(a) => Some(a)
+    }
+  }
+
   override def apply(s: HttpService): HttpService = Service.lift { req =>
     log.info(s"Intercepting request ${req}")
+    // TODO: this used to be nice with toOption, what happened
     val sessions =
       req.headers.get(headers.Cookie).toList.flatMap(_.values.list).flatMap {
         header =>
-          JwtCirce
-            .decodeJson(header.content, secretKey, Seq(JwtAlgorithm.HS256))
+          JwtCirce.decodeJson(header.content, secretKey, Seq(JwtAlgorithm.HS256))
             .toOption
             .flatMap { jwt =>
-              jwt.as[MyJwt].toOption
+              jwt.as[MyJwt] match {
+                case Right(x) => Some(x)
+                case Left(_) => None
+              }
             }
             .flatMap { myjwt =>
               Try { OM.readValue(myjwt.session, classOf[Session2]) }.toOption

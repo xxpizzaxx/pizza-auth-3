@@ -4,7 +4,7 @@ import moe.pizza.auth.models.Pilot
 import moe.pizza.crestapi.CrestApi
 import moe.pizza.eveapi._
 
-import scala.concurrent.ExecutionContext
+import org.http4s.client.Client
 
 /**
   * Created by Andi on 21/02/2016.
@@ -12,13 +12,13 @@ import scala.concurrent.ExecutionContext
 object LocationManager {
 
   def locateUsers(crest: CrestApi)(pilots: List[Pilot])(
-      implicit ec: ExecutionContext) = {
+      implicit client: Client) = {
 
     pilots.map { p =>
       p.getCrestTokens.map { token =>
-        val refreshed = crest.refresh(token.token).sync()
-        val verify = crest.verify(refreshed.access_token).sync()
-        (p, verify.characterName,
+        val refreshed = crest.refresh(token.token).unsafePerformSync
+        val verify = crest.verify(refreshed.access_token).unsafePerformSync
+        (p, verify.CharacterName,
          crest.character.location(token.characterID, refreshed.access_token))
       }
     }

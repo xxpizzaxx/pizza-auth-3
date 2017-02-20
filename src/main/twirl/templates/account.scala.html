@@ -1,6 +1,8 @@
 @import moe.pizza.auth.models.Pilot
 @import moe.pizza.crestapi.CrestApi
-@(pilot: Pilot, verifies: List[(Pilot.CrestToken,CrestApi.VerifyResponse)])
+@(pilot: Pilot,
+    validKeys: List[(Pilot.CrestToken,Option[CrestApi.VerifyResponse])],
+    invalidKeys: List[(Pilot.CrestToken,Option[CrestApi.VerifyResponse])])
 
 <h2>Account Management</h2>
 
@@ -14,49 +16,63 @@
                         <tr>
                             <th>Account name</th><td>@pilot.uid</td>
                         </tr>
+                        <tr>
+                            <th>Character name</th><td>@pilot.characterName</td>
+                        </tr>
                     </table>
-                    <!--<button type="submit" class="btn btn-default">Update</button>-->
                 </form>
-                <script>
-                        $( "#update_account" ).validate({
-                            rules: {
-
-                            }
-                        });
-                </script>
             </div>
         </div>
         <div class="panel panel-primary">
-            <div class="panel-heading"><h3 class="panel-title">Your Characters</h3></div>
-            <div class="panel-body"> 
-                <table class="table table-bordered table-condensed table-striped">
-                    <thead>
-                        <tr>
-                            <th width="32"></th>
-                            <th>Name</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for(verifyResponse <- verifies) {
+            <div class="panel-heading"><h3 class="panel-title">Additional Characters</h3></div>
+            <div class="panel-body">
+                @if(validKeys.length > 0) {
+                    <table class="table table-bordered table-condensed table-striped">
+                        <thead>
                             <tr>
-                                <td><img src="@("https://imageserver.eveonline.com/Character/" + verifyResponse._2.characterID + "_32.jpg")"/></td>
-                                <td>@verifyResponse._2.characterName</td>
-                                <td>
-                                    @if(!verifyResponse._2.characterName.equals(pilot.characterName)) {
+                                <th width="32"></th>
+                                <th>Name</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for(validKey <- validKeys) {
+                                <tr>
+                                    <td><img src="@("https://imageserver.eveonline.com/Character/" + validKey._2.get.CharacterID + "_32.jpg")"/></td>
+                                    <td>@validKey._2.get.CharacterName</td>
+                                    <td>
                                         <form role="form" class="delete_character" action="/account/characters/remove" method="post">
-                                            <input type="hidden" name="crestToken" value="@verifyResponse._1.toString"/>
+                                            <input type="hidden" name="crestToken" value="@validKey._1.toString"/>
                                             <button type="submit" class="btn btn-primary btn-sm">Remove</button>
                                         </form>
-                                    } else {
-                                        <i>Main character</i>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
                 <a href="/account/characters/add" class="btn btn-primary">Add Character</a>
+                @if(invalidKeys.length > 0) {
+                    <table class="table table-bordered table-condensed table-striped">
+                        <thead>
+                            <tr><th colspan="3">Invalid Keys</th></tr>
+                        </thead>
+                        <tbody>
+                            @for(invalidKey <- invalidKeys) {
+                                <tr>
+                                    <td><img src="@("https://imageserver.eveonline.com/Character/" + invalidKey._1.characterID + "_32.jpg")"/></td>
+                                    <td><i>invalid</i></td>
+                                    <td>
+                                        <form role="form" class="delete_character" action="/account/characters/remove" method="post">
+                                            <input type="hidden" name="crestToken" value="@invalidKey._1.toString"/>
+                                            <button type="submit" class="btn btn-primary btn-sm">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
             </div>
         </div>
     </div>

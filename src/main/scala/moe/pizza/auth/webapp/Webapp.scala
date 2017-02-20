@@ -16,9 +16,13 @@ import org.http4s.dsl.{Root, _}
 import org.http4s.server._
 import org.http4s.server.staticcontent.ResourceService
 import org.http4s.server.syntax.ServiceOps
+
+
 import org.joda.time.DateTime
 import play.twirl.api.Html
 import moe.pizza.eveapi._
+import org.http4s.client.Client
+import org.http4s.client.blaze.PooledHttp1Client
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.http4s.twirl._
@@ -54,6 +58,7 @@ class Webapp(fullconfig: ConfigFile,
              ud: UserDatabase,
              crestapi: Option[CrestApi] = None,
              eve: Option[EVEAPI] = None,
+             apiClient: Option[Client] = None,
              mapper: Option[EveMapDb] = None,
              updater: Option[Update] = None,
              broadcasters: List[BroadcastService] =
@@ -64,13 +69,16 @@ class Webapp(fullconfig: ConfigFile,
   val config = fullconfig.crest
   val groupconfig = fullconfig.auth.groups
 
+
+  implicit val client = apiClient.getOrElse(PooledHttp1Client())
+
   val crest = crestapi.getOrElse(
     new CrestApi(baseurl = config.loginUrl,
                  cresturl = config.crestUrl,
                  config.clientID,
                  config.secretKey,
                  config.redirectUrl))
-  val eveapi = eve.getOrElse(new EVEAPI())
+  val eveapi = eve.getOrElse(new EVEAPI(client))
   val map = mapper.getOrElse {
     // make the graph database in the webapp for the MVP version
     val map = new EveMapDb("internal-map")
@@ -172,9 +180,9 @@ class Webapp(fullconfig: ConfigFile,
         .flatMap(_.signupData)
         .map { signup =>
           val charinfo =
-            eveapi.eve.CharacterInfo(signup.verify.characterID.toInt)
+            eveapi.eve.CharacterInfo(signup.verify.CharacterID.toInt)
           val pilot = charinfo.map { ci =>
-            val refresh = crest.refresh(signup.refresh).sync()
+            val refresh = crest.refresh(signup.refresh).unsafePerformSync
             ci match {
               case Right(r) =>
                 // has an alliance
@@ -209,7 +217,7 @@ class Webapp(fullconfig: ConfigFile,
             }
           }
           Try {
-            pilot.sync()
+            pilot.unsafePerformSync
           } match {
             case TSuccess(p) =>
               log.info(s"pilot has been read out of XML API: ${p}")
@@ -252,9 +260,9 @@ class Webapp(fullconfig: ConfigFile,
         .flatMap(_.signupData)
         .map { signup =>
           val charinfo =
-            eveapi.eve.CharacterInfo(signup.verify.characterID.toInt)
+            eveapi.eve.CharacterInfo(signup.verify.CharacterID.toInt)
           val pilot = charinfo.map { ci =>
-            val refresh = crest.refresh(signup.refresh).sync()
+            val refresh = crest.refresh(signup.refresh).unsafePerformSync
             ci match {
               case Right(r) =>
                 // has an alliance
@@ -289,7 +297,7 @@ class Webapp(fullconfig: ConfigFile,
             }
           }
           Try {
-            pilot.sync()
+            pilot.unsafePerformSync
           } match {
             case TSuccess(p) =>
               log.info(s"pilot has been read out of XML API: ${p}")
@@ -509,7 +517,7 @@ class Webapp(fullconfig: ConfigFile,
                 .flatten
                 .map { kv =>
                   Try {
-                    (kv._1, kv._2, Await.result(kv._3, 10 seconds))
+                    (kv._1, kv._2, kv._3.unsafePerformSyncFor(2 seconds))
                   }
                 }
               log.info(locations.toString)
@@ -693,13 +701,23 @@ class Webapp(fullconfig: ConfigFile,
       req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
         case Some(p) =>
           val verifies = p.getCrestTokens.map(crestToken => {
-            val refreshed = crest.refresh(crestToken.token).sync()
-            (crestToken, crest.verify(refreshed.access_token).sync())
+            crest.refresh(crestToken.token).attemptRun match {
+              case \/-(callbackResult) =>
+                val verify = crest.verify(callbackResult.access_token).unsafePerformSync
+                (crestToken, Some(verify))
+              case -\/(_) =>
+                (crestToken, None)
+            }
           })
+
+          val (validKeys, invalidKeys) = verifies.partition(x => x._2.isDefined)
+
+          val validKeysWithoutMain = validKeys.filter(x => x._2.get.CharacterName != p.characterName)
+
           Ok(
             templates.html.base(
               "pizza-auth-3",
-              templates.html.account(p,verifies),
+              templates.html.account(p,validKeysWithoutMain, invalidKeys),
               req.getSession.map(_.toNormalSession),
               req.getSession.flatMap(_.pilot))).attachSessionifDefined(
             req.getSession.map(_.copy(alerts = List())))
@@ -852,11 +870,16 @@ class Webapp(fullconfig: ConfigFile,
     case req @ GET -> Root / "callback" => {
       val code = req.params("code")
       val state = req.params("state")
-      val callbackresults = crest.callback(code).sync()
-      val verify = crest.verify(callbackresults.access_token).sync()
+      println(crest)
+      println(code)
+      val callbacktask = crest.callback(code)
+      println(callbacktask)
+      val callbackresults = callbacktask.unsafePerformSync
+      println(callbackresults)
+      val verify = crest.verify(callbackresults.access_token).unsafePerformSync
       state match {
         case "signup" =>
-          log.info(s"signup route in callback for ${verify.characterName}")
+          log.info(s"signup route in callback for ${verify.CharacterName}")
           val newSession = req.getSession.map(x =>
             x.copy(signupData =
               Some(new SignupData(verify, callbackresults.refresh_token.get))))
@@ -869,11 +892,11 @@ class Webapp(fullconfig: ConfigFile,
           val goback = SeeOther(Uri(path = "/account"))
           req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
             case Some(p) =>
-              val crestToken = new Pilot.CrestToken(verify.characterID,callbackresults.refresh_token.get).toString
+              val crestToken = new Pilot.CrestToken(verify.CharacterID,callbackresults.refresh_token.get).toString
               ud.updateUser(p.copy(crestTokens = p.crestTokens :+ crestToken)) match {
                 case true =>
                   goback.attachSessionifDefined(
-                    req.flash(Alerts.success, "Successfully added character %s.".format(verify.characterName)).map(_.updatePilot))
+                    req.flash(Alerts.success, "Successfully added character %s.".format(verify.CharacterName)).map(_.updatePilot))
                 case false =>
                   goback.attachSessionifDefined(
                     req.flash(Alerts.warning, s"Error adding character."))
@@ -882,7 +905,7 @@ class Webapp(fullconfig: ConfigFile,
               TemporaryRedirect(Uri(path = "/"))
           }
         case "login" =>
-          val uid = Utils.sanitizeUserName(verify.characterName)
+          val uid = Utils.sanitizeUserName(verify.CharacterName)
           val pilot = ud.getUser(uid)
           val session = pilot match {
             case Some(p) =>
