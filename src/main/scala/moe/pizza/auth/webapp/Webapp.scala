@@ -700,13 +700,23 @@ class Webapp(fullconfig: ConfigFile,
       req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
         case Some(p) =>
           val verifies = p.getCrestTokens.map(crestToken => {
-            val refreshed = crest.refresh(crestToken.token).unsafePerformSync
-            (crestToken, crest.verify(refreshed.access_token).unsafePerformSync)
+            crest.refresh(crestToken.token).attemptRun match {
+              case \/-(callbackResult) =>
+                val verify = crest.verify(callbackResult.access_token).unsafePerformSync
+                (crestToken, Some(verify))
+              case -\/(_) =>
+                (crestToken, None)
+            }
           })
+
+          val (validKeys, invalidKeys) = verifies.partition(x => x._2.isDefined)
+
+          val validKeysWithoutMain = validKeys.filter(x => x._2.get.CharacterName != p.characterName)
+
           Ok(
             templates.html.base(
               "pizza-auth-3",
-              templates.html.account(p,verifies),
+              templates.html.account(p,validKeysWithoutMain, invalidKeys),
               req.getSession.map(_.toNormalSession),
               req.getSession.flatMap(_.pilot))).attachSessionifDefined(
             req.getSession.map(_.copy(alerts = List())))

@@ -1629,8 +1629,6 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     assert(bodytxt contains "/account/update/email")
     assert(bodytxt contains "/account/update/password")
     assert(bodytxt contains "Bob McName")
-    assert(bodytxt contains "103_32.jpg")
-    assert(bodytxt contains "Main character")
     assert(bodytxt contains "/account/characters/add")
   }
   "DynamicRouter's account page" should "change people's emails" in {
