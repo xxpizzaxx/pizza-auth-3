@@ -30,7 +30,7 @@ class SessionManagerSpec extends FlatSpec with MustMatchers with MockitoSugar {
     val session = r.headers.get(CaseInsensitiveString("set-cookie")).get
     session.value.startsWith("authsession=") must equal(true)
     val bodytxt = EntityDecoder.decodeString(r)(Charset.`UTF-8`).run
-    bodytxt must equal("Some(HydratedSession(List(),None,None))")
+    bodytxt must equal("Some(HydratedSession(List(),None,None,None))")
   }
 
   "when wrapping a service it" should "add a session cookie and use it to store state between calls" in {
@@ -47,7 +47,7 @@ class SessionManagerSpec extends FlatSpec with MustMatchers with MockitoSugar {
     r.status must equal(Ok)
     val bodytxt = EntityDecoder.decodeString(r2)(Charset.`UTF-8`).run
     bodytxt must equal(
-      "Some(HydratedSession(List(Alert(info,this is an alert)),None,None))")
+      "Some(HydratedSession(List(Alert(info,this is an alert)),None,None,None))")
   }
 
   "when wrapping a service it" should "be able to remove sessions" in {

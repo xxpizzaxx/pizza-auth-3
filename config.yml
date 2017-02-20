@@ -60,6 +60,13 @@
         usecorp: false
     restkeys:
       - "insertakeyhere"
+    # OAuth Applications
+    applications:
+      -
+        name: "testapp"
+        clientId: "123"
+        secret: "234"
+        callback: "localhost"
 
   #############################################################################
   ## embedded ldap settings

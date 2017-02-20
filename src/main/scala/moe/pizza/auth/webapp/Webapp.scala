@@ -9,12 +9,7 @@ import BroadcastService._
 import moe.pizza.auth.models.Pilot
 import moe.pizza.auth.plugins.LocationManager
 import moe.pizza.auth.tasks.Update
-import moe.pizza.auth.webapp.Types.{
-  HydratedSession,
-  Session,
-  Session2,
-  SignupData
-}
+import moe.pizza.auth.webapp.Types.{HydratedSession, Session, Session2, SignupData}
 import moe.pizza.crestapi.CrestApi
 import org.http4s.{HttpService, _}
 import org.http4s.dsl.{Root, _}
@@ -45,6 +40,7 @@ import org.slf4j.LoggerFactory
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
+import moe.pizza.auth.webapp.oauth.OAuthResource
 import moe.pizza.auth.webapp.rest.{RestKeyMiddleware, RestResource}
 import org.http4s.circe._
 
@@ -108,10 +104,15 @@ class Webapp(fullconfig: ConfigFile,
   import Utils._
 
   implicit class RichHydratedSession(hs: HydratedSession) {
-    def toNormalSession = new Session(hs.alerts)
+    def toNormalSession = new Session(hs.alerts, hs.redirect)
 
     def updatePilot: HydratedSession = {
-      hs.copy(pilot = ud.getUser(hs.pilot.get.uid))
+      hs.pilot match {
+        case Some(p) =>
+          hs.copy(pilot = ud.getUser(p.uid))
+        case None =>
+          hs
+      }
     }
   }
 
@@ -910,14 +911,25 @@ class Webapp(fullconfig: ConfigFile,
             case Some(p) =>
               req
                 .flash(Alerts.success,
-                       "Thanks for logging in %s".format(verify.CharacterName))
-                .map(_.copy(pilot = Some(p)))
+                       "Thanks for logging in %s".format(verify.characterName))
+                .map(_.copy(pilot = Some(p), redirect=None))
             case None =>
               req.flash(
                 Alerts.warning,
                 "Unable to find a user associated with that EVE character, please sign up or use another character")
           }
-          TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(session)
+          req.getSession.flatMap(_.redirect) match {
+            case Some(uristring) =>
+              Uri.fromString(uristring).toOption match {
+                case Some(uri) =>
+                  TemporaryRedirect(uri).attachSessionifDefined(session)
+                case None =>
+                  TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(session)
+              }
+
+            case None =>
+              TemporaryRedirect(Uri(path = "/")).attachSessionifDefined(session)
+          }
         case _ =>
           TemporaryRedirect(Uri(path = "/"))
       }
@@ -938,8 +950,10 @@ class Webapp(fullconfig: ConfigFile,
                                  broadcasters)
   val restMiddleware = new RestKeyMiddleware(fullconfig.auth.restkeys)
 
+  val oauthServer = new OAuthResource(portnumber, ud, fullconfig.auth.applications)
+
   def router =
-    staticrouter orElse sessions(dynamicWebRouter) orElse restMiddleware(
-      restapi.resource)
+    staticrouter orElse sessions(dynamicWebRouter) orElse sessions(oauthServer.resource) //orElse restMiddleware(
+      //restapi.resource)
 
 }
