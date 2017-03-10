@@ -76,6 +76,8 @@
             </div>
         </div>
     </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.16.0/jquery.validate.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.16.0/additional-methods.min.js"></script>
     <div class="col-md-4">
         <div class="panel panel-primary">
             <div class="panel-heading"><h3 class="panel-title">Password</h3></div>
@@ -92,14 +94,14 @@
                     <button type="submit" class="btn btn-primary">Update</button>
                 </form>
                 <script>
-                        $( "#update_password" ).validate({
-                            rules: {
-                                password: "required",
-                                password_confirm: {
-                                    equalTo: "#password"
-                                }
+                    $("#update_password").validate({
+                        rules: {
+                            password: "required",
+                            password_confirm: {
+                                equalTo: "#password"
                             }
-                        });
+                        }
+                    });
                 </script>
 
 
@@ -119,17 +121,15 @@
                     <button type="submit" class="btn btn-primary">Update</button>
                 </form>
                 <script>
-                        $( "#update_email" ).validate({
-                            rules: {
-                                email: {
-                                    required: true,
-                                    email: true
-                                }
+                    $("#update_email").validate({
+                        rules: {
+                            email: {
+                                required: true,
+                                email: true
                             }
-                        });
+                        }
+                    });
                 </script>
-
-
             </div>
         </div>
     </div>
