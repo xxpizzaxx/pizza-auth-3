@@ -911,7 +911,7 @@ class Webapp(fullconfig: ConfigFile,
             case Some(p) =>
               req
                 .flash(Alerts.success,
-                       "Thanks for logging in %s".format(verify.characterName))
+                       "Thanks for logging in %s".format(verify.CharacterName))
                 .map(_.copy(pilot = Some(p), redirect=None))
             case None =>
               req.flash(
