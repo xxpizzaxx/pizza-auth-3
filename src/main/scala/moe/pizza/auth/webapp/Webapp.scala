@@ -870,12 +870,8 @@ class Webapp(fullconfig: ConfigFile,
     case req @ GET -> Root / "callback" => {
       val code = req.params("code")
       val state = req.params("state")
-      println(crest)
-      println(code)
-      val callbacktask = crest.callback(code)
-      println(callbacktask)
+      val callbacktask = crest.callback(code)(client)
       val callbackresults = callbacktask.unsafePerformSync
-      println(callbackresults)
       val verify = crest.verify(callbackresults.access_token).unsafePerformSync
       state match {
         case "signup" =>

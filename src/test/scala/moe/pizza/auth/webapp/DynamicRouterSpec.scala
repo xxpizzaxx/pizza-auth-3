@@ -648,7 +648,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
     when(config.auth).thenReturn(authconfig)
     when(crest.redirect("login", Webapp.defaultCrestScopes))
       .thenReturn("http://login.eveonline.com/whatever2")
-    when(crest.callback("codegoeshere")).thenReturn(Task {
+    when(crest.callback("codegoeshere")(null)).thenReturn(Task {
       CallbackResponse("access_token", "bearer", 1000, Some("refresh_token"))
     })
     val verifyR = VerifyResponse(103,
@@ -658,7 +658,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
       "token type",
       "owner hash",
       "eve online")
-    when(crest.verify("access_token")).thenReturn(Task {
+    when(crest.verify("access_token")(null)).thenReturn(Task {
       verifyR
     })
     val p = new Pilot(null,
@@ -678,7 +678,9 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
       9021,
       ud,
       crestapi = Some(crest),
-      mapper = Some(db))
+      mapper = Some(db),
+      apiClient = Some(null)
+    )
 
     val req = Request(
       uri = Uri
@@ -691,7 +693,7 @@ class DynamicRouterSpec extends FlatSpec with MockitoSugar with MustMatchers {
         new HydratedSession(List.empty[Alert], Some("/groups"), None, None)))
     val res = app.dynamicWebRouter(reqwithsession)
 
-    val resp = res.run
+    val resp = res.unsafePerformSync
     resp.status must equal(Status.TemporaryRedirect)
     val session = resp.getSession
     verify(ud).getUser("bob_mcbobface")
