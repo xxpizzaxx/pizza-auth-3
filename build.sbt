@@ -9,7 +9,7 @@ resolvers += Resolver.jcenterRepo
 fork := true
 parallelExecution in Test := false
 
-val HTTP4S_VERSION = "0.15.3a"
+val HTTP4S_VERSION = "0.15.16a"
 
 // main dependencies
 libraryDependencies ++= Seq(
