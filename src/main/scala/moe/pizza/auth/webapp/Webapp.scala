@@ -16,8 +16,6 @@ import org.http4s.dsl.{Root, _}
 import org.http4s.server._
 import org.http4s.server.staticcontent.ResourceService
 import org.http4s.server.syntax.ServiceOps
-
-
 import org.joda.time.DateTime
 import play.twirl.api.Html
 import moe.pizza.eveapi._
@@ -45,6 +43,7 @@ import moe.pizza.auth.webapp.rest.{RestKeyMiddleware, RestResource}
 import org.http4s.circe._
 
 import scalaz.\/-
+import scalaz.concurrent.Task
 
 object Webapp {
   val PILOT = "pilot"
@@ -158,14 +157,17 @@ class Webapp(fullconfig: ConfigFile,
       }
     }
     case req @ GET -> Root / "login" => {
-      Uri
-        .fromString(crest.redirect("login", Webapp.defaultCrestScopes)) match {
+      Task {
+        Uri.fromString(crest.redirect("login", Webapp.defaultCrestScopes))
+      }.flatMap {
         case \/-(url) => TemporaryRedirect(url)
         case _ => InternalServerError("unable to construct url")
       }
     }
     case req @ GET -> Root / "signup" => {
-      Uri.fromString(crest.redirect("signup", Webapp.defaultCrestScopes)) match {
+      Task {
+        Uri.fromString(crest.redirect("signup", Webapp.defaultCrestScopes))
+      }.flatMap {
         case \/-(url) => TemporaryRedirect(url)
         case _ => InternalServerError("unable to construct url")
       }
@@ -345,7 +347,9 @@ class Webapp(fullconfig: ConfigFile,
     }
 
     case req @ GET -> Root / "groups" => {
-      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+      Task {
+        req.getSession.map(_.updatePilot).flatMap(_.pilot)
+      }.flatMap {
         case Some(p) =>
           val groups = fullconfig.auth.groups
           Ok(
@@ -357,11 +361,14 @@ class Webapp(fullconfig: ConfigFile,
             req.getSession.map(_.copy(alerts = List())))
         case None =>
           TemporaryRedirect(Uri(path = "/"))
+
       }
     }
 
     case req @ GET -> Root / "groups" / "admin" => {
-      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+      Task {
+        req.getSession.map(_.updatePilot).flatMap(_.pilot)
+      }.flatMap {
         case Some(p) =>
           p.getGroups contains "admin" match {
             case true =>
@@ -397,7 +404,9 @@ class Webapp(fullconfig: ConfigFile,
 
     case req @ GET -> Root / "groups" / "admin" / "approve" / user / group => {
       val goback = TemporaryRedirect(Uri(path = "/groups/admin"))
-      req.getSession.map(_.updatePilot).flatMap(_.pilot) match {
+      Task {
+        req.getSession.map(_.updatePilot).flatMap(_.pilot)
+      }.flatMap {
         case Some(p) =>
           p.getGroups contains "admin" match {
             case true =>
