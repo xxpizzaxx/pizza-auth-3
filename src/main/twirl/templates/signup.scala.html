@@ -44,21 +44,20 @@
         </table>
         <button type="submit" class="btn btn-primary" value="submit">Submit</button>
     </form>
-    <script src="http://jquery.bassistance.de/validate/jquery.validate.js"></script>
-    <script src="http://jquery.bassistance.de/validate/additional-methods.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.16.0/jquery.validate.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.16.0/additional-methods.min.js"></script>
     <script>
-            $( "#account" ).validate({
-                rules: {
-                    email: {
-                        required: true,
-                        email: true
-                    },
-                    password: "required",
-                    password_confirm: {
-                        equalTo: "#password"
-                    }
+        $("#account").validate({
+            rules: {
+                email: {
+                    required: true,
+                    email: true
+                },
+                password: "required",
+                password_confirm: {
+                    equalTo: "#password"
                 }
-            });
+            }
+        });
     </script>
-
 </div>
